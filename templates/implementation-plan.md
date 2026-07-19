@@ -1,0 +1,22 @@
+# 实施导航：<business-title>
+
+<!-- 只回答“怎么做”。Task ID 必须与 task_plan 对齐；不得复制范围决定、状态或执行结果。 -->
+
+## 约定
+
+- 文件路径、代码符号和命令必须来自 discovery；未知项回 Readiness，不写假路径。
+- 每个步骤能映射到 Task DONE；跨 Task 共享改动指定唯一 owner。
+- 验证写可执行命令或证据路径，实际输出写 progress。
+
+## P01-T01｜<task-title>
+
+- **输入 / 前置**：Solution/Experience contract、findings Exx、依赖 Task。
+- **文件域**：允许修改 / 只读 / 禁止修改。
+- **共享资源**：无 / build / release candidate / migration。
+- **实现策略**：满足验收的最小设计与主要取舍。
+- **步骤**：
+  1. 建立 RED 或缺口证据。
+  2. 实现最小变更。
+  3. 运行 Task 验证并记录 progress。
+- **验证**：命令、预期 exit code、用户可观察检查。
+- **回退 / 安全**：可恢复点、所需授权、失败时回哪个阶段。
