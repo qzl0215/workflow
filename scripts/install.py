@@ -11,13 +11,17 @@ import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-
-from workflow_doctor import PUBLIC_TARGETS
+from typing import Optional
 
 
 SOURCE = Path(__file__).resolve().parents[1]
+CHECK = Path(__file__).with_name("check.py")
 NAME = "workflow"
 TARGET_ENV = "AGENT_SKILLS_DIR"
+RUNTIME_DIRECTORIES = ("references", "templates")
+IGNORED_NAMES = frozenset({".DS_Store", "Thumbs.db", "desktop.ini"})
+IGNORED_PARTS = frozenset({".git", "__pycache__"})
+IGNORED_SUFFIXES = frozenset({".pyc", ".pyo"})
 
 
 def known_targets() -> tuple[tuple[str, Path], ...]:
@@ -31,12 +35,34 @@ def known_targets() -> tuple[tuple[str, Path], ...]:
 
 
 def stamp() -> str:
-    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
 
 
 def fail(message: str) -> int:
     print(f"workflow 安装错误 / install error: {message}", file=sys.stderr)
     return 2
+
+
+def ignored(path: Path) -> bool:
+    relative = path.relative_to(SOURCE)
+    return (
+        bool(IGNORED_PARTS.intersection(relative.parts))
+        or path.name in IGNORED_NAMES
+        or path.suffix.casefold() in IGNORED_SUFFIXES
+    )
+
+
+def runtime_payload() -> list[Path]:
+    files = [SOURCE / "SKILL.md"]
+    for name in RUNTIME_DIRECTORIES:
+        directory = SOURCE / name
+        if directory.is_dir():
+            files.extend(
+                path
+                for path in directory.rglob("*")
+                if path.is_file() and path.suffix.casefold() == ".md" and not ignored(path)
+            )
+    return sorted(set(files))
 
 
 def auto_candidates() -> list[tuple[str, Path]]:
@@ -69,7 +95,7 @@ def show_detection() -> int:
     return 0
 
 
-def resolve_target(raw: str | None, action: str) -> Path:
+def resolve_target(raw: Optional[str], action: str) -> Path:
     if raw and raw != "auto":
         return Path(raw).expanduser().resolve()
     candidates = auto_candidates()
@@ -89,54 +115,59 @@ def resolve_target(raw: str | None, action: str) -> Path:
     raise ValueError(f"发现多个 skills 目录，不能替你猜；请使用 --target 明确选择：\n{choices}")
 
 
-def validate_source() -> list[str]:
-    actual = {path.relative_to(SOURCE).as_posix() for path in SOURCE.rglob("*") if path.is_file()}
-    return sorted(PUBLIC_TARGETS - actual)
+def run_check(package: Path, *, quiet: bool = False) -> int:
+    result = subprocess.run(
+        [sys.executable, "-B", str(CHECK), str(package)],
+        cwd=SOURCE,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    if not quiet or result.returncode:
+        print(result.stdout, end="")
+    return result.returncode
 
 
 def copy_payload(stage: Path) -> None:
-    for relative in sorted(PUBLIC_TARGETS):
-        source = SOURCE / relative
+    for source in runtime_payload():
+        relative = source.relative_to(SOURCE)
         destination = stage / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
 
 
-def run_check(destination: Path) -> int:
-    for script in ("workflow_doctor.py", "release_check.py"):
-        result = subprocess.run(
-            [sys.executable, "-B", str(destination / "scripts" / script)],
-            cwd=destination,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=False,
-        )
-        print(result.stdout, end="")
-        if result.returncode:
-            return result.returncode
-    return 0
+def package_name(package: Path) -> Optional[str]:
+    skill = package / "SKILL.md"
+    if not skill.is_file() or skill.is_symlink():
+        return None
+    lines = skill.read_text(encoding="utf-8", errors="replace").splitlines()
+    if not lines or lines[0].strip() != "---":
+        return None
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        if line.startswith("name:"):
+            return line.split(":", 1)[1].strip().strip("'\"")
+    return None
 
 
 def install(parent: Path, *, update: bool) -> int:
-    missing = validate_source()
-    if missing:
-        return fail("当前源码不是完整发布候选：" + ", ".join(missing))
+    if run_check(SOURCE, quiet=True):
+        return fail("当前源码未通过运行包检查")
     destination = parent / NAME
-    if update and not destination.is_dir():
-        return fail(f"没有可更新的安装：{destination}")
+    if update and package_name(destination) != NAME:
+        return fail(f"目标不是可识别的 workflow 安装，拒绝更新：{destination}")
     if not update and destination.exists():
         return fail(f"目标已存在：{destination}；请改用 update 以保留备份")
 
     parent.mkdir(parents=True, exist_ok=True)
     stage = Path(tempfile.mkdtemp(prefix=".workflow-stage-", dir=parent))
-    backup: Path | None = None
+    backup: Optional[Path] = None
     try:
         copy_payload(stage)
         if update:
             backup = parent / f"{NAME}.backup-{stamp()}"
-            if backup.exists():
-                return fail(f"备份路径已存在：{backup}")
             destination.rename(backup)
         try:
             stage.rename(destination)
@@ -150,9 +181,9 @@ def install(parent: Path, *, update: bool) -> int:
 
     if run_check(destination):
         print("安装文件未通过验证 / verification failed", file=sys.stderr)
+        failed = parent / f"{NAME}.failed-{stamp()}"
+        destination.rename(failed)
         if backup and backup.exists():
-            failed = parent / f"{NAME}.failed-{stamp()}"
-            destination.rename(failed)
             backup.rename(destination)
             print(f"已恢复旧版本；失败候选保留在 {failed}", file=sys.stderr)
         return 1
@@ -166,11 +197,9 @@ def uninstall(parent: Path, confirmed: bool) -> int:
     destination = parent / NAME
     if not confirmed:
         return fail("卸载需要 --yes；操作只会重命名目录，不会永久删除")
-    if not destination.is_dir():
-        return fail(f"未找到安装：{destination}")
+    if package_name(destination) != NAME:
+        return fail(f"目标不是可识别的 workflow 安装，拒绝卸载：{destination}")
     recovered = parent / f"{NAME}.removed-{stamp()}"
-    if recovered.exists():
-        return fail(f"恢复目录已存在：{recovered}")
     destination.rename(recovered)
     print(f"workflow 已卸载；可恢复目录：{recovered}")
     return 0
@@ -197,9 +226,9 @@ def main() -> int:
         return fail(str(exc))
     if parent == Path(parent.anchor):
         return fail("target 不能是文件系统根目录")
-    if parent == SOURCE or SOURCE in parent.parents:
-        return fail("target 不能是源码包或其子目录")
     destination = parent / NAME
+    if destination == SOURCE or destination in SOURCE.parents or SOURCE in destination.parents:
+        return fail("target 解析后的安装目录不能与源码包相同或重叠")
     if args.action == "install":
         return install(parent, update=False)
     if args.action == "update":

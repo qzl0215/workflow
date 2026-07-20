@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="workflow：把复杂需求编译成最小、清楚、可验证的 AI 工作单元。">
+  <meta name="color-scheme" content="light">
+  <title>workflow｜复杂工作的 AI 总导演</title>
+  <style>
+    :root {
+      --paper: #f1eee6;
+      --surface: #fbfaf6;
+      --ink: #18231e;
+      --muted: #647068;
+      --line: #d4d3ca;
+      --forest: #174f3d;
+      --forest-2: #2c7057;
+      --moss: #dce7df;
+      --amber: #8b451c;
+      --amber-soft: #f3e1ce;
+      --blue: #376f86;
+      --blue-soft: #dce9ee;
+      --shadow: 0 24px 70px rgb(35 44 39 / 10%);
+      font-family: Inter, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; min-width: 320px; background: var(--paper); color: var(--ink); }
+    button, a { color: inherit; font: inherit; }
+    button { cursor: pointer; }
+    a { text-underline-offset: .22em; }
+    :focus-visible { outline: 3px solid #8b451c; outline-offset: 3px; }
+    .skip-link { position: fixed; left: 16px; top: 8px; z-index: 50; padding: 10px 14px; color: white; background: var(--forest); transform: translateY(-160%); }
+    .skip-link:focus { transform: none; }
+    .shell { width: min(1400px, 100%); margin: auto; min-height: 100vh; background: var(--surface); box-shadow: var(--shadow); }
+    .topbar { min-height: 58px; padding: 10px clamp(20px, 4vw, 52px); display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; background: rgb(251 250 246 / 92%); backdrop-filter: blur(14px); }
+    .brand { display: flex; align-items: baseline; gap: 10px; text-decoration: none; font-weight: 850; letter-spacing: -.03em; }
+    .brand small { color: var(--forest); font: 700 10px/1 ui-monospace, monospace; letter-spacing: .09em; }
+    .topbar nav { display: flex; gap: 16px; color: var(--muted); font-size: 13px; }
+    .topbar nav a { min-height: 40px; display: inline-flex; align-items: center; }
+    .hero { min-height: 76vh; padding: clamp(70px, 10vw, 140px) clamp(24px, 7vw, 96px) 70px; position: relative; overflow: hidden; display: grid; align-content: center; }
+    .hero::before { content: ""; width: 480px; aspect-ratio: 1; border: 1px solid rgb(23 79 61 / 18%); border-radius: 50%; position: absolute; right: -130px; top: 60px; box-shadow: 0 0 0 70px rgb(23 79 61 / 4%), 0 0 0 140px rgb(23 79 61 / 3%); }
+    .eyebrow, .section-kicker { margin: 0 0 14px; color: var(--forest); font: 800 11px/1.2 ui-monospace, monospace; letter-spacing: .14em; text-transform: uppercase; }
+    h1, h2, h3, p { text-wrap: balance; }
+    h1 { max-width: 980px; margin: 0; font-family: "Songti SC", "STSong", Georgia, serif; font-size: clamp(48px, 8vw, 108px); font-weight: 650; line-height: .98; letter-spacing: -.065em; }
+    .hero .lede { max-width: 760px; margin: 32px 0 0; color: #47534c; font-size: clamp(17px, 2vw, 23px); line-height: 1.75; }
+    .hero-actions { margin-top: 34px; display: flex; flex-wrap: wrap; gap: 12px; }
+    .primary, .secondary { min-height: 48px; padding: 0 18px; border: 1px solid var(--forest); display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 760; font-size: 14px; }
+    .primary { color: white; background: var(--forest); }
+    .primary:hover { background: #0d3c2d; }
+    .secondary { color: var(--forest); background: transparent; }
+    .secondary:hover { background: var(--moss); }
+    .promise-grid { padding: 0 clamp(24px, 7vw, 96px) 80px; display: grid; grid-template-columns: repeat(4, 1fr); }
+    .promise { min-height: 190px; padding: 26px; border: 1px solid var(--line); border-right: 0; background: white; }
+    .promise:last-child { border-right: 1px solid var(--line); }
+    .promise span { color: var(--amber); font: 800 12px/1 ui-monospace, monospace; }
+    .promise h3 { margin: 36px 0 10px; font-size: 19px; }
+    .promise p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+    section.panel { padding: clamp(72px, 9vw, 120px) clamp(24px, 7vw, 96px); border-top: 1px solid var(--line); }
+    .section-head { max-width: 820px; margin-bottom: 44px; }
+    .section-head h2 { margin: 0; font-family: "Songti SC", "STSong", Georgia, serif; font-size: clamp(36px, 5vw, 66px); line-height: 1.05; letter-spacing: -.045em; }
+    .section-head p:last-child { margin: 18px 0 0; color: var(--muted); font-size: 17px; line-height: 1.75; }
+    .cell { display: grid; grid-template-columns: minmax(260px, .78fr) minmax(0, 1.4fr); border: 1px solid var(--line); background: #fff; }
+    .cell-copy { padding: clamp(30px, 5vw, 62px); border-right: 1px solid var(--line); }
+    .cell-copy h3 { margin: 0 0 16px; font-size: 28px; }
+    .cell-copy p { margin: 0; color: var(--muted); line-height: 1.75; }
+    .cell-flow { padding: clamp(24px, 4vw, 48px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-content: center; }
+    .cell-node { min-height: 110px; padding: 16px; border: 1px solid var(--line); background: var(--surface); position: relative; }
+    .cell-node b { display: block; margin-bottom: 8px; color: var(--forest); font-size: 14px; }
+    .cell-node span { color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .orchestration { display: grid; grid-template-columns: .72fr 1.2fr .72fr; gap: 14px; align-items: stretch; }
+    .orchestration-lane { padding: 24px; border: 1px solid var(--line); background: white; }
+    .orchestration-lane h3 { margin: 0 0 10px; font-size: 18px; }
+    .orchestration-lane > p { margin: 0 0 18px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .active-cell { margin-top: 8px; padding: 13px; border-left: 3px solid var(--forest); background: var(--moss); }
+    .active-cell b { display: block; font-size: 13px; }
+    .active-cell span { color: var(--muted); font-size: 11px; }
+    .orchestration-arrow { display: grid; place-content: center; color: var(--forest); font: 800 13px/1.6 ui-monospace, monospace; text-align: center; }
+    .stages-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 28px; }
+    .stage-nav { display: grid; gap: 8px; align-self: start; position: sticky; top: 84px; }
+    .stage-nav button { min-height: 50px; padding: 0 16px; border: 1px solid var(--line); background: transparent; display: flex; align-items: center; gap: 12px; text-align: left; }
+    .stage-nav button span { color: var(--muted); font: 800 11px/1 ui-monospace, monospace; }
+    .stage-nav button[aria-selected="true"] { color: white; border-color: var(--forest); background: var(--forest); }
+    .stage-nav button[aria-selected="true"] span { color: #b9dacb; }
+    .stage-card { min-height: 590px; padding: clamp(30px, 6vw, 70px); border: 1px solid var(--line); background: white; display: none; }
+    .stage-card.active { display: block; animation: reveal .3s ease both; }
+    .stage-number { color: var(--amber); font: 850 13px/1 ui-monospace, monospace; letter-spacing: .12em; }
+    .stage-card h3 { margin: 18px 0 12px; font-family: "Songti SC", "STSong", Georgia, serif; font-size: clamp(36px, 5vw, 64px); letter-spacing: -.045em; }
+    .stage-question { max-width: 720px; margin: 0 0 40px; color: var(--muted); font-size: 18px; line-height: 1.7; }
+    .stage-contract { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .contract-block { min-height: 148px; padding: 20px; border: 1px solid var(--line); background: var(--surface); }
+    .contract-block small { color: var(--forest); font: 800 10px/1 ui-monospace, monospace; letter-spacing: .11em; }
+    .contract-block b { display: block; margin: 14px 0 6px; font-size: 16px; }
+    .contract-block p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
+    .scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .scenario { padding: clamp(28px, 4vw, 46px); border: 1px solid var(--line); background: #fff; }
+    .scenario:first-child { background: var(--moss); }
+    .scenario:last-child { background: var(--amber-soft); }
+    .scenario h3 { margin: 0 0 24px; font-size: 24px; }
+    .scenario ol { margin: 0; padding-left: 20px; display: grid; gap: 14px; color: #445149; line-height: 1.55; }
+    .scenario b { color: var(--forest); }
+    .install-box { display: grid; grid-template-columns: .8fr 1.2fr; border: 1px solid var(--line); background: #15251e; color: #eef5f0; }
+    .install-copy { padding: clamp(30px, 5vw, 60px); border-right: 1px solid rgb(255 255 255 / 15%); }
+    .install-copy h3 { margin: 0 0 14px; font-size: 28px; }
+    .install-copy p { color: #b7c9bf; line-height: 1.7; }
+    .install-prompt { margin: 0; padding: clamp(26px, 5vw, 58px); overflow: auto; white-space: pre-wrap; color: #e7efe9; font: 13px/1.75 ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    .copy-install { min-height: 44px; margin-top: 12px; padding: 0 15px; border: 1px solid #9fc5b2; color: #eef5f0; background: transparent; font-weight: 750; }
+    .copy-install:hover { background: rgb(255 255 255 / 9%); }
+    .copy-status { min-height: 20px; margin-top: 10px; color: #b7c9bf; font-size: 12px; }
+    .footer { min-height: 90px; padding: 22px clamp(24px, 7vw, 96px); display: flex; align-items: center; justify-content: space-between; gap: 20px; color: var(--muted); border-top: 1px solid var(--line); font-size: 12px; }
+    @keyframes reveal { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    @media (max-width: 900px) {
+      .promise-grid { grid-template-columns: 1fr 1fr; }
+      .promise:nth-child(2) { border-right: 1px solid var(--line); }
+      .promise:nth-child(-n+2) { border-bottom: 0; }
+      .cell, .install-box, .orchestration { grid-template-columns: 1fr; }
+      .cell-copy, .install-copy { border-right: 0; border-bottom: 1px solid var(--line); }
+      .stages-layout { grid-template-columns: 1fr; }
+      .stage-nav { grid-template-columns: repeat(4, 1fr); position: static; }
+      .stage-nav button { justify-content: center; padding: 8px; text-align: center; }
+      .stage-nav button span { display: none; }
+    }
+    @media (max-width: 620px) {
+      .topbar nav a:first-child { display: none; }
+      .hero { min-height: 70vh; }
+      .promise-grid, .scenario-grid, .stage-contract { grid-template-columns: 1fr; }
+      .promise { border-right: 1px solid var(--line); border-bottom: 0; }
+      .promise:last-child { border-bottom: 1px solid var(--line); }
+      .cell-flow { grid-template-columns: 1fr 1fr; }
+      .stage-nav { grid-template-columns: 1fr 1fr; }
+      .stage-card { min-height: 0; }
+      .footer { align-items: flex-start; flex-direction: column; }
+    }
+    @media (max-width: 420px) {
+      .topbar { padding-inline: 14px; }
+      .brand small { display: none; }
+      .topbar nav { gap: 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+  <noscript><style>.stage-card { display: block !important; margin-bottom: 16px; }</style></noscript>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到正文</a>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="#main-content">workflow <small>AI ORCHESTRATOR</small></a>
+      <nav aria-label="页面导航"><a href="#stages">八阶段</a><a href="#scenarios">真实场景</a><a href="#install">安装</a></nav>
+    </header>
+
+    <main id="main-content">
+      <section class="hero">
+        <p class="eyebrow">复杂工作的 AI 总导演</p>
+        <h1>阶段清楚，背景降噪，分工明确，深度发力。</h1>
+        <p class="lede">workflow 把一串还没想完整的要求，编译成最小、清楚、可验证的工作单元。你负责真正的取舍，AI 负责查清、想透、排好、做成、验真和升级。</p>
+        <div class="hero-actions"><a class="primary" href="#stages">看它怎样工作</a><a class="secondary" href="#install">一键交给 Agent 安装</a></div>
+      </section>
+
+      <section class="promise-grid" aria-label="workflow 的四个承诺">
+        <article class="promise"><span>01</span><h3>先接住需求</h3><p>逐项归一，能查的自己查，真正关键的问题集中问。</p></article>
+        <article class="promise"><span>02</span><h3>先看森林</h3><p>专家独立发散、交叉挑战；体验与视觉先于工程计划。</p></article>
+        <article class="promise"><span>03</span><h3>持续做到验真</h3><p>计划串并行、控制上下文、修根因、简化代码并 fresh 验收。</p></article>
+        <article class="promise"><span>04</span><h3>把变化放对地方</h3><p>缺陷、优化、新 Plan、新需求和长期经验各走自己的路。</p></article>
+      </section>
+
+      <section class="panel" id="cell">
+        <div class="section-head"><p class="section-kicker">The operating unit</p><h2>每次只让 AI 看见，做好当前一步所必需的内容。</h2><p>不是把整个项目塞给每个 Agent，而是动态生成一个最小充分的 Workflow Cell。</p></div>
+        <div class="cell">
+          <div class="cell-copy"><h3>一个 Cell，一项清楚的责任</h3><p>执行合同写清任务，进度控制台保存状态；当前角色只收到即时生成的上下文包。上下文不够时，只补一个明确缺口。</p></div>
+          <div class="cell-flow" aria-label="Workflow Cell 组成">
+            <div class="cell-node"><b>工作对象</b><span>一次交付、结果计划、执行任务或新反馈</span></div>
+            <div class="cell-node"><b>当前阶段</b><span>现在只回答哪一类问题</span></div>
+            <div class="cell-node"><b>最小上下文</b><span>相关事实、决策和证据引用</span></div>
+            <div class="cell-node"><b>责任角色</b><span>谁对这个结果负责</span></div>
+            <div class="cell-node"><b>能力与权限</b><span>怎样做，以及不能越过什么边界</span></div>
+            <div class="cell-node"><b>证据与路由</b><span>产出什么，凭什么进入下一步</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="truth">
+        <div class="section-head"><p class="section-kicker">One fact, one owner</p><h2>四类真源，外加按需执行合同。</h2><p>不是把所有背景塞进一个大文档，也不是让每个 Agent 建一套文件。每类信息只放在一个地方，执行时只取相关切片。</p></div>
+        <div class="scenario-grid" aria-label="workflow 项目文档真源">
+          <article class="scenario"><h3>request.md · 看清问题</h3><p>真实用户、背景、原因、需求、约束和验收基线。</p></article>
+          <article class="scenario"><h3>findings.md · 保存依据</h3><p>事实、来源、未知、专家结论和方案比较；有跨阶段复用价值时才创建。</p></article>
+          <article class="scenario"><h3>plan.md · 确认方案</h3><p>完整业务方案、多个结果计划、任务依赖、冲突预防和整体验收。</p></article>
+          <article class="scenario"><h3>progress.md · 控制现场</h3><p>所有对象当前阶段、下一动作、阻塞、反馈和证据索引只看这一处。</p></article>
+          <article class="scenario"><h3>task.md · 按需派工</h3><p>复杂、委派或跨会话任务才生成；一项稳定 Task 一份，不按 Agent 数量复制。</p></article>
+          <article class="scenario"><h3>不再默认创建</h3><p>证据流水文档、持久化上下文包、每 Plan 进度、每角色文档和 Markdown 日记。</p></article>
+        </div>
+      </section>
+
+      <section class="panel" id="orchestration">
+        <div class="section-head"><p class="section-kicker">One request, many active cells</p><h2>一张进度全景，多个 Plan 各走各的阶段。</h2><p>同一独立需求共享一个工作区，所有运行状态集中在一份 progress.md。总协调者只把当前步骤需要的内容交给对应 AI，计划时先消除写冲突，最终再统一汇合。</p></div>
+        <div class="orchestration" aria-label="多 Plan 多 Agent 编排全景">
+          <div class="orchestration-lane"><h3>一个 Request</h3><p>共同目标、需求账本、授权、工作区与最终验收基线。</p><div class="active-cell"><b>progress.md · 唯一状态台</b><span>分别记录 Request、Plan、Task 和反馈</span></div></div>
+          <div class="orchestration-lane"><h3>多个并行 Cell</h3><p>每条工作线只加载自己的上下文；有写冲突的工作提前串行。</p><div class="active-cell"><b>P01 · 质量验收</b><span>AI Reviewer · 只读实际 diff 与验收</span></div><div class="active-cell"><b>P02 · 执行建设</b><span>Task Owner · 只改授权文件域</span></div><div class="active-cell"><b>P03 · 等待外部输入</b><span>Blocker 不拖回未受影响 Plan</span></div><div class="active-cell"><b>F04 · 看清反馈</b><span>先分类，再决定回哪一阶段</span></div></div>
+          <div class="orchestration-lane"><h3>一个汇合口</h3><p>所有纳入 Plan 验收通过后，再同步最新目标、解决语义冲突并重跑整体证据。</p><div class="orchestration-arrow">PLAN 通过<br>↓<br>REQUEST 集成<br>↓<br>真实交付</div></div>
+        </div>
+      </section>
+
+      <section class="panel" id="stages">
+        <div class="section-head"><p class="section-kicker">Eight clear stages</p><h2>每个阶段，只做每个阶段的事情。</h2><p>选择一个阶段，查看它实际读取什么、由谁处理、怎样产生下一步。</p></div>
+        <div class="stages-layout">
+          <div class="stage-nav" role="tablist" aria-label="workflow 八阶段">
+            <button id="tab-01" type="button" role="tab" tabindex="0" aria-selected="true" aria-controls="stage-01" data-stage-target="stage-01"><span>01</span>立项隔离</button>
+            <button id="tab-02" type="button" role="tab" tabindex="-1" aria-selected="false" aria-controls="stage-02" data-stage-target="stage-02"><span>02</span>看清需求</button>
+            <button id="tab-03" type="button" role="tab" tabindex="-1" aria-selected="false" aria-controls="stage-03" data-stage-target="stage-03"><span>03</span>选定设计</button>
+            <button id="tab-04" type="button" role="tab" tabindex="-1" aria-selected="false" aria-controls="stage-04" data-stage-target="stage-04"><span>04</span>计划编排</button>
+            <button id="tab-05" type="button" role="tab" tabindex="-1" aria-selected="false" aria-controls="stage-05" data-stage-target="stage-05"><span>05</span>执行建设</button>
+            <button id="tab-06" type="button" role="tab" tabindex="-1" aria-selected="false" aria-controls="stage-06" data-stage-target="stage-06"><span>06</span>质量验收</button>
+            <button id="tab-07" type="button" role="tab" tabindex="-1" aria-selected="false" aria-controls="stage-07" data-stage-target="stage-07"><span>07</span>集成交付</button>
+            <button id="tab-08" type="button" role="tab" tabindex="-1" aria-selected="false" aria-controls="stage-08" data-stage-target="stage-08"><span>08</span>复盘升级</button>
+          </div>
+          <div class="stage-panels">
+            <article class="stage-card active" id="stage-01" role="tabpanel" aria-labelledby="tab-01"><span class="stage-number">STAGE 01</span><h3>立项隔离</h3><p class="stage-question">先保护现场，再从最新、正确的项目基线开始。</p><div class="stage-contract"><div class="contract-block"><small>只读上下文</small><b>请求、项目规则、Git 状态</b><p>不加载方案历史和交付细节。</p></div><div class="contract-block"><small>责任角色</small><b>总协调者</b><p>判断是当前需求的补充，还是独立新需求。</p></div><div class="contract-block"><small>主要动作</small><b>同步最新代码 + 独立工作区</b><p>一个独立需求一个工作区；AI 协作者默认共享。</p></div><div class="contract-block"><small>输出</small><b>安全基线</b><p>需求编号、起点版本、分支、工作区和项目入口。</p></div></div></article>
+            <article class="stage-card" id="stage-02" role="tabpanel" aria-labelledby="tab-02"><span class="stage-number">STAGE 02</span><h3>看清需求</h3><p class="stage-question">一串要求分别是什么，它们怎样关联，什么才算做成？</p><div class="stage-contract"><div class="contract-block"><small>只读上下文</small><b>用户原话、项目事实</b><p>不把可查事实重新问给用户。</p></div><div class="contract-block"><small>责任角色</small><b>需求负责人 / 关键追问主持</b><p>把问题压缩成真正会改变方向的决策。</p></div><div class="contract-block"><small>按需能力</small><b>关键追问与变化需求分流</b><p>问题集中问、总数不超过 15；新反馈先分类。</p></div><div class="contract-block"><small>输出</small><b>需求账本与验收</b><p>稳定编号、关系、边界、未知和可观察成功标准。</p></div></div></article>
+            <article class="stage-card" id="stage-03" role="tabpanel" aria-labelledby="tab-03"><span class="stage-number">STAGE 03</span><h3>选定设计</h3><p class="stage-question">怎样得到 90 分终局，同时删除不必要的复杂度？</p><div class="stage-contract"><div class="contract-block"><small>只读上下文</small><b>目标、证据、约束</b><p>不继承执行流水和无关历史。</p></div><div class="contract-block"><small>责任角色</small><b>动态专家森林</b><p>独立发散、交叉质询，再由方案 Owner 收敛。</p></div><div class="contract-block"><small>按需能力</small><b>体验、视觉与动效</b><p>UI 先完成完整状态和方向选择，非 UI 不加载。</p></div><div class="contract-block"><small>输出</small><b>推荐方案</b><p>终局、边界、不变量、删除项、回滚点和设计契约。</p></div></div></article>
+            <article class="stage-card" id="stage-04" role="tabpanel" aria-labelledby="tab-04"><span class="stage-number">STAGE 04</span><h3>计划编排</h3><p class="stage-question">怎样把结果拆成可串并行、可交接、可独立验收的工作？</p><div class="stage-contract"><div class="contract-block"><small>只读上下文</small><b>选定方案、真实目录和命令</b><p>不把专家完整发言带入实施。</p></div><div class="contract-block"><small>责任角色</small><b>结果计划负责人 / 总协调者</b><p>建立结果计划和任务的前后依赖，指定唯一写入负责人。</p></div><div class="contract-block"><small>并行原则</small><b>先消除冲突，再并行</b><p>文件、代码位置、数据结构、生成物和共享资源重叠就串行。</p></div><div class="contract-block"><small>按需补地基</small><b>只补当前交付缺的最小入口</b><p>AI 项目入口、运行/部署、全景导航、DESIGN.md 四选所需，不铺治理体系。</p></div></div></article>
+            <article class="stage-card" id="stage-05" role="tabpanel" aria-labelledby="tab-05"><span class="stage-number">STAGE 05</span><h3>执行建设</h3><p class="stage-question">当前最小可验结果是什么，怎样用最少改动把它做成？</p><div class="stage-contract"><div class="contract-block"><small>只读上下文</small><b>一份 Task 执行合同</b><p>再加当前状态切片和精确引用，不读取完整 Portfolio。</p></div><div class="contract-block"><small>责任角色</small><b>Task Owner</b><p>只改授权写域，返回实际产物和证据。</p></div><div class="contract-block"><small>按需能力</small><b>根因 Debug</b><p>只有真实失败才加载；先复现与证伪，不堆补丁。</p></div><div class="contract-block"><small>输出</small><b>Task 结果</b><p>diff、命令、失败、fresh evidence 和下游新事实。</p></div></div></article>
+            <article class="stage-card" id="stage-06" role="tabpanel" aria-labelledby="tab-06"><span class="stage-number">STAGE 06</span><h3>质量验收</h3><p class="stage-question">能否更简单，以及凭什么证明做成了？</p><div class="stage-contract"><div class="contract-block"><small>只读上下文</small><b>验收、实际变更、相关证据</b><p>复核者不继承实现者的完成判断。</p></div><div class="contract-block"><small>责任角色</small><b>AI 独立复核者</b><p>不默认等待人类；无独立 AI 时同一模型切换职责。</p></div><div class="contract-block"><small>按需能力</small><b>复用已有实现 + 代码瘦身</b><p>复用、删除、合并、效率检查后再重新跑验证。</p></div><div class="contract-block"><small>输出</small><b>当前结果计划的通过证据</b><p>执行任务、结果计划和残余风险逐层说清。</p></div></div></article>
+            <article class="stage-card" id="stage-07" role="tabpanel" aria-labelledby="tab-07"><span class="stage-number">STAGE 07</span><h3>集成交付</h3><p class="stage-question">怎样把已验证成果安全放到最新目标分支和真实环境？</p><div class="stage-contract"><div class="contract-block"><small>只读上下文</small><b>目标分支、变更意图、授权</b><p>不重新加载 Grill 和专家会议。</p></div><div class="contract-block"><small>责任角色</small><b>Integrator</b><p>总协调者唯一负责 Git 生命周期和交付状态。</p></div><div class="contract-block"><small>按需能力</small><b>Fetch / Rebase / 语义解冲突</b><p>冲突后旧证据失效，必须 fresh 重验。</p></div><div class="contract-block"><small>输出</small><b>真实交付状态</b><p>本地、提交、推送、合并或部署到哪一级，如实报告。</p></div></div></article>
+            <article class="stage-card" id="stage-08" role="tabpanel" aria-labelledby="tab-08"><span class="stage-number">STAGE 08</span><h3>复盘升级</h3><p class="stage-question">这次哪里偏了，怎样让项目和 workflow 下一次更省力？</p><div class="stage-contract"><div class="contract-block"><small>只读上下文</small><b>计划与实际差异</b><p>不复制完整日志和成功叙事。</p></div><div class="contract-block"><small>责任角色</small><b>Review Owner</b><p>找返工根因、早期信号和应删除的机制。</p></div><div class="contract-block"><small>按需能力</small><b>受控进化</b><p>两次复现，或一次严重且可复现，才晋升 workflow。</p></div><div class="contract-block"><small>输出</small><b>No-op 或最小改进</b><p>项目事实、用户偏好和 workflow 规则进入各自唯一真源。</p></div></div></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="scenarios">
+        <div class="section-head"><p class="section-kicker">Two common realities</p><h2>需求不会整齐地来，反馈也不会等流程结束。</h2></div>
+        <div class="scenario-grid">
+          <article class="scenario"><h3>一次提出一串需求</h3><ol><li><b>逐项接住</b>：生成稳定 Requirement ID。</li><li><b>先查事实</b>：把能发现的内容从问题中删除。</li><li><b>集中 Grill</b>：独立问题并行问，最多 15 个。</li><li><b>建立关系</b>：识别重复、依赖、冲突和共享基础。</li><li><b>编排结果</b>：组成 Plan DAG 与 Task DAG，再决定串并行。</li></ol></article>
+          <article class="scenario"><h3>验收中又冒出新要求</h3><ol><li><b>冻结基线</b>：保留原来怎样算完成。</li><li><b>批量收集</b>：先进入 progress.md，分类前不改代码。</li><li><b>先改定义</b>：必要时升级需求基线或方案版本。</li><li><b>保护交付</b>：只失效受影响 Task，其他工作继续。</li><li><b>重验影响面</b>：重新计算可执行任务和集成路径。</li></ol></article>
+        </div>
+      </section>
+
+      <section class="panel" id="install">
+        <div class="section-head"><p class="section-kicker">One skill, one install</p><h2>不需要先知道 skills 目录。</h2><p>把下面这段交给当前 Agent，它会根据自己的真实环境安装并验证。</p></div>
+        <div class="install-box"><div class="install-copy"><h3>Agent 安装提示词</h3><p>运行时不依赖第三方 Python 包，也不要求安装其他 skills。安装器会备份旧版本，并在目录不明确时停止猜测。</p><button class="copy-install" id="copy-install" type="button">复制安装提示词</button><div class="copy-status" id="copy-status" role="status" aria-live="polite"></div></div><pre class="install-prompt" id="install-prompt">请安装 GitHub 项目 https://github.com/qzl0215/workflow。把仓库克隆到临时目录，根据你当前 Agent 的真实配置找到 skills 父目录，不要猜固定路径；运行 python3 scripts/install.py install --target "&lt;skills父目录&gt;"。如果已经安装，使用 update。最后运行同一脚本的 check，验证通过后再告诉我安装完成。不要覆盖没有备份的旧版本，也不要安装其他 skill。</pre></div>
+      </section>
+    </main>
+
+    <footer class="footer"><span>workflow · dependency-closed AI orchestration skill</span><span>MIT · zhonglin</span></footer>
+  </div>
+  <script>
+    const tabs = [...document.querySelectorAll('[data-stage-target]')];
+    const panels = [...document.querySelectorAll('.stage-card')];
+    function selectStage(tab) {
+      const id = tab.dataset.stageTarget;
+      tabs.forEach(item => {
+        const selected = item === tab;
+        item.setAttribute('aria-selected', String(selected));
+        item.tabIndex = selected ? 0 : -1;
+      });
+      panels.forEach(panel => {
+        const active = panel.id === id;
+        panel.classList.toggle('active', active);
+        panel.hidden = !active;
+      });
+    }
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => selectStage(tab));
+      tab.addEventListener('keydown', event => {
+        if (!['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        const direction = ['ArrowDown', 'ArrowRight'].includes(event.key) ? 1 : -1;
+        const next = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs[tabs.length - 1] : tabs[(tabs.indexOf(tab) + direction + tabs.length) % tabs.length];
+        next.focus();
+        selectStage(next);
+      });
+    });
+    selectStage(tabs.find(tab => tab.getAttribute('aria-selected') === 'true') || tabs[0]);
+
+    const copyButton = document.querySelector('#copy-install');
+    const installPrompt = document.querySelector('#install-prompt');
+    const copyStatus = document.querySelector('#copy-status');
+    copyButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(installPrompt.textContent.trim());
+        copyStatus.textContent = '已复制，可以直接粘贴给 Agent。';
+      } catch {
+        copyStatus.textContent = '浏览器未允许自动复制，请手动选中右侧提示词。';
+      }
+    });
+  </script>
+</body>
+</html>

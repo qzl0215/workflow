@@ -1,40 +1,91 @@
 # workflow
 
-**一个 skill，带你的 Agent 把复杂任务真正做完。**
+把一句还没想完整的需求，推进成已经做完、验明白，并让下一次更省事的结果。
 
-从“到底要做什么”开始，依次完成项目就绪检查、方案与体验设计、计划、实现、调试、验证和交付。只安装 `workflow`，不要求你再准备其他 skills，也不会为了显得完整给项目堆一套文档。
+你只需要说目标。workflow 会自己查项目、准备高价值问题、组织必要的专家视角、选择方案、安排多个结果计划、执行任务和 AI 协作者，持续实施、验收、处理反馈，并把值得复用的经验写回正确的位置。
 
-[打开中文可视化介绍](docs/workflow-visual-map.html) · [查看完整工作协议](SKILL.md)
+它是一个完整的单 Skill：不默认你还安装了其他 skills，也不要求你先学会工程术语。
 
-## 30 秒了解
+[下载或本地打开可视化 HTML](docs/index.html)
 
-适合这些任务：
+## 你会感受到什么
 
-- 功能较复杂，需要跨多个文件或多个步骤；
-- 需求还比较散，需要先收敛方案和优先级；
-- 涉及 UI、视觉或动效，需要先定设计再写工程计划；
-- 要跨会话推进，或需要多人 / 多 Agent 协作；
-- 最终要有可复查的测试、交付或发布结果。
+- **先弄清楚**：能从项目查到的事实不问你；真正需要你决定的问题集中问。
+- **先想透再开工**：复杂问题先看完整森林；界面、视觉和动效在工程计划前确定。
+- **一路做到并验真**：AI 自动安排先后与并行、修复失败、做代码瘦身，并用刚刚跑出的证据验收。
+- **新反馈不会把项目搅乱**：验收中的缺陷、优化、新结果计划和新需求会被分别处理。
 
-不适合纯问答、改一个错别字、一次性安全小操作。这些事情直接做更快。
+## 八个清楚的阶段
 
-它的主线可以简单理解为：
+| 阶段 | 这一阶段只解决什么 |
+|---|---|
+| 1. 立项隔离 | 判断是不是一个新需求；Git 项目从最新代码建立独立工作区（worktree） |
+| 2. 看清需求 | 逐项接住需求、查事实、集中关键追问（Grill），明确边界和验收 |
+| 3. 选定设计 | 专家独立发散与交叉质询，选方案；UI 先定体验、视觉和动效 |
+| 4. 计划编排 | 排清前后依赖和唯一负责人；确有阻碍时才补最小项目入口、运行/部署说明、全景导航或 DESIGN.md |
+| 5. 执行建设 | 每个角色只拿当前工作单元需要的背景，按任务实施和纠错 |
+| 6. 质量验收 | 先复用已有实现和做代码瘦身，再由 AI 独立重审并重新跑验收 |
+| 7. 集成交付 | 按授权同步最新代码、理解并解决冲突、重验后交付 |
+| 8. 复盘升级 | 找真实偏差，更新项目；有复用证据时才升级 workflow |
 
-> 接住任务 → 澄清目标 → 检查能否开工 → 定方案 → 定体验 → 写计划 → 实施与调试 → 验证 → 收尾
+阶段是 AI 的责任边界，不是八次会议。没有需要你决定的事情时，workflow 会连续推进。
+
+## 它怎样减少上下文噪音
+
+每次实际工作都被编译成一个最小工作单元（内部称 `Workflow Cell`）：
+
+```text
+正在处理哪个对象
+→ 处于什么阶段
+→ 只加载哪些相关事实
+→ 由什么责任角色处理
+→ 使用什么阶段能力
+→ 允许做什么
+→ 必须产出什么证据
+→ 下一步去哪里
+```
+
+一次独立交付（Request）可以包含多个结果计划（Plan），每个 Plan 可以处于不同阶段；每个执行任务（Task）只有一个写入负责人。多个 AI 协作者默认共享该 Request 的独立工作区，不各自创建分支，也不会同时修改冲突的文件域。
+
+复杂、需要委派或跨会话的 Task 会在开工前得到一份独立执行合同。合同已经写清输入、输出、允许修改范围、完成标准和验证方法，所以执行者不需要重读完整需求和专家会议。
+
+## 项目怎样记住上下文
+
+项目级工作只保留四类真源，并按需增加 Task 合同：
+
+| 文件 | 只回答一个问题 |
+|---|---|
+| `request.md` | 为什么做、为谁做、必须做到什么 |
+| `findings.md` | 我们查到了什么，为什么得出这个判断；确有跨阶段复用价值时才建 |
+| `plan.md` | 最终确认做成什么，以及多个结果和任务怎样编排 |
+| `progress.md` | 现在做到哪里、哪里受阻、下一步做什么；所有运行状态只看这里 |
+| `tasks/p01-t01.md` | 当前复杂 Task 的执行合同；按需生成，不按 Agent 数量复制 |
+
+执行上下文包由这些真源即时生成，不再默认建立证据流水文档、持久化上下文包、每 Plan 进度或每角色文档。完整日志和截图留在原产物位置，`progress.md` 只保存当前快照和证据索引。
+
+## 连续需求和验收反馈
+
+一次说出很多要求时，workflow 会先逐项编号，查清事实和关系，再组合成可独立验收的结果计划，而不是把每句话直接变成待办。
+
+验收中又提出一串反馈时，它会先冻结原验收基线并分类：
+
+- 原验收没做到：重开原执行任务。
+- 原目标有所遗漏：回到受影响的设计或计划。
+- 同目标的小优化：加入当前结果计划或延后，不默认阻塞交付。
+- 新的独立业务结果：加入当前 Request 的新 Plan。
+- 不相关的新目标：建立新 Request 和新独立工作区，不污染当前交付。
 
 ## 安装
 
-需要 Python 3.9+，运行时不需要第三方 Python 包。
+需要 Python 3.9+；workflow 运行时不需要第三方 Python 包。
 
 ### 推荐：复制给你的 Agent
 
-不需要先知道 skills 目录。把下面整段复制给当前 Agent，它会根据自己的运行环境完成安装和验证：
+把下面整段发给当前 Agent：
 
-> 请安装 GitHub 项目 `https://github.com/qzl0215/workflow`。先把仓库克隆到临时目录，再根据你当前 Agent 的配置确认 skills 父目录，不要猜固定路径；运行 `python3 scripts/install.py install --target "<skills父目录>"`。如果已经安装，则使用 `update`。最后运行同一脚本的 `check`，只有验证通过后才能告诉我安装完成。不要安装任何其他 skill，也不要覆盖没有备份的旧版本。
+> 请安装 GitHub 项目 `https://github.com/qzl0215/workflow`。把仓库克隆到临时目录，根据你当前 Agent 的真实配置找到 skills 父目录，不要猜固定路径；运行 `python3 scripts/install.py install --target "<skills父目录>"`。如果已经安装，使用 `update`。最后运行同一脚本的 `check`，验证通过后再告诉我安装完成。不要覆盖没有备份的旧版本，也不要安装其他 skill。
 
-### 自己在终端安装
-
-如果电脑上只有一个已存在的常见 Agent skills 目录，安装器会自动识别：
+### 终端安装
 
 ```bash
 git clone --depth 1 https://github.com/qzl0215/workflow.git
@@ -42,79 +93,47 @@ cd workflow
 python3 scripts/install.py install
 ```
 
-先只读查看识别结果：
-
-```bash
-python3 scripts/install.py detect
-```
-
-如果发现多个目录或没有识别到，请明确指定你的 Agent skills 父目录：
+有多个 skills 目录时明确指定：
 
 ```bash
 python3 scripts/install.py install --target "/path/to/agent/skills"
-```
-
-安装结果为 `<skills父目录>/workflow`。自动识别只使用已配置的 `AGENT_SKILLS_DIR` 或本机已经存在的常见目录；有歧义时会停止，不会替你猜。
-
-安装后检查：
-
-```bash
 python3 scripts/install.py check --target "/path/to/agent/skills"
 ```
 
-## 开始使用
-
-安装后，直接把复杂目标交给 Agent：
-
-> 用 workflow 帮我梳理这个项目的新功能。先把需求和方案讲清楚；如果涉及界面，先完成视觉与动效选型，再写计划、实现并验证。
-
-workflow 会按任务复杂度自动选择必要阶段。成熟项目不会被强行“补基建”；只有入口、约束、关键命令或验证路径真的缺失并阻断后续工作时，才优先补现有真源，极端情况下最多新建一份项目入口文档。
-
-## 它如何避免把事情做重
-
-| 原则 | 实际行为 |
-|---|---|
-| 一个入口 | 包内只有一个根 `SKILL.md`，所有能力都已编排在同一个包内 |
-| 按需读取 | 默认一次只读取当前阶段的一份 reference，不把整套流程塞进上下文 |
-| 设计先于计划 | UI 任务先完成体验、视觉、动效和完整状态选型；非 UI 明确跳过 |
-| 最小项目就绪 | 项目能开工就不改；缺什么只补真正阻断的那一处 |
-| 证据先于完成 | 没有刚刚跑出的验证证据，就不声称任务已经完成 |
-| 副作用先授权 | 未经明确授权，不 commit、push、merge、deploy、delete 或公开发布 |
-
-缺少 subagent、浏览器、memory 或 Git 时，workflow 会改用当前环境能提供的安全路径，并明确哪些验证没有做；不会伪造 PR、发布或完成状态。
-
-## 更新与卸载
-
-更新前会自动保留旧版本备份：
+更新和可恢复卸载：
 
 ```bash
 python3 scripts/install.py update --target "/path/to/agent/skills"
-```
-
-卸载只会把目录改名为可恢复备份，不会永久删除：
-
-```bash
 python3 scripts/install.py uninstall --target "/path/to/agent/skills" --yes
 ```
 
-## 项目维护
+安装器只把 `SKILL.md`、阶段 references 和 templates 放入 Agent 的 `workflow` 目录；README、HTML、测试和仓库维护文件不会进入运行上下文。
 
-运行完整检查：
+## 开始使用
+
+安装后直接描述目标：
+
+> 用 workflow 推进这个需求。先查项目和现有事实；需要时一次集中关键追问，并让相关专家独立发散、交叉质询。界面工作先定体验和视觉，再计划。没有需要我决定的事情就持续推进，直到刚刚重跑的验收全部通过。
+
+## 安全边界
+
+- 能自行发现的事实不会重新问用户。
+- Grill 单次最多 15 个问题，通常远少于这个数字。
+- 未经明确授权，不 commit、push、merge、deploy、delete 或公开发布。
+- 没有 fresh evidence，不声称完成。
+- 没有复用证据，不把一次经验永久写进 workflow。
+- 无 Git、无 subagent、无浏览器时会安全降级，不伪造能力和结果。
+- 项目地基只补当前交付真正需要的部分，不默认铺治理文档。
+
+## 维护检查
 
 ```bash
+python3 -B scripts/check.py
 python3 -B -m unittest discover -s tests -p 'test_*.py' -v
-python3 -B scripts/workflow_doctor.py
-python3 -B scripts/release_check.py
 ```
 
-贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)，安全问题见 [SECURITY.md](SECURITY.md)，来源与 clean-room 边界见 [NOTICE.md](NOTICE.md)。本项目按 [MIT License](LICENSE) 发布。
-
----
+MIT licensed. <sub>Maintained by zhonglin.</sub>
 
 ## English
 
-`workflow` is a dependency-closed AI skill for complex work: discovery, minimum readiness, solution and experience design, planning, implementation, debugging, fresh verification, and delivery. Install this repository only; no other custom skill or third-party Python package is required.
-
-Ask your agent to clone `https://github.com/qzl0215/workflow`, identify its own skills parent directory, run `python3 scripts/install.py install --target "<skills-directory>"`, and verify with the `check` action. The installer can also safely auto-detect one existing common skills directory with `python3 scripts/install.py install`; ambiguity fails closed.
-
-See the [visual introduction](docs/workflow-visual-map.html), or run `python3 -B scripts/release_check.py` to verify a checkout.
+`workflow` turns an incomplete request into a verified delivery through staged, progressively loaded context. One independent request gets one worktree; sub-agents share it by default. Four compact sources of truth hold the problem, findings, approved plan and live progress; non-trivial Task contracts are created only when needed.
