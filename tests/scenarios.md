@@ -102,9 +102,9 @@
 
 ## S17｜运行包 Clean-room 安装
 
-- Given：用户只安装 workflow，没有其他自定义 skill 或第三方 Python 包，目标路径可能包含空格。
-- When：Agent 执行安装、更新、检查或可恢复卸载。
-- Then：安装包只包含根协议、阶段 references 和 templates；可独立检查本地链接与完整性，环境垃圾不进入安装结果。
+- Given：用户已有能操作本地文件的 Agent，可能已安装旧 workflow，但没有 Python 或不知道 skills 目录。
+- When：用户发送同一句 Agent 安装/更新提示词。
+- Then：Agent 自动识别真实 skills 目录，整体备份旧版，以最新 GitHub main 的根协议、阶段 references 和 templates 完整镜像替换，校验入口与本地引用并报告版本/commit/位置；失败时恢复备份，不要求 Python。
 
 ## S18｜Plan 验收与 Request 交付分开
 

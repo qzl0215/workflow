@@ -75,17 +75,19 @@
 - 新的独立业务结果：加入当前 Request 的新 Plan。
 - 不相关的新目标：建立新 Request 和新独立工作区，不污染当前交付。
 
-## 安装
+## 安装与自动更新
 
-需要 Python 3.9+；workflow 运行时不需要第三方 Python 包。
+workflow 本身和 Agent 原生安装都不需要 Python。Python 3.9+ 是可选的终端安全工具。
 
-### 推荐：复制给你的 Agent
+### 推荐：发给 Agent 的一句话
 
-把下面整段发给当前 Agent：
+第一次发送会安装，以后再次发送同一句会自动更新：
 
-> 请安装 GitHub 项目 `https://github.com/qzl0215/workflow`。把仓库克隆到临时目录，根据你当前 Agent 的真实配置找到 skills 父目录，不要猜固定路径；运行 `python3 scripts/install.py install --target "<skills父目录>"`。如果已经安装，使用 `update`。最后运行同一脚本的 `check`，验证通过后再告诉我安装完成。不要覆盖没有备份的旧版本，也不要安装其他 skill。
+> 请从 `https://github.com/qzl0215/workflow` 安装或更新 workflow：自动找到你当前实际使用的 skills 目录，有旧版先整体备份，再以最新 main 中的 `SKILL.md`、`references/` 和 `templates/` 完整镜像替换，校验入口与本地引用后报告版本、来源 commit 和安装位置；任何一步失败都恢复备份，不要猜固定目录。
 
-### 终端安装
+### 可选：Python 安全安装器
+
+需要人工终端、CI 或确定性回滚时，可以使用仓库自带的标准库脚本：
 
 ```bash
 git clone --depth 1 https://github.com/qzl0215/workflow.git
@@ -107,7 +109,7 @@ python3 scripts/install.py update --target "/path/to/agent/skills"
 python3 scripts/install.py uninstall --target "/path/to/agent/skills" --yes
 ```
 
-安装器只把 `SKILL.md`、阶段 references 和 templates 放入 Agent 的 `workflow` 目录；README、HTML、测试和仓库维护文件不会进入运行上下文。
+无论 Agent 原生安装还是可选脚本，都只把 `SKILL.md`、阶段 references 和 templates 放入 Agent 的 `workflow` 目录；README、HTML、测试和仓库维护文件不会进入运行上下文。
 
 ## 开始使用
 

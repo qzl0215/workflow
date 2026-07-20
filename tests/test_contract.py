@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import html
 import importlib.util
 import os
 import re
@@ -183,6 +184,44 @@ class ProgressiveProtocolContractTest(unittest.TestCase):
             text = path.read_text(encoding="utf-8")
             for token in forbidden:
                 self.assertNotIn(token, text, f"semantic registry in {path.name}")
+
+    def test_agent_native_prompt_installs_or_updates_without_python(self) -> None:
+        readme = (PACKAGE / "README.md").read_text(encoding="utf-8")
+        install_section = re.search(
+            r"^## [^\n]*安装[^\n]*更新[^\n]*\n(?P<body>.*?)(?=^## |\Z)",
+            readme,
+            re.MULTILINE | re.DOTALL,
+        )
+        self.assertIsNotNone(install_section)
+        section = install_section.group("body")
+        prompts = re.findall(r"^> (.+)$", section, re.MULTILINE)
+        self.assertEqual(len(prompts), 1, section)
+        prompt = prompts[0]
+        self.assertEqual(prompt.count("。"), 1, prompt)
+        for token in (
+            "https://github.com/qzl0215/workflow",
+            "安装或更新",
+            "最新 main",
+            "备份",
+            "SKILL.md",
+            "references",
+            "templates",
+            "校验",
+            "恢复",
+        ):
+            self.assertIn(token, prompt)
+        self.assertNotIn("python", prompt.casefold())
+        self.assertRegex(readme, r"Python[^。\n]*可选")
+
+        page = (PACKAGE / "docs" / "index.html").read_text(encoding="utf-8")
+        match = re.search(
+            r'<pre class="install-prompt" id="install-prompt">(.*?)</pre>',
+            page,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(match)
+        page_prompt = html.unescape(match.group(1)).strip()
+        self.assertEqual(page_prompt, prompt.replace("`", ""))
 
     def test_behavior_scenarios_have_unique_ids(self) -> None:
         text = SCENARIOS.read_text(encoding="utf-8")

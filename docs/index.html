@@ -239,8 +239,8 @@
       </section>
 
       <section class="panel" id="install">
-        <div class="section-head"><p class="section-kicker">One skill, one install</p><h2>不需要先知道 skills 目录。</h2><p>把下面这段交给当前 Agent，它会根据自己的真实环境安装并验证。</p></div>
-        <div class="install-box"><div class="install-copy"><h3>Agent 安装提示词</h3><p>运行时不依赖第三方 Python 包，也不要求安装其他 skills。安装器会备份旧版本，并在目录不明确时停止猜测。</p><button class="copy-install" id="copy-install" type="button">复制安装提示词</button><div class="copy-status" id="copy-status" role="status" aria-live="polite"></div></div><pre class="install-prompt" id="install-prompt">请安装 GitHub 项目 https://github.com/qzl0215/workflow。把仓库克隆到临时目录，根据你当前 Agent 的真实配置找到 skills 父目录，不要猜固定路径；运行 python3 scripts/install.py install --target "&lt;skills父目录&gt;"。如果已经安装，使用 update。最后运行同一脚本的 check，验证通过后再告诉我安装完成。不要覆盖没有备份的旧版本，也不要安装其他 skill。</pre></div>
+        <div class="section-head"><p class="section-kicker">One prompt, install or update</p><h2>一句话交给 Agent，首次安装，以后自动更新。</h2><p>不需要 Python，也不需要先知道 skills 目录；Agent 会根据真实环境备份、同步并校验。</p></div>
+        <div class="install-box"><div class="install-copy"><h3>Agent 安装与更新提示词</h3><p>同一句提示词同时覆盖首次安装和后续更新；旧版本会先备份，失败时恢复。</p><button class="copy-install" id="copy-install" type="button">复制安装提示词</button><div class="copy-status" id="copy-status" role="status" aria-live="polite"></div></div><pre class="install-prompt" id="install-prompt">请从 https://github.com/qzl0215/workflow 安装或更新 workflow：自动找到你当前实际使用的 skills 目录，有旧版先整体备份，再以最新 main 中的 SKILL.md、references/ 和 templates/ 完整镜像替换，校验入口与本地引用后报告版本、来源 commit 和安装位置；任何一步失败都恢复备份，不要猜固定目录。</pre></div>
       </section>
     </main>
 
