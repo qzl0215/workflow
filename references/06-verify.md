@@ -18,14 +18,14 @@ stage: 06
 
 ## 责任角色
 
-**Reviewer**从验收和 fresh diff 开始独立复核，先看需求符合性，再看实现质量、复用、安全和维护性；**Plan owner**对集成业务结果负责。没有 fresh Agent 时同一 AI 切换职责重审并如实标注，不要求人类 Reviewer。
+**Reviewer**从验收和当前 diff 开始复核，先看需求符合性，再看实现质量、复用、安全和维护性；**Plan owner**对集成业务结果负责。H2/H3 默认使用独立 Agent；H0/H1 可由同一 AI 明确切换职责重审。没有独立 Agent 时如实标注，不要求人类 Reviewer。
 
 ## 阶段能力
 
 1. 从实际变更和验收生成验证矩阵，覆盖定向、相邻、集成、构建、真实使用和必要的 clean-room 路径；按影响选择最小充分范围。
 2. 有非平凡代码 diff 时加载 `references/06-simplify.md`，检查复用、删除、合并、清晰度和效率，修复确认问题后重新验证。
 3. Reviewer 检查越界文件、遗漏状态、错误抽象、隐性第二真源、安全/性能风险和失败回退；不因实现者解释而跳过实际代码。
-4. fresh 运行关键命令，检查 exit code、完整关键输出、产物 freshness、source fingerprint 和环境。
+4. 核对证据身份 `被验对象/产物 + 输入/依赖 fingerprint + 环境 + 命令/场景 + 验收 baseline` 及有效条件：只有确定性检查、实质输入已指纹化且原始结果可复核时复用；任一项变化才 fresh 运行受影响命令。外部可变状态在当前决策点重新观测。
 5. 依次证明 Task → 当前 Plan 的独立业务结果；低层测试不能替代 Plan 的用户结果，部分日志不能替代未覆盖场景。Request 整体结果由 07 在所有纳入 Plan 汇合后证明。
 6. 总协调者把 fresh 结论和原始证据位置写入 `progress.md` Evidence Index，不粘贴完整日志。验收过程中出现新要求时冻结原 baseline/version，进入 02 的 Delta Intake；未分类前不改代码。
 

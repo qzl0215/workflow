@@ -24,7 +24,7 @@ stage: 07
 
 1. 只读确认所有纳入 Plan 已通过、工作区、候选 diff、目标 remote/branch、授权、敏感信息和项目 CI/MR/发布契约，不混入无关改动。
 2. 需要 Git commit、fetch/rebase、冲突解决、push 或 merge 时加载 `references/07-git-integrate.md`；Git start 规则仍属于 01，不在此重新创建子 worktree。
-3. Rebase、冲突修复或目标分支前进都会改变 source fingerprint，使旧验证失效；必须 fresh 运行受影响 Plan 验证、跨 Plan 集成和 Request 整体关键路径。
+3. Rebase、冲突修复或目标分支前进会改变 source fingerprint；只失效证据身份受影响的验证，fresh 运行相关 Plan、跨 Plan 集成和 Request 关键路径，不机械重跑无关检查。
 4. 外部动作逐目标应用已有授权；未覆盖的 remote、branch、环境、公开发布、delete 或破坏性例外停在授权门。
 5. 交付失败立即停止后续写操作，保留可恢复现场和证据；不得用 force、reset、整文件选边或新建逃避分支掩盖冲突。
 6. 面向用户先说明业务结果、是否可放心使用、验证、真实交付层级和下一步；技术细节只保留复核所需。

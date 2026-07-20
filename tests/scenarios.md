@@ -4,6 +4,8 @@
 
 `工作对象 → 当前阶段 → 最小上下文 → 责任角色 → 使用能力 → 权限边界 → 实际输出 → fresh evidence → 下一路由`
 
+维护本 Skill 时，由 Agent 先检查结构与引用，再逐项以“协议是否能导出 Then 行为”为准审阅受影响场景；不要求安装语言运行时，也不把关键词命中当成行为通过。
+
 ## S01｜Git 项目中的新 Request
 
 - Given：用户在有 remote 的项目提出一个独立写需求，当前工作区可能已有用户改动。
@@ -56,7 +58,7 @@
 
 - Given：Request 涉及用户旅程、界面、视觉或动效。
 - When：进入选定设计。
-- Then：按需要先完成结构、状态、视觉和动效方向，再进入工程计划；非 UI 不加载体验 reference。
+- Then：存在体验方向取舍时，先完成结构、状态、视觉和动效方向，再进入工程计划；纯文案 typo 或遵循既定设计的小修不为形式升级，非 UI 不加载体验 reference。
 
 ## S10｜失败时才加载 Debug
 
@@ -86,7 +88,7 @@
 
 - Given：目标分支在 Request 执行期间前进。
 - When：进入集成交付并已有相应授权。
-- Then：总协调者 fetch/rebase；AI根据双方业务意图、diff、约束和测试解决文本与语义冲突；source fingerprint 改变后旧证据失效并 fresh 重跑。
+- Then：总协调者 fetch/rebase；AI根据双方业务意图、diff、约束和测试解决文本与语义冲突；source fingerprint 改变后只失效受影响证据，并 fresh 重验相关 Plan、跨 Plan 集成和 Request 关键路径。
 
 ## S15｜AI Review 与受控进化
 
@@ -104,7 +106,7 @@
 
 - Given：用户已有能操作本地文件的 Agent，可能已安装旧 workflow，但没有 Python 或不知道 skills 目录。
 - When：用户发送同一句 Agent 安装/更新提示词。
-- Then：Agent 自动识别真实 skills 目录，整体备份旧版，以最新 GitHub main 的根协议、阶段 references 和 templates 完整镜像替换，校验入口与本地引用并报告版本/commit/位置；失败时恢复备份，不要求 Python。
+- Then：Agent 必须唯一定位真实 skills 目录，先把根协议、阶段 references、templates 和 `tests/scenarios.md` 下载到临时目录并校验，再原子替换；更新失败恢复备份，首次安装失败删除未完成目录；最后报告版本/commit/位置，全程不要求 Python。
 
 ## S18｜Plan 验收与 Request 交付分开
 
@@ -135,3 +137,27 @@
 - Given：Request 已执行多轮 Task、验证和反馈路由。
 - When：协调者更新 `progress.md`。
 - Then：已完成 Task 折叠进 Plan 结果，过期 Evidence、已路由 Feedback、已关闭 Blocker 和已闭合事务从当前快照移除；历史交给 Git 或原始产物，不形成 Markdown 日记。
+
+## S23｜按难度投入，不为简单任务开大会
+
+- Given：同一个 workflow 既可能接到本地可逆的小改动，也可能接到跨域、难逆或高影响公开发布的复杂目标。
+- When：总协调者决定调查、专家、文档、Agent 和验证投入。
+- Then：按 H0–H3 选择最小充分强度；H0/H1 不默认建项目文档或召集专家，H2 才引入定向多视角和独立复核，H3 使用完整专家森林、正式确认和高风险证据；用户明确要求 Grill、专家会议或视觉选型时至少按 H2 处理。
+
+## S24｜相同证据不机械重跑
+
+- Given：同一 Request 已有一条通过证据，其被验对象/产物、输入/依赖 fingerprint、环境、命令/场景、验收 baseline、观测时间和有效条件都可复核。
+- When：后续阶段需要引用相同结论。
+- Then：只有确定性检查、被验对象/产物与全部实质输入已指纹化、环境/命令/验收一致、有效条件仍成立且原始结果可用时才复用；任一项变化只失效受影响证据。外部可变状态在决策点重新观测；Rebase、冲突修复、依赖或产物变化后重验相关路径。
+
+## S25｜零 Python 的维护验收
+
+- Given：维护者电脑只有能读写仓库和执行基础 Git/文本检查的 Agent，没有 Python。
+- When：安装、更新或修改 workflow。
+- Then：运行包镜像 `SKILL.md`、`references/`、`templates/` 和按需维护契约 `tests/scenarios.md`；Agent 检查 frontmatter、相对引用、文件可达性、版本、安装提示词同步、敏感信息、冲突标记、行为场景与变更 diff，并给出可追溯结论，不要求任何 `.py` 文件或 Python 环境。
+
+## S26｜计划确认与连续执行的交互预算
+
+- Given：用户已经明确授权实施，但任务难度和未决取舍不同。
+- When：workflow 准备从计划进入建设。
+- Then：H0/H1 且没有方向性未知时，用户的明确执行请求可作为计划授权；H2/H3 用业务语言和必要可视化呈现完整方案，待用户确认后开工。开工后默认持续到 AI 验收与授权内交付，只有重大未授权决策才中断用户。

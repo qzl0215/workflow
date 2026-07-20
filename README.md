@@ -12,7 +12,7 @@
 
 - **先弄清楚**：能从项目查到的事实不问你；真正需要你决定的问题集中问。
 - **先想透再开工**：复杂问题先看完整森林；界面、视觉和动效在工程计划前确定。
-- **一路做到并验真**：AI 自动安排先后与并行、修复失败、做代码瘦身，并用刚刚跑出的证据验收。
+- **一路做到并验真**：AI 自动安排先后与并行、修复失败、做代码瘦身，并用仍有效的证据验收；变化后只重验受影响路径。
 - **新反馈不会把项目搅乱**：验收中的缺陷、优化、新结果计划和新需求会被分别处理。
 
 ## 八个清楚的阶段
@@ -24,11 +24,15 @@
 | 3. 选定设计 | 专家独立发散与交叉质询，选方案；UI 先定体验、视觉和动效 |
 | 4. 计划编排 | 排清前后依赖和唯一负责人；确有阻碍时才补最小项目入口、运行/部署说明、全景导航或 DESIGN.md |
 | 5. 执行建设 | 每个角色只拿当前工作单元需要的背景，按任务实施和纠错 |
-| 6. 质量验收 | 先复用已有实现和做代码瘦身，再由 AI 独立重审并重新跑验收 |
+| 6. 质量验收 | 先复用已有实现和做代码瘦身，再由 AI 独立重审；沿用仍有效的证据，重验变化影响面 |
 | 7. 集成交付 | 按授权同步最新代码、理解并解决冲突、重验后交付 |
 | 8. 复盘升级 | 找真实偏差，更新项目；有复用证据时才升级 workflow |
 
 阶段是 AI 的责任边界，不是八次会议。没有需要你决定的事情时，workflow 会连续推进。
+
+## 不会为简单任务开大会
+
+workflow 会按难度选择最小充分投入：已有答案和证据就快速通过；普通局部工作由一个负责人推进；出现多结果、关键取舍、体验方向或并行协作时才请定向专家和独立复核；只有难逆迁移、安全、高影响发布等高风险工作才启动完整专家森林与高风险验证。确定性检查在对象、输入/依赖、环境、命令和验收均未变化且仍有效时复用；远端与线上状态在决策点重查。
 
 ## 它怎样减少上下文噪音
 
@@ -77,62 +81,37 @@
 
 ## 安装与自动更新
 
-workflow 本身和 Agent 原生安装都不需要 Python。Python 3.9+ 是可选的终端安全工具。
+仓库和运行包都是零 Python。你只需要一个能操作本地文件的 Agent。
 
 ### 推荐：发给 Agent 的一句话
 
 第一次发送会安装，以后再次发送同一句会自动更新：
 
-> 请从 `https://github.com/qzl0215/workflow` 安装或更新 workflow：自动找到你当前实际使用的 skills 目录，有旧版先整体备份，再以最新 main 中的 `SKILL.md`、`references/` 和 `templates/` 完整镜像替换，校验入口与本地引用后报告版本、来源 commit 和安装位置；任何一步失败都恢复备份，不要猜固定目录。
+> 请从 `https://github.com/qzl0215/workflow` 安装或更新 workflow：先唯一定位你当前实际使用的 skills 目录，无法唯一定位就停止；把最新 main 中的 `SKILL.md`、`references/`、`templates/` 和 `tests/scenarios.md` 下载到临时目录，校验版本、必需文件与全部本地引用后，再原子替换 workflow；有旧版先整体备份，更新失败恢复备份，首次安装失败删除未完成目录；最后报告版本、来源 commit 和安装位置，不要猜固定目录。
 
-### 可选：Python 安全安装器
-
-需要人工终端、CI 或确定性回滚时，可以使用仓库自带的标准库脚本：
-
-```bash
-git clone --depth 1 https://github.com/qzl0215/workflow.git
-cd workflow
-python3 scripts/install.py install
-```
-
-有多个 skills 目录时明确指定：
-
-```bash
-python3 scripts/install.py install --target "/path/to/agent/skills"
-python3 scripts/install.py check --target "/path/to/agent/skills"
-```
-
-更新和可恢复卸载：
-
-```bash
-python3 scripts/install.py update --target "/path/to/agent/skills"
-python3 scripts/install.py uninstall --target "/path/to/agent/skills" --yes
-```
-
-无论 Agent 原生安装还是可选脚本，都只把 `SKILL.md`、阶段 references 和 templates 放入 Agent 的 `workflow` 目录；README、HTML、测试和仓库维护文件不会进入运行上下文。
+Agent 只把 `SKILL.md`、阶段 references、templates 和按需维护契约 `tests/scenarios.md` 放入实际使用的 `workflow` 目录；README、HTML 和其他仓库维护文件不会进入日常运行上下文。
 
 ## 开始使用
 
 安装后直接描述目标：
 
-> 用 workflow 推进这个需求。先查项目和现有事实；需要时一次集中关键追问，并让相关专家独立发散、交叉质询。界面工作先定体验和视觉，再计划。没有需要我决定的事情就持续推进，直到刚刚重跑的验收全部通过。
+> 用 workflow 推进这个需求。先查项目和现有事实；需要时一次集中关键追问，并让相关专家独立发散、交叉质询。存在界面体验方向取舍时，先定体验和视觉，再计划。没有需要我决定的事情就持续推进，直到与当前对象、输入、环境和验收匹配的证据全部通过。
 
 ## 安全边界
 
 - 能自行发现的事实不会重新问用户。
 - Grill 单次最多 15 个问题，通常远少于这个数字。
 - 未经明确授权，不 commit、push、merge、deploy、delete 或公开发布。
-- 没有 fresh evidence，不声称完成。
+- 没有与当前对象、输入、环境和验收匹配且仍有效的证据，不声称完成。
 - 没有复用证据，不把一次经验永久写进 workflow。
 - 无 Git、无 subagent、无浏览器时会安全降级，不伪造能力和结果。
 - 项目地基只补当前交付真正需要的部分，不默认铺治理文档。
 
 ## 维护检查
 
-```bash
-python3 -B scripts/check.py
-python3 -B -m unittest discover -s tests -p 'test_*.py' -v
-```
+把下面一句交给 Agent：
+
+> 请维护检查当前 workflow 仓库：以 `SKILL.md`、阶段 `references/`、`templates/` 和 `tests/scenarios.md` 为真源，检查 frontmatter、全部相对引用与文件可达性、版本和安装提示词同步、零 Python/零生成注册表、敏感信息、冲突标记及实际 diff；再逐项判断受影响行为场景能否从协议导出，给出通过、失败、证据位置和最小修复建议，不要只做关键词匹配。
 
 MIT licensed. <sub>Maintained by zhonglin.</sub>
 

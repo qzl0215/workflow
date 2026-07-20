@@ -28,16 +28,16 @@ stage: 04
 4. 建冲突矩阵：文件、符号、API/schema、lockfile、生成物、build output、端口、数据库和 release candidate 任一共享写入，都合并为同一 owner 或串行。
 5. 只有依赖已满足、写域隔离、验证独立且并行收益高于协调成本的 Task 才并行；需要多 Agent 时加载 `references/04-coordinate.md`。
 6. 若缺少会直接阻碍当前 Request 安全实施、验证、部署或交接的项目地基，加载 `references/04-foundation.md`，把最小补齐项作为前置 Task；不为未来可能性铺文档体系。
-7. 用户用业务语言确认完整方案和 Plan 编排后，才能进入 Build；不逐 Task 索取无意义批准。派工时从 Task 合同、`progress.md` 当前切片和精确事实引用生成一次性上下文包。
+7. H2/H3 由用户用业务语言确认完整方案和 Plan 编排后才能进入 Build；H0/H1 无方向性未知且用户已明确要求执行时，该请求可作为计划授权。不逐 Task 索取无意义批准。派工时从 Task 合同、`progress.md` 当前切片和精确事实引用生成一次性上下文包。
 8. Git 项目才把最终 rebase、post-rebase 验证和交付路径纳入计划；本阶段不执行 Git 副作用。
 
 ## 输出
 
-- 一份用户确认的完整 `plan.md`：方案、Plan Portfolio/DAG、Task DAG、冲突矩阵和串并行顺序；
+- H2/H3 的一份用户确认的完整 `plan.md`，或 H0/H1 的对话内短计划：方案、Plan/Task 编排、冲突预防和串并行顺序；
 - 每个 Ready 候选 Task 的 owner、写域、验证、权限，以及按需冻结的 Task 合同；
 - `progress.md` 中的多对象当前阶段、派生 Ready Queue 和 blocker；
 - 集成/交付验证矩阵、blocker 和进入 05 阶段的执行入口。
 
 ## 退出与路由
 
-用户已确认 `plan.md`，每个 Ready Task 无需重新设计即可独立执行，写冲突已消除，Plan 级验收和集成路径清楚后路由到 **05 执行建设**。目标/验收改变返回 02；方案/体验缺口返回 03；仓库事实不足只读补证据。无并行收益时按 Ready Queue solo，不降低验收。
+H2/H3 已确认 `plan.md`，或 H0/H1 已有明确执行授权；同时每个 Ready Task 无需重新设计即可独立执行、写冲突已消除、Plan 级验收和集成路径清楚后，路由到 **05 执行建设**。目标/验收改变返回 02；方案/体验缺口返回 03；仓库事实不足只读补证据。无并行收益时按 Ready Queue solo，不降低验收。

@@ -75,13 +75,14 @@ flowchart LR
 
 ## 6. 开工确认
 
+- 投入级别：H0 / H1 / H2 / H3；依据：
 - Request baseline：与 frontmatter 一致。
 - Plan version：与 frontmatter 一致。
-- 用户可读方案已确认：是 / 否；证据：
+- 计划授权：H0/H1 明确执行请求 / H2/H3 用户确认完整方案；证据：
 - 本地实施授权：
 - commit / push / merge / deploy / delete / 公开发布授权：
 - 方向性未知：无 / …
-- 未确认时不得开始 Build；用户确认后把 `decision` 更新为 `approved`。
+- H0/H1 无方向性未知且已有明确执行请求，或 H2/H3 完整方案已确认后，才把 `decision` 更新为 `approved` 并开始 Build。
 
 ## 7. 变更规则
 

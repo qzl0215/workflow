@@ -12,7 +12,7 @@ updated_at: <YYYY-MM-DD>
 
 <!--
 本文件是 Request、Plan、Task 和 Feedback 运行状态的唯一真源，只保存当前可行动快照和证据索引，不复制需求、方案、Task 合同或完整日志。
-只有总协调者写本文件。Worker/Reviewer 返回结构化结果；总协调者核对合同版本、source fingerprint、DONE 和 fresh evidence 后更新状态。Git 历史或项目已有版本机制负责历史，不把 progress.md 写成日记。
+只有总协调者写本文件。Worker/Reviewer 返回结构化结果；总协调者核对合同版本、DONE 和证据身份后更新状态。证据身份包含被验对象/产物、输入/依赖 fingerprint、环境、命令/场景和验收 baseline，并记录观测时间/有效条件；只有确定性、输入已指纹化且仍有效的证据可复用。Git 历史或项目已有版本机制负责历史，不把 progress.md 写成日记。
 -->
 
 ## 1. Current Checkpoint
@@ -58,9 +58,9 @@ updated_at: <YYYY-MM-DD>
 
 只保存能支持当前 baseline/version 的证据索引和关键结论；完整输出、截图、日志、构建物保留在原始位置，不粘贴进本文件。
 
-| Evidence | Object | Baseline / Version / Source fingerprint | Fresh 检查 | 结果 / 关键结论 | 原始证据位置 |
+| Evidence | Object / Artifact + Input fingerprint | Baseline / Version | 环境 + 命令/场景 | 观测时间 / 有效条件 | 结果 / 关键结论 + 原始位置 |
 |---|---|---|---|---|---|
-| EV01 | P01-T01 | B01 / V01 / … | command / scenario | pass / fail | |
+| EV01 | P01-T01 / … | B01 / V01 | environment / command | observed_at / validity | pass / fail / evidence-ref |
 
 ## 6. Feedback Queue
 

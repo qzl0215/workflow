@@ -25,7 +25,7 @@ Task owner 从版本化 Task 合同、`progress.md` 当前切片和精确 facts/
 1. 开始前重验 active request baseline、plan version、Task contract version、Ready、依赖、写域占用、source fingerprint 和验证路径；失效就返回协调者升级合同或重编上下文包。
 2. 先获得最小失败/缺口证据，再做满足验收的最小实现；适用时保留红→绿→整理证据。
 3. 只改 Task 写域；发现上游缺口、范围变化、共享资源冲突或需要外部副作用时停止并返回，不顺手扩大范围。
-4. 执行最小相关验证，再检查受影响的相邻路径；记录实际命令、exit code、关键输出和 fingerprint。
+4. 执行最小相关验证，再检查受影响的相邻路径；记录被验对象/产物、输入/依赖 fingerprint、环境、命令/场景、验收 baseline、观测时间/有效条件、exit code、关键输出和原始位置。只有确定性检查、实质输入已指纹化且有效条件仍成立时复用。
 5. 出现 bug、失败、flaky、空结果或连续失败时加载 `references/05-debug.md`，基于可证伪假设换观察点，不机械重试。
 6. Worker 结构化返回产物、实际 diff、证据、失败、排除假设、新事实、偏差、上下文 gap 和推荐路由；不能自行宣布 Plan 完成。
 7. 用户已授权持续推进时，每个 Task 验明后自动重算 Ready Queue，直到纳入 Plan 完成、真实 blocker、需要新业务决策或用户暂停。
@@ -39,4 +39,4 @@ Task owner 从版本化 Task 合同、`progress.md` 当前切片和精确 facts/
 
 ## 退出与路由
 
-Task 满足验收且证据与当前 fingerprint 一致后完成；Plan 的纳入 Task 全部具备可复核产物后路由到 **06 质量验收**。实现失败加载本阶段 Debug；目标/验收缺口返回 02，方案/体验缺口返回 03，编排或写域缺口返回 04。新反馈先进入 02 的 Delta Intake，不直接塞入 Build。
+Task 满足验收，且证据身份与有效条件仍覆盖当前判断后完成；Plan 的纳入 Task 全部具备可复核产物后路由到 **06 质量验收**。实现失败加载本阶段 Debug；目标/验收缺口返回 02，方案/体验缺口返回 03，编排或写域缺口返回 04。新反馈先进入 02 的 Delta Intake，不直接塞入 Build。
