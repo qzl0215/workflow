@@ -1,90 +1,58 @@
 ---
-scope: runtime-control-plane
+scope: current-progress-and-acceptance
 owner: 总协调者
-persistence: project-request-lifetime
+persistence: request-lifetime
 request_id: <RQxx>
-active_request_baseline: B01
-active_plan_version: V01
+findings_baseline: B01
+task_plan_version: V01
 updated_at: <YYYY-MM-DD>
 ---
 
-# 当前进展与运行控制台：<business-result>
+# 当前进展：<business-outcome>
 
 <!--
-本文件是 Request、Plan、Task 和 Feedback 运行状态的唯一真源，只保存当前可行动快照和证据索引，不复制需求、方案、Task 合同或完整日志。
-只有总协调者写本文件。Worker/Reviewer 返回结构化结果；总协调者核对合同版本、DONE 和证据身份后更新状态。证据身份包含被验对象/产物、输入/依赖 fingerprint、环境、命令/场景和验收 baseline，并记录观测时间/有效条件；只有确定性、输入已指纹化且仍有效的证据可复用。Git 历史或项目已有版本机制负责历史，不把 progress.md 写成日记。
+本文件是当前运行进展与验收记录的唯一真源，只保留可恢复、可行动的最新快照。工作项状态只使用：待做 / 进行中 / 等待中 / 已完成。
+已完成 Task 折叠进所属 Plan 的当前业务结果；已处理反馈、已解除等待和过期验收记录及时移除。重要事实或决定回写 `findings.md` / `task_plan.md`，完整日志与产物留在原位置，历史交给 Git 或项目既有版本机制。
+只有总协调者更新本文件；执行者和复核者返回结构化结果，由总协调者核对版本、DONE 与证据后写入。
+本模板是当前快照，不是表单或日志：删除空字段和无行动价值的行；没有多 Plan、反馈、等待或持久化需求时不要创建本文件。
 -->
 
-## 1. Current Checkpoint
+## 当前
 
-- 当前关注对象：只写 Object ID；阶段以 Object State 对应行唯一值为准。
+- 当前阶段：01 看清需求 / 02 方案选型 / 03 计划编排 / ◆开工门 / 04 执行建设 / 05 质量验收 / 06 集成交付 / 07 复盘升级
+- 当前关注对象：<RQxx / Pxx / Pxx-Txx>
 - 最近完成的业务结果：
-- 当前正在推进：
+- 正在推进：
 - 下一安全动作：
+- 等待原因与解锁条件：无 / …
 - 需要用户决定：无 / …
-- 恢复工作先读：本 checkpoint → Active Object → 对应合同 / 精确证据引用
+- 当前未闭环反馈：无 / <Fxx + 原话 + 影响>
+- 恢复工作先读：本块 → 下方对应工作项 → 对应定义 / 合同的精确引用
 - 不要重复做：
 
-## 2. Object State
+## 工作进展
 
-生命周期只表达 `pending / active / completed / superseded`。Ready 由合同、依赖、资源、验证和授权实时推导；Blocked 由当前 Blocker 推导，二者都不保存为第五种状态。
-
-| Object | Contract / 定义真源 | 当前阶段 | Lifecycle | 当前结果 | 下一动作 | Owner | Blocker |
-|---|---|---|---|---|---|---|---|
-| RQxx | `request.md@active_request_baseline` | 01–08 | active | | | 总协调者 | — / B01 |
-| P01 | `plan.md@active_plan_version#P01` | 03–08 | pending | | | Plan owner | — |
-| P01-T01 | `tasks/p01-t01.md@C01` | 05 | pending | | | Task owner | — |
-
-## 3. Derived Ready Queue
-
-这是可删除、可重算的派生视图，不是第二状态真源。
-
-- Derived at：
-- Basis：active baseline/version + dependencies completed + contract valid + no blocker + write/resource available + verification executable + authorization
-
-| Order / Wave | Task | 为什么 Ready | 写域 / 资源占用 | 派发上下文 |
+| 工作项 | 阶段 | 状态 | 当前业务结果 | 下一步或等待原因 |
 |---|---|---|---|---|
-| W01 | P01-T01 | | | Task 合同 + 本文件切片 + 精确 findings/code refs |
+| RQxx | 04–06 汇合 | 进行中 | | |
+| P01 | 05 质量验收 | 进行中 | | |
+| P02 | 04 执行建设 | 进行中 | | |
+| P03 | 03 计划编排 | 等待中 | | <原因 + 解锁条件 + owner> |
 
-## 4. Current Blockers
+多人并行且责任不清时，才临时增加“负责人”列；合同位置由工作项 ID 直接定位 `task_plan.md` inline 小节或 `implementation-plan.md` 同 ID 小节。
 
-这里只保留尚未关闭的 blocker；关闭后从当前快照移除，历史由 Git 保存。
+- 只保留待做、进行中、等待中的工作项，以及仍待 Request 汇合的已完成 Plan。
+- Task 已完成后从表中移除，把其业务结果折叠到所属 Plan；Plan 汇合后再折叠到 Request。
+- 新反馈先冻结当前 baseline / version 并分类；成为需求或方案变化后回写对应定义，本块只保留尚未闭环项。
 
-| Blocker | 影响 Object | 阻断事实 | 所需输入 / Owner | 解锁证据 | 返回阶段 |
-|---|---|---|---|---|---|
-| B01 | | | | | |
+## 验收记录
 
-## 5. Evidence Index
+只保留仍支持当前 baseline / version 的关键验收。输入版本、环境、命令和有效条件写在原始证据中，不把控制台扩成数据库。
 
-只保存能支持当前 baseline/version 的证据索引和关键结论；完整输出、截图、日志、构建物保留在原始位置，不粘贴进本文件。
+| 结果 | 如何确认 | 结论 | 证据位置 |
+|---|---|---|---|
+| P01-T01 的业务结果 | <命令 / 场景> | 通过 / 不通过 / 未覆盖 | <日志 / 截图 / 产物链接> |
 
-| Evidence | Object / Artifact + Input fingerprint | Baseline / Version | 环境 + 命令/场景 | 观测时间 / 有效条件 | 结果 / 关键结论 + 原始位置 |
-|---|---|---|---|---|---|
-| EV01 | P01-T01 / … | B01 / V01 | environment / command | observed_at / validity | pass / fail / evidence-ref |
-
-## 6. Feedback Queue
-
-新反馈先捕获、批量分类再改定义或代码。运行阶段保存在这里；一旦被接受为需求或方案变更，更新 `request.md` / `plan.md`，本行只保留当前路由结果。
-
-| Feedback | 用户原话 | 影响的 Baseline / Object | 分类 / 路由 | 是否阻塞当前交付 | 当前处理结果 |
-|---|---|---|---|---|---|
-| F01 | | B01 / P01 | 待分类 / 缺陷 / 遗漏 / 优化 / 新 Plan / 新 Request | | |
-
-## 7. 状态变更事务
-
-这里只保留最近一次尚未闭合的事务；闭合后清空，历史由 Git 保存。
-
-- 触发：无 / Feedback、执行结果、合同变化
-- 已核对：active baseline / plan version / Task contract version / source fingerprint
-- 需先更新的定义：无 / request / plan / task
-- 受影响对象与合同：
-- Object State / Evidence Index 更新：
-- Ready 重算：
-- 闭合条件：
-
-## 8. 快照预算
-
-- Object State 只保留 active、pending、当前 blocker 影响对象，以及仍待 Request 汇合的已完成 Plan；已完成 Task 折叠进 Plan 当前结果。
-- Evidence Index 只保留 active baseline/version 和当前交付仍需引用的证据；过期证据由 Git 或原始产物追溯。
-- Feedback 完成分类并回写 `request.md` / `plan.md` 后从当前队列移除，只保留 unresolved 项。
-- Blocker 关闭即移除；状态事务闭合即清空。`progress.md` 不保留事件流水、每日记录或完整命令输出。
+- 只有确定性检查、实质输入已指纹化、环境 / 命令 / 验收一致、有效条件仍成立且原始结果可用时才复用。
+- 被验对象、输入、依赖、环境、命令、baseline 或有效条件改变时，只重验受影响路径并替换过期记录。
+- 外部可变事实应在依赖它的决策点重新观察；本地通过不能替代远端或发布结果。

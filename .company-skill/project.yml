@@ -1,0 +1,15 @@
+project_name: workflow-agent-install-performance
+owner: qzl0215
+project_type: unknown
+visibility: internal
+has_company_data: false
+data_types:
+
+deployment_target: ""
+gitlab_remote: "https://github.com/qzl0215/workflow.git"
+default_branch: main
+created_by_skill: true
+last_submit_at: "2026-07-21T18:57:56+08:00"
+skill_version: v1.0.0
+last_checked_at: "2026-07-21T18:55:55+08:00"
+source_repo: "http://dev-git.voghion.com/qianzhonglin/company-submit.git"
