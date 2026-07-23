@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import os
 import shutil
@@ -8,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 
@@ -20,18 +22,24 @@ STDLIB_OR_LOCAL = {
     "datetime",
     "hashlib",
     "html",
+    "http",
     "importlib",
     "json",
     "os",
     "pathlib",
+    "plistlib",
+    "platform",
     "re",
+    "shlex",
     "shutil",
     "subprocess",
     "sys",
     "tempfile",
     "typing",
     "unittest",
+    "urllib",
     "workflow_doctor",
+    "zipfile",
 }
 
 
@@ -116,7 +124,22 @@ class PortabilityContractTest(unittest.TestCase):
         self.assertEqual([path for path in PACKAGE.rglob("*") if path.is_symlink()], [])
         self.assertEqual(list((PACKAGE / "scripts").glob("*.sh")), [])
 
-    def test_installer_install_check_update_and_recoverable_uninstall(self) -> None:
+    def test_public_docs_define_single_latest_release_update_contract(self) -> None:
+        readme = (PACKAGE / "README.md").read_text(encoding="utf-8")
+        for token in (
+            "GitHub 最新正式、immutable Release",
+            "enable-auto-update",
+            "每 24 小时",
+            "workflow.zip",
+            "SHA-256",
+            "不保留 backup、failed 或 removed 副本",
+        ):
+            self.assertIn(token, readme)
+        security = (PACKAGE / "SECURITY.md").read_text(encoding="utf-8")
+        for token in ("single active package", "immutable GitHub Release", "SHA-256"):
+            self.assertIn(token, security)
+
+    def test_installer_install_check_update_and_uninstall_leave_one_or_zero_copies(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             target = Path(temp) / "Agent Skills"
             script = PACKAGE / "scripts/install.py"
@@ -133,12 +156,266 @@ class PortabilityContractTest(unittest.TestCase):
             for action in ("install", "check", "update"):
                 result = run(action)
                 self.assertEqual(result.returncode, 0, result.stdout)
-            backups = list(target.glob("workflow.backup-*"))
-            self.assertEqual(len(backups), 1)
+            self.assertEqual(sorted(path.name for path in target.iterdir()), ["workflow"])
             result = run("uninstall", "--yes")
             self.assertEqual(result.returncode, 0, result.stdout)
-            self.assertFalse((target / "workflow").exists())
-            self.assertEqual(len(list(target.glob("workflow.removed-*"))), 1)
+            self.assertEqual(list(target.iterdir()), [])
+
+    def test_installer_check_rejects_a_second_discoverable_workflow(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            target = Path(temp) / "Agent Skills"
+            script = PACKAGE / "scripts/install.py"
+            installed = subprocess.run(
+                [sys.executable, "-B", str(script), "install", "--target", str(target)],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(installed.returncode, 0, installed.stdout)
+            duplicate = target / "workflow-copy"
+            duplicate.mkdir()
+            (duplicate / "SKILL.md").write_text(
+                "---\nname: workflow\nversion: duplicate\n---\n",
+                encoding="utf-8",
+            )
+
+            checked = subprocess.run(
+                [sys.executable, "-B", str(script), "check", "--target", str(target)],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+
+            self.assertNotEqual(checked.returncode, 0, checked.stdout)
+            self.assertIn("多个 workflow", checked.stdout)
+
+    def test_installer_sync_replaces_stale_copy_from_verified_latest_release(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            target = root / "Agent Skills"
+            script = PACKAGE / "scripts/install.py"
+
+            installed = subprocess.run(
+                [sys.executable, "-B", str(script), "install", "--target", str(target)],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(installed.returncode, 0, installed.stdout)
+            skill = target / "workflow/SKILL.md"
+            skill.write_text(
+                skill.read_text(encoding="utf-8").replace(
+                    self.package_version(),
+                    "0.0.0-test",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            manifest = self.local_latest_release(root)
+
+            synced = subprocess.run(
+                [
+                    sys.executable,
+                    "-B",
+                    str(script),
+                    "sync",
+                    "--target",
+                    str(target),
+                    "--release-api",
+                    manifest.as_uri(),
+                ],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+
+            self.assertEqual(synced.returncode, 0, synced.stdout)
+            self.assertIn(f"version: {self.package_version()}", skill.read_text(encoding="utf-8"))
+            self.assertEqual(sorted(path.name for path in target.iterdir()), ["workflow"])
+
+    def test_installer_sync_digest_failure_keeps_current_copy_untouched(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            target = root / "Agent Skills"
+            script = PACKAGE / "scripts/install.py"
+            installed = subprocess.run(
+                [sys.executable, "-B", str(script), "install", "--target", str(target)],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(installed.returncode, 0, installed.stdout)
+            skill = target / "workflow/SKILL.md"
+            skill.write_text(
+                skill.read_text(encoding="utf-8").replace(
+                    self.package_version(),
+                    "0.0.0-test",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            before = skill.read_bytes()
+            manifest = self.local_latest_release(root, digest="sha256:" + ("0" * 64))
+
+            synced = subprocess.run(
+                [
+                    sys.executable,
+                    "-B",
+                    str(script),
+                    "sync",
+                    "--target",
+                    str(target),
+                    "--release-api",
+                    manifest.as_uri(),
+                ],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+
+            self.assertNotEqual(synced.returncode, 0, synced.stdout)
+            self.assertIn("SHA-256", synced.stdout)
+            self.assertEqual(skill.read_bytes(), before)
+            self.assertEqual(sorted(path.name for path in target.iterdir()), ["workflow"])
+
+    def test_installer_sync_repairs_same_version_payload_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            target = root / "Agent Skills"
+            script = PACKAGE / "scripts/install.py"
+            installed = subprocess.run(
+                [sys.executable, "-B", str(script), "install", "--target", str(target)],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(installed.returncode, 0, installed.stdout)
+            readme = target / "workflow/README.md"
+            readme.write_text(
+                readme.read_text(encoding="utf-8") + "\n<!-- local drift -->\n",
+                encoding="utf-8",
+            )
+            manifest = self.local_latest_release(root)
+
+            synced = subprocess.run(
+                [
+                    sys.executable,
+                    "-B",
+                    str(script),
+                    "sync",
+                    "--target",
+                    str(target),
+                    "--release-api",
+                    manifest.as_uri(),
+                ],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+
+            self.assertEqual(synced.returncode, 0, synced.stdout)
+            self.assertEqual(readme.read_bytes(), (PACKAGE / "README.md").read_bytes())
+            self.assertEqual(sorted(path.name for path in target.iterdir()), ["workflow"])
+
+    def test_installer_sync_rejects_untrusted_release_metadata_without_replacement(self) -> None:
+        cases = (
+            ("mutable", {"immutable": False}, "immutable"),
+            ("version-mismatch", {"tag": "9.9.9"}, "包版本不一致"),
+        )
+        for label, options, expected in cases:
+            with self.subTest(case=label), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                target = root / "Agent Skills"
+                script = PACKAGE / "scripts/install.py"
+                installed = subprocess.run(
+                    [sys.executable, "-B", str(script), "install", "--target", str(target)],
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    check=False,
+                )
+                self.assertEqual(installed.returncode, 0, installed.stdout)
+                skill = target / "workflow/SKILL.md"
+                before = skill.read_bytes()
+                manifest = self.local_latest_release(root, **options)
+
+                synced = subprocess.run(
+                    [
+                        sys.executable,
+                        "-B",
+                        str(script),
+                        "sync",
+                        "--target",
+                        str(target),
+                        "--release-api",
+                        manifest.as_uri(),
+                    ],
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    check=False,
+                )
+
+                self.assertNotEqual(synced.returncode, 0, synced.stdout)
+                self.assertIn(expected, synced.stdout)
+                self.assertEqual(skill.read_bytes(), before)
+                self.assertEqual(sorted(path.name for path in target.iterdir()), ["workflow"])
+
+    def test_auto_update_schedule_dry_run_covers_supported_platforms_without_writes(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            target = root / "Agent Skills"
+            fake_home = root / "home"
+            fake_home.mkdir()
+            script = PACKAGE / "scripts/install.py"
+            environment = {**os.environ, "HOME": str(fake_home)}
+            installed = subprocess.run(
+                [sys.executable, "-B", str(script), "install", "--target", str(target)],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+                env=environment,
+            )
+            self.assertEqual(installed.returncode, 0, installed.stdout)
+
+            expectations = {
+                "darwin": ("RunAtLoad", "86400"),
+                "linux": ("OnBootSec=2min", "OnUnitActiveSec=1d"),
+                "win32": ("Workflow Sync Daily", "Workflow Sync Logon"),
+            }
+            for platform_name, tokens in expectations.items():
+                with self.subTest(platform=platform_name):
+                    result = subprocess.run(
+                        [
+                            sys.executable,
+                            "-B",
+                            str(script),
+                            "enable-auto-update",
+                            "--target",
+                            str(target),
+                            "--dry-run",
+                            "--scheduler-platform",
+                            platform_name,
+                        ],
+                        text=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        check=False,
+                        env=environment,
+                    )
+                    self.assertEqual(result.returncode, 0, result.stdout)
+                    for token in tokens:
+                        self.assertIn(token, result.stdout)
+            self.assertEqual(list(fake_home.iterdir()), [])
 
     def test_installer_update_preserves_managed_symlink_and_fails_on_drift(self) -> None:
         if sys.platform == "win32":
@@ -239,6 +516,48 @@ class PortabilityContractTest(unittest.TestCase):
             )
             self.assertEqual(configured.returncode, 0, configured.stdout)
             self.assertTrue((fake_home / ".claude" / "skills" / "workflow" / "SKILL.md").is_file())
+
+    def package_version(self) -> str:
+        for line in (PACKAGE / "SKILL.md").read_text(encoding="utf-8").splitlines():
+            if line.startswith("version:"):
+                return line.split(":", 1)[1].strip()
+        self.fail("package version missing")
+
+    def local_latest_release(
+        self,
+        root: Path,
+        *,
+        digest: str | None = None,
+        immutable: bool = True,
+        tag: str | None = None,
+    ) -> Path:
+        asset = root / "workflow.zip"
+        with zipfile.ZipFile(asset, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            for path in sorted(PACKAGE.rglob("*")):
+                if not path.is_file() or ".git" in path.parts or "__pycache__" in path.parts:
+                    continue
+                archive.write(path, path.relative_to(PACKAGE).as_posix())
+        actual_digest = hashlib.sha256(asset.read_bytes()).hexdigest()
+        manifest = root / "latest.json"
+        manifest.write_text(
+            json.dumps(
+                {
+                    "tag_name": tag or self.package_version(),
+                    "draft": False,
+                    "prerelease": False,
+                    "immutable": immutable,
+                    "assets": [
+                        {
+                            "name": "workflow.zip",
+                            "browser_download_url": asset.as_uri(),
+                            "digest": digest or f"sha256:{actual_digest}",
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        return manifest
 
 
 if __name__ == "__main__":

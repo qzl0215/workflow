@@ -14,5 +14,7 @@ Include the affected version, environment, minimal reproduction, impact, and any
 
 - workflow does not require secrets and must not store credentials in plans, logs, templates, or examples.
 - commit, push, merge, deploy, delete, public release, and other external writes require explicit authorization.
-- install/update keeps a recoverable backup; uninstall renames the installation instead of permanently deleting it.
+- install/update validates a complete candidate before replacing the single active package; no discoverable backup, failed, or removed copy is retained.
+- remote sync accepts only the official latest non-draft, non-prerelease, immutable GitHub Release, verifies the asset SHA-256 and package version, and runs the package gates before replacement.
+- uninstall permanently removes the active package after explicit `--yes`; users who need rollback must reinstall a specific verified Release.
 - reports about third-party agents, Git providers, or runtimes may need to be filed with those maintainers as well.
