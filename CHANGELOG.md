@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.4.0] - 2026-07-24
+
+### Changed
+
+- Replaced the 12-slide visual lecture with a concise first-person introduction that explains what workflow is, its seven-action path, when the user participates, how unknowns are routed, and how to install it.
+- Removed the fixed 1480px content ceiling and presentation-deck controls in favor of a fluid single-page layout that uses about 92% of a 3840px display while remaining a single column without horizontal overflow at 390px.
+- Reduced the generated visual document by about 57% and simplified its content model, generator, and tests around the current workflow contract instead of maintaining per-slide teaching payloads.
+
+### Compatibility
+
+- The workflow protocol, seven canonical actions, fourteen routed capabilities, installer, and authorization boundaries are unchanged.
+- The visual introduction remains a standalone generated HTML file with no external scripts, fonts, or runtime dependencies.
+
+### Release status
+
+- Stable public release target: `2.4.0`.
+
 ## [2.3.0] - 2026-07-24
 
 ### Changed

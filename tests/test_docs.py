@@ -385,7 +385,7 @@ class DocumentationContractTest(unittest.TestCase):
         for token in ("Attribution", "Clean-room", "Excluded"):
             self.assertIn(token, notice)
         skill = (PACKAGE / "SKILL.md").read_text()
-        self.assertIn("version: 2.3.0", skill)
+        self.assertIn("version: 2.4.0", skill)
         self.assertIn("author: zhonglin", skill)
 
     def test_workflow_has_project_scoped_standing_release_authorization(self) -> None:
