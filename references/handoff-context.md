@@ -9,34 +9,39 @@
 - 项目与任务目录、当前 `stage`、活跃 Plan/Task、活动阶段成果路由和唯一状态真源；
 - Snapshot、handoff checkpoint、P9 六要素与上下文引用；
 - 已完成动作、失败、排除假设、fresh 证据和最易过期事实；
-- 文件权限、外部授权、blocker 和下一步。
+- 执行现场、Task 绑定、目标基线、freshness 来源、source fingerprint、脏改动归属与可写性；
+- 文件权限、外部授权、blocker 和下一步；
+- 回灌 side task 的发现来源、已确认需求、目标归属、最小方案、预期价值与回传要求。
 
 ## 深度判断
 
 按 L0–L4 渐进加载，读到能回答具体缺口即停止：
 
-- **L0 定位**：项目、任务目录、当前动作、活跃 Plan/Task。
+- **L0 定位**：项目、任务目录、当前动作、活跃 Plan/Task、执行现场与 Task 绑定。
 - **L1 快照**：Current Snapshot 与 handoff checkpoint。
 - **L2 当前 Task**：验收、依赖、文件域、相关 findings 和最新证据。
 - **L3 目标证据**：只加载能回答已记录 gap 的代码、日志、reference 或历史决策。
 - **L4 全历史**：只用于一致性争议、审计或 L3 仍不足，并记录原因。
 
+先过**上下文同一性门**：只有目标结果、验收、owner、交付边界和 source fingerprint 仍属于同一份业务合同时，才继续沿用当前 Task capsule。出现已交付后新缺陷、新的独立用户结果、跨项目或 skill owner、需要独立回滚的新交付时，建立**独立 side-task capsule**；宿主与用户授权允许时交给 fresh task，否则也只从 capsule 继续，不默认携带旧线程全文。新增 Plan 解决范围编排，不自动证明旧线程仍是最佳上下文容器。是否切分依据业务边界、证据失效和上下文污染风险，不按固定轮次、分钟、token 或压缩次数机械决定。
+
 ## 核心动作
 
-1. 构建 **Task capsule**：目标、当前动作、活动阶段成果路由、输入/证据路径、允许/禁止文件、已完成、失败与排除假设、验收、验证命令、权限、blocker、下一步。
-2. 明确“不要重复做”的动作和哪些证据可复用；source fingerprint 或环境变化时标记旧证据失效。
-3. 新执行者先验证 capsule 中最易过期、且会改变下一步的事实；不默认读完整聊天、所有计划和全仓文档。
-4. 缺上下文时以 `gap / target / expected_answer / level` 请求具体切片；收到答案立即停止升级。
-5. 摘要、计划和实际文件冲突时以正式真源与 fresh 检查为准并 fail closed，不静默猜测。
-6. 阶段切换、fresh 委派、第二次压缩、共享资源等待或高风险动作前重建 capsule。
+1. 构建 **Task capsule**：目标、当前动作、活动阶段成果路由、执行现场、Task 绑定、目标基线、freshness、source fingerprint、可写性、脏改动归属、输入/证据路径、允许/禁止文件、已完成、失败与排除假设、验收、验证命令、权限、blocker、下一步。
+2. 回灌 side task 额外携带发现来源、用户已确认需求、目标归属、最小方案、预期价值、禁止重复追问和结构化回传要求；目标 owner 只补会推翻方案的 fresh 事实。
+3. 明确“不要重复做”的动作和哪些证据可复用；source fingerprint 或环境变化时标记旧证据失效。
+4. 新执行者先验证 capsule 中最易过期、且会改变下一步的事实；可变更任务先重验执行现场有效性，不默认读完整聊天、所有计划和全仓文档。
+5. 缺上下文时以 `gap / target / expected_answer / level` 请求具体切片；收到答案立即停止升级。
+6. 摘要、计划和实际文件冲突时以正式真源与 fresh 检查为准并 fail closed，不静默猜测。
+7. 阶段切换、fresh 委派、第二次压缩、共享资源等待或高风险动作前重建 capsule。
 
 ## 写入真源
 
-Current Snapshot 与唯一状态留在 `task_plan.md`；实际进度、失败、证据和 handoff checkpoint 留在 `progress.md`；长期事实留在其项目 owner。capsule 是有界派生输入，不成为第二状态真源。
+Current Snapshot 与唯一状态留在目标 owner 的 `task_plan.md`；实际进度、失败、证据和 handoff checkpoint 留在其 `progress.md`；长期事实留在对应 owner。来源任务只记录提案决策、目标入口和最终回执；capsule 是有界派生输入，不成为第二状态真源。
 
 ## 停止 / 通过
 
-另一位执行者无需读取整段聊天即可安全继续当前 Task，能指出目标、边界、最新证据、下一步和禁止动作；同时知道哪些事实需要 fresh 重验。没有明确 gap 时不升级到 L3/L4。
+另一位执行者无需读取整段聊天即可安全继续当前 Task，能指出目标、边界、执行现场、Task 绑定、目标基线、可写性、最新证据、下一步和禁止动作；同时知道哪些事实需要 fresh 重验。回灌 side task 只有返回实际变更、fresh 验证、残余风险和真实交付状态才算完成；没有明确 gap 时不升级到 L3/L4。
 
 ## 失败回路 / 能力缺口
 

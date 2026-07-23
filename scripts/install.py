@@ -102,6 +102,15 @@ def copy_payload(stage: Path) -> None:
         shutil.copy2(source, destination)
 
 
+def payload_matches(destination: Path) -> bool:
+    for relative in PUBLIC_TARGETS:
+        source = SOURCE / relative
+        installed = destination / relative
+        if not installed.is_file() or installed.read_bytes() != source.read_bytes():
+            return False
+    return True
+
+
 def run_check(destination: Path) -> int:
     for script in ("workflow_doctor.py", "release_check.py"):
         result = subprocess.run(
@@ -123,6 +132,19 @@ def install(parent: Path, *, update: bool) -> int:
     if missing:
         return fail("当前源码不是完整发布候选：" + ", ".join(missing))
     destination = parent / NAME
+    if update and destination.is_symlink():
+        if not destination.is_dir() or not (destination / "SKILL.md").is_file():
+            return fail(f"符号链接安装已损坏：{destination}")
+        if not payload_matches(destination):
+            return fail(
+                f"符号链接安装与当前源码不同：{destination}；"
+                "请先更新链接指向的唯一真源，安装器不会把软链替换成实体副本"
+            )
+        result = run_check(destination)
+        if result:
+            return result
+        print(f"workflow 由符号链接管理且已是当前版本，保留原链接：{destination}")
+        return 0
     if update and not destination.is_dir():
         return fail(f"没有可更新的安装：{destination}")
     if not update and destination.exists():

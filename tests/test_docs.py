@@ -119,7 +119,7 @@ class DocumentationContractTest(unittest.TestCase):
         self.assertIsNotNone(version)
         current = version.group(1)
         self.assertIn(f"当前协议版本：`{current}`", readme)
-        self.assertIn(f"## [{current}] - 2026-07-23", changelog)
+        self.assertIn(f"## [{current}] - 2026-07-24", changelog)
         self.assertIn("### Migration from 2.1.0-beta.3", changelog)
         self.assertIn("## [2.1.0-beta.3] - 2026-07-21", changelog)
 
@@ -189,6 +189,10 @@ class DocumentationContractTest(unittest.TestCase):
         self.assertEqual(actions["回灌改进"]["documents"], ("目标真源",))
         self.assertIn("index.md", actions["拆成任务"]["documents"])
         self.assertIn("并行成果：各自验完，再串行合入", " ".join(actions["验收交付"]["deep"]))
+        evolution_story = " ".join(str(actions["回灌改进"][field]) for field in actions["回灌改进"])
+        for token in ("小改动、大价值", "确认后", "正确项目"):
+            self.assertIn(token, evolution_story)
+        self.assertNotIn("两次独立复现", evolution_story)
         delivery_story = " ".join(
             str(actions["验收交付"][field])
             for field in ("solution", "best_practice", "outcome", "evidence", "deep")
@@ -219,6 +223,57 @@ class DocumentationContractTest(unittest.TestCase):
         self.assertEqual(statuses["提炼经验"], "本版新增")
         self.assertEqual(statuses["需求澄清"], "本版强化")
         self.assertEqual(statuses["回灌改进"], "保持稳定")
+
+    def test_visual_build_allows_current_release_to_omit_stable_actions(self) -> None:
+        def mutate(package: Path) -> None:
+            skill = (package / "SKILL.md").read_text()
+            version = re.search(r"^version:\s*(\S+)$", skill, re.M)
+            self.assertIsNotNone(version)
+            changelog = package / "CHANGELOG.md"
+            source = changelog.read_text()
+            release = re.search(
+                rf"^## \[{re.escape(version.group(1))}\].*?(?=^## \[|\Z)",
+                source,
+                re.MULTILINE | re.DOTALL,
+            )
+            self.assertIsNotNone(release)
+            updated = (
+                f"## [{version.group(1)}] - test\n\n"
+                "### Changed\n\n"
+                "- 需求澄清\n\n"
+            )
+            changelog.write_text(source[: release.start()] + updated + source[release.end() :])
+
+        result, generated = self.run_copied_visual(mutate)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIsNotNone(
+            re.search(r'"name": "需求澄清".*?"status": "本版强化"', generated, re.DOTALL)
+        )
+        self.assertIsNotNone(
+            re.search(r'"name": "回灌改进".*?"status": "保持稳定"', generated, re.DOTALL)
+        )
+
+    def test_visual_build_still_rejects_a_missing_current_release(self) -> None:
+        def mutate(package: Path) -> None:
+            skill = (package / "SKILL.md").read_text()
+            version = re.search(r"^version:\s*(\S+)$", skill, re.M)
+            self.assertIsNotNone(version)
+            changelog = package / "CHANGELOG.md"
+            source = changelog.read_text()
+            release = re.search(
+                rf"^## \[{re.escape(version.group(1))}\].*?(?=^## \[|\Z)",
+                source,
+                re.MULTILINE | re.DOTALL,
+            )
+            self.assertIsNotNone(release)
+            changelog.write_text(source[: release.start()] + source[release.end() :])
+
+        result, _ = self.run_copied_visual(mutate)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(
+            "visual map source error: current changelog does not support the visual action update states",
+            result.stdout,
+        )
 
     def test_changelog_is_part_of_visual_freshness(self) -> None:
         def mutate(package: Path) -> None:
@@ -387,14 +442,32 @@ class DocumentationContractTest(unittest.TestCase):
             "三段七动作",
             "四路未知",
             "14 项按需能力",
+            "发现小改进时，先提案再动手",
+            "小改动、大价值",
+            "正确归属地",
         ):
             self.assertIn(token, readme)
         notice = (PACKAGE / "NOTICE.md").read_text()
         for token in ("Attribution", "Clean-room", "Excluded"):
             self.assertIn(token, notice)
         skill = (PACKAGE / "SKILL.md").read_text()
-        self.assertIn("version: 2.2.0-beta.1", skill)
+        self.assertIn("version: 2.2.0-beta.5", skill)
         self.assertIn("author: zhonglin", skill)
+
+    def test_workflow_has_project_scoped_standing_release_authorization(self) -> None:
+        contributing = (PACKAGE / "CONTRIBUTING.md").read_text()
+        for token in (
+            "## 持续发布授权",
+            "2026-07-24",
+            "`qzl0215/workflow`",
+            "commit、push、合并到主版本和发布",
+            "不再重复请求授权",
+            "仅限本仓库",
+            "fresh",
+            "P0",
+            "禁止 force",
+        ):
+            self.assertIn(token, contributing)
 
     def test_formal_sources_do_not_publish_legacy_stage_words(self) -> None:
         paths = [
@@ -458,6 +531,22 @@ class DocumentationContractTest(unittest.TestCase):
                 stderr=subprocess.STDOUT,
                 check=False,
             )
+
+    def run_copied_visual(self, mutate) -> tuple[subprocess.CompletedProcess[str], str]:
+        with tempfile.TemporaryDirectory() as temp:
+            package = Path(temp) / "workflow"
+            shutil.copytree(PACKAGE, package, ignore=shutil.ignore_patterns(".git"))
+            mutate(package)
+            result = subprocess.run(
+                [sys.executable, "-B", str(package / "scripts/generate_visual_map.py")],
+                cwd=package,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            generated = (package / "docs/workflow-visual-map.html").read_text()
+            return result, generated
 
     def test_release_gate_fails_when_target_file_is_missing(self) -> None:
         result = self.run_copied_release(lambda package: (package / "references/verify-deliver.md").unlink())

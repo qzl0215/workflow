@@ -10,6 +10,7 @@ from pathlib import Path
 
 PACKAGE = Path(__file__).resolve().parents[1]
 SCRIPT = PACKAGE / "scripts/build_context_capsule.py"
+TASK_OWNER_TEMPLATE = (PACKAGE / "templates/task-owner-prompt.md").read_text()
 CANONICAL_STAGES = (
     "需求澄清",
     "选定方案",
@@ -349,6 +350,20 @@ SHOULD_NOT_BE_LOADED
             self.assertIn(f"**{role}**", root)
         for forbidden in ("/opt/" + "obrain", "/" + "Users" + "/", "C:\\" + "Users\\"):
             self.assertNotIn(forbidden, root + templates)
+
+    def test_side_task_capsule_carries_confirmed_evolution_without_becoming_state_truth(self) -> None:
+        for token in (
+            "发现来源",
+            "已确认需求",
+            "目标归属",
+            "最小方案",
+            "预期价值",
+            "禁止重复追问",
+            "回传要求",
+            "派生输入",
+            "不成为第二状态真源",
+        ):
+            self.assertIn(token, TASK_OWNER_TEMPLATE)
 
 
 if __name__ == "__main__":

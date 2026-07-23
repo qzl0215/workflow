@@ -140,6 +140,43 @@ class PortabilityContractTest(unittest.TestCase):
             self.assertFalse((target / "workflow").exists())
             self.assertEqual(len(list(target.glob("workflow.removed-*"))), 1)
 
+    def test_installer_update_preserves_managed_symlink_and_fails_on_drift(self) -> None:
+        if sys.platform == "win32":
+            self.skipTest("Windows symlink creation requires environment-specific privileges")
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            target = root / "Agent Skills"
+            target.mkdir()
+            managed_source = root / "managed-workflow"
+            shutil.copytree(PACKAGE, managed_source, ignore=shutil.ignore_patterns(".git"))
+            destination = target / "workflow"
+            destination.symlink_to(managed_source, target_is_directory=True)
+            script = PACKAGE / "scripts/install.py"
+
+            def run_update() -> subprocess.CompletedProcess[str]:
+                return subprocess.run(
+                    [sys.executable, "-B", str(script), "update", "--target", str(target)],
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    check=False,
+                )
+
+            matching = run_update()
+            self.assertEqual(matching.returncode, 0, matching.stdout)
+            self.assertTrue(destination.is_symlink())
+            self.assertEqual(destination.resolve(), managed_source.resolve())
+            self.assertEqual(list(target.glob("workflow.backup-*")), [])
+
+            skill = managed_source / "SKILL.md"
+            skill.write_text(skill.read_text(encoding="utf-8") + "\n<!-- drift -->\n", encoding="utf-8")
+            drifted = run_update()
+            self.assertEqual(drifted.returncode, 2, drifted.stdout)
+            self.assertIn("符号链接", drifted.stdout)
+            self.assertTrue(destination.is_symlink())
+            self.assertEqual(destination.resolve(), managed_source.resolve())
+            self.assertEqual(list(target.glob("workflow.backup-*")), [])
+
     def test_installer_auto_detects_an_existing_agent_skills_directory(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             fake_home = Path(temp) / "home"

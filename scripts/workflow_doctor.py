@@ -236,7 +236,7 @@ def main() -> int:
     for name in sorted(actual_names - expected_names):
         error(errors, refs / name, "orphan or unowned reference")
     for name in REQUIRED_REFERENCES:
-        if skill_text.count(f"references/{name}") != 1:
+        if skill_text.count(f"`references/{name}`") != 1:
             error(errors, skill, f"must route exactly once to references/{name}")
     markdown.extend(actual_refs)
     reference_lines = sum(len(read(path).splitlines()) for path in actual_refs)

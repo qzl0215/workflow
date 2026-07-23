@@ -11,6 +11,8 @@ README = (PACKAGE / "README.md").read_text()
 CHANGELOG = (PACKAGE / "CHANGELOG.md").read_text()
 REFERENCES = PACKAGE / "references"
 TASK_PLAN_TEMPLATE = (PACKAGE / "templates/task_plan.md").read_text()
+FINDINGS_TEMPLATE = (PACKAGE / "templates/findings.md").read_text()
+TASK_OWNER_TEMPLATE = (PACKAGE / "templates/task-owner-prompt.md").read_text()
 
 STAGES = [
     "需求澄清",
@@ -92,15 +94,42 @@ class CanonicalStageContractTest(unittest.TestCase):
 
 
 class UserHandoffContractTest(unittest.TestCase):
-    def test_handoff_is_conclusion_first_and_only_when_people_are_needed(self) -> None:
+    def test_handoff_is_only_when_people_are_needed_and_keeps_two_action_exits(self) -> None:
         self.assertIn("## 用户交接", SKILL)
         for token in (
             "只有需要人参与时才交回控制权",
-            "连续工作不强制输出阶段导航",
-            "`阶段｜n/7 · 阶段名`",
-            "结论 → 当前阶段 → 阶段成果 → 风险或待决策（按需）→ 最佳下一步与回复方式",
+            "建议下一步｜",
+            "回复建议｜",
+            "下一 Ready",
+            "不得替代",
         ):
             self.assertIn(token, SKILL)
+
+    def test_changed_state_snapshot_is_event_driven_non_blocking_and_deduplicated(self) -> None:
+        for token in (
+            "状态发生实质变化",
+            "下一条可见消息",
+            "状态未变化",
+            "不重复",
+            "播报后继续工作",
+            "进度｜■■■◆□□□ 4/7 · 执行任务",
+        ):
+            self.assertIn(token, SKILL)
+
+    def test_snapshot_uses_clickable_reference_titles_results_and_compact_path(self) -> None:
+        for token in (
+            "一级中文标题",
+            "成果｜",
+            "✓ P01 → ● P02 / T03 → ○ P03",
+            "不展示 Ready 队列",
+            "不探测宿主",
+            "不生成 DAG 视觉",
+        ):
+            self.assertIn(token, SKILL)
+        skill_line = next(line for line in SKILL.splitlines() if line.startswith("技能｜"))
+        self.assertIn("[执行任务](references/execute-tasks.md)", skill_line)
+        self.assertIn("[修复失败](references/fix-failures.md)", skill_line)
+        self.assertNotIn("`", skill_line)
 
     def test_first_two_stages_use_short_feedback_loops_without_asking_discoverable_facts(self) -> None:
         goal = reference("understand-goal.md")
@@ -110,6 +139,48 @@ class UserHandoffContractTest(unittest.TestCase):
             self.assertIn("会改变目标、范围、验收或方向", text)
         self.assertIn("事实可查", goal)
         self.assertIn("不问用户", goal)
+
+    def test_requirement_card_cannot_replace_requirement_discovery(self) -> None:
+        goal = reference("understand-goal.md")
+        requirement_row = next(line for line in SKILL.splitlines() if line.startswith("| 需求澄清 |"))
+        for token in (
+            "需求成熟度硬门",
+            "需求卡是澄清完成后的结晶",
+            "禁止生成完成态需求卡",
+            "沉默不等于确认",
+            "用户 / 场景 / 现状痛点",
+            "目标结果与可观察成功标准",
+            "范围与非范围",
+            "关键约束、优先级与取舍",
+            "授权边界与责任人",
+        ):
+            self.assertIn(token, goal)
+        for token in ("需求成熟度硬门", "关键用户判断已有回答"):
+            self.assertIn(token, requirement_row)
+        for token in (
+            "## 需求成熟度硬门",
+            "## 关键追问",
+            "答案会改变什么",
+            "用户回答 / 明确延期",
+        ):
+            self.assertIn(token, FINDINGS_TEMPLATE)
+
+    def test_requirement_discovery_uses_numbered_batches_and_keeps_drilling(self) -> None:
+        goal = reference("understand-goal.md")
+        challenge = reference("challenge-decisions.md")
+        for text in (goal, challenge):
+            for token in (
+                "编号问题批次",
+                "相互独立",
+                "有依赖",
+                "1B 2A 3C",
+                "同一编号",
+                "不设置总问题数上限",
+                "批量不等于问卷倾倒",
+            ):
+                self.assertIn(token, text)
+        for token in ("回答含糊", "继续追问", "决策树"):
+            self.assertIn(token, goal)
 
     def test_later_stages_continue_until_a_real_handoff_trigger(self) -> None:
         plan = reference("plan-tasks.md")
@@ -134,23 +205,23 @@ class StageResultRoutingContractTest(unittest.TestCase):
         for token in (
             "单一业务成果直达文件",
             "选定方案优先指向已选视觉预览",
+            "没有视觉方案",
             "多个同等重要成果指向已有目录",
-            "宿主不能打开目录时",
-            "`index.md`",
             "移除受影响的下游活动入口",
             "findings/progress",
         ):
             self.assertIn(token, SKILL)
 
-    def test_stage_result_links_are_runtime_resolved_plain_markdown(self) -> None:
+    def test_stage_result_links_are_plain_markdown_without_host_probing(self) -> None:
         for token in (
-            "交接时按当前宿主解析",
+            "解析为普通 Markdown 链接",
+            "不探测宿主",
             "不得保存机器绝对路径",
             "不得保存 `file://`",
             "当前和待开始阶段不链接",
         ):
             self.assertIn(token, SKILL)
-        link_line = next(line for line in SKILL.splitlines() if line.startswith("真实交接格式："))
+        link_line = next(line for line in SKILL.splitlines() if line.startswith("成果｜"))
         self.assertRegex(link_line, r"\[需求澄清\]\([^)]+\)")
         self.assertNotIn("`", link_line)
         self.assertEqual(SKILL[: SKILL.index(link_line)].count("```") % 2, 0)
@@ -158,47 +229,49 @@ class StageResultRoutingContractTest(unittest.TestCase):
 
 
 class CrossHostHandoffContractTest(unittest.TestCase):
-    def test_native_views_are_optional_derived_enhancement(self) -> None:
+    def test_snapshot_uses_one_text_contract_without_host_probing(self) -> None:
         for token in (
-            "原生 Plan/Task 视图",
-            "零配置可用时",
-            "派生展示",
-            "正式阶段或任务状态变化时",
-            "不可用时静默使用文本交接",
-            "不修改用户设置",
-            "不得成为第二状态真源",
+            "普通文本",
+            "普通 Markdown",
+            "不探测宿主",
+            "不生成 DAG 视觉",
+            "不建立第二状态真源",
+        ):
+            self.assertIn(token, SKILL)
+        self.assertNotIn("原生 Plan/Task 视图", SKILL)
+
+    def test_markdown_links_keep_portable_result_and_reference_targets(self) -> None:
+        for token in (
+            "项目相对路径",
+            "选定方案优先指向已选视觉预览",
+            "没有视觉方案",
+            "一级中文标题",
         ):
             self.assertIn(token, SKILL)
 
-    def test_host_rendering_has_file_visual_directory_and_plain_text_fallbacks(self) -> None:
-        for token in (
-            "支持本地 Markdown 链接",
-            "只能识别文件路径",
-            "视觉文件使用宿主预览",
-            "目录不支持时打开 `index.md`",
-            "自定义 URL scheme",
-            "ANSI 控制码",
-            "跨平台 Widget",
-        ):
-            self.assertIn(token, SKILL)
-
-    def test_readme_shows_three_conclusion_first_handoffs_with_reply_options(self) -> None:
+    def test_readme_shows_three_state_aware_handoffs_with_two_reply_exits(self) -> None:
         for heading in ("### 场景一：方向决策", "### 场景二：阻断或授权", "### 场景三：最终完成"):
             self.assertIn(heading, README)
         for token in (
             "结论｜",
-            "阶段｜2/7 · 选定方案",
-            "阶段｜5/7 · 验收交付",
-            "阶段｜7/7 · 回灌改进",
+            "进度｜■◆□□□□□ 2/7 · 选定方案",
+            "进度｜■■■■◆□□ 5/7 · 验收交付",
+            "进度｜■■■■■■◆ 7/7 · 回灌改进",
+            "技能｜",
+            "成果｜",
             "状态｜已完成",
-            "最佳下一步｜",
+            "建议下一步｜",
+            "回复建议｜",
             "回复“采用推荐方案”",
             "回复“授权发布”或“保持本地已验证”",
             "回复“继续下一目标”或直接提出新任务",
         ):
             self.assertIn(token, README)
         self.assertNotIn("阶段｜8/8", README)
-        linked_lines = [line for line in README.splitlines() if "回看｜" in line]
+        self.assertNotIn("最佳下一步｜", README)
+        self.assertEqual(README.count("> 建议下一步｜"), 3)
+        self.assertEqual(README.count("> 回复建议｜"), 3)
+        linked_lines = [line for line in README.splitlines() if "> 成果｜" in line]
         self.assertEqual(len(linked_lines), 3)
         for line in linked_lines:
             self.assertIn("](", line)
@@ -318,6 +391,25 @@ class PlanningAndExecutionContractTest(unittest.TestCase):
         ):
             self.assertIn(token, text)
 
+    def test_mutating_task_requires_one_execution_site_validity_check(self) -> None:
+        text = reference("execute-tasks.md")
+        for token in (
+            "执行现场有效性检查",
+            "标记进行中之前",
+            "Task 绑定",
+            "目标基线",
+            "freshness 来源",
+            "脏改动归属",
+            "新 Task",
+            "同一活跃 Task",
+            "同一计划链的后续 Task",
+            "已被目标吸收",
+            "只读诊断",
+            "不是新的 stage 或 status",
+        ):
+            self.assertIn(token, text)
+        self.assertNotIn("behind > 0 就 rebase", text)
+
     def test_continuous_delivery_authorization_advances_ready_tasks_without_stopping(self) -> None:
         text = reference("execute-tasks.md")
         for token in (
@@ -361,22 +453,72 @@ class VerificationReviewAndEvolutionContractTest(unittest.TestCase):
 
     def test_evolution_has_evidence_promotion_and_authority_boundaries(self) -> None:
         text = reference("evolve-system.md")
+        self.assertNotIn("两次独立复现", text)
+        self.assertNotIn("复现次数", text)
         for token in (
-            "两次独立复现",
-            "一次严重、系统性且可复现的问题",
+            "模型判断",
+            "奥卡姆删除测试",
+            "痛点问题",
+            "推断需求",
+            "最小改造",
+            "预期价值",
+            "接受 / 调整 / 暂不做",
+            "提案接受只授权进入计划",
+            "完整 Plan",
+            "no-op",
             "唯一 owner",
             "失败验收",
-            "维护 ROI 为正",
-            "用户明确偏好",
-            "推断只留在 findings",
-            "独立进化 Plan",
-            "本地、可逆、可验证",
             "外部副作用仍需明确授权",
         ):
             self.assertIn(token, text)
 
+    def test_accepted_evolution_routes_to_the_truth_owner_without_hiding_normal_gates(self) -> None:
+        evolution = reference("evolve-system.md")
+        planning = reference("plan-tasks.md")
+        execution = reference("execute-tasks.md")
+        for token in (
+            "原验收未满足",
+            "修正原 P/T",
+            "新的用户结果",
+            "零距离 handoff",
+            "side-task capsule",
+            "无 owner",
+            "fail closed",
+            "来源任务保持“回灌改进”",
+            "目标任务从“拆成任务”开始",
+            "handoff 提示词生成不算完成",
+            "实际变更与 fresh 验证",
+        ):
+            self.assertIn(token, evolution)
+        for token in ("来源：原始需求 / 回灌提案 / 外部 handoff", "新的用户结果追加新 Plan"):
+            self.assertIn(token, planning + TASK_PLAN_TEMPLATE)
+        self.assertIn("原验收未满足时重开原 Task", execution)
+
+    def test_root_contract_presents_evolution_as_a_user_decision_not_an_automatic_write(self) -> None:
+        evolution_row = next(line for line in SKILL.splitlines() if line.startswith("| 回灌改进 |"))
+        for token in ("回灌提案", "用户确认", "目标 owner"):
+            self.assertIn(token, evolution_row)
+        self.assertIn("提案不等于写入授权", SKILL)
+
 
 class IntegratedReleaseContractTest(unittest.TestCase):
+    def test_final_report_shows_three_business_delivery_states_without_internal_ids(self) -> None:
+        delivery = reference("verify-deliver.md")
+        for token in (
+            "代码完成｜",
+            "合并完成｜",
+            "线上生效｜",
+            "三项都必须出现",
+            "合入的目标版本名称",
+            "不得展示提交哈希",
+            "精确技术标识只写入",
+        ):
+            self.assertIn(token, delivery)
+        final_scenario = README.split("### 场景三：最终完成", 1)[1].split("## ", 1)[0]
+        for token in ("代码完成｜", "合并完成｜", "线上生效｜"):
+            self.assertIn(token, final_scenario)
+        self.assertNotRegex(final_scenario, r"\b[0-9a-f]{7,40}\b")
+
     def test_integrated_release_is_a_required_gate_when_delivery_is_requested(self) -> None:
         delivery = reference("verify-deliver.md")
         for token in (
@@ -414,6 +556,18 @@ class IntegratedReleaseContractTest(unittest.TestCase):
         release_row = next(line for line in SKILL.splitlines() if line.startswith("| 验收交付 |"))
         self.assertIn("项目发布真源", release_row)
         self.assertIn("集成发布", release_row)
+
+    def test_delivery_records_workspace_disposition_without_automatic_cleanup(self) -> None:
+        delivery = reference("verify-deliver.md")
+        for token in (
+            "现场处置",
+            "保留只读",
+            "等待授权清理",
+            "继续同一 Task",
+            "不得自动删除",
+            "不得绑定新 Task",
+        ):
+            self.assertIn(token, delivery)
 
     def test_humans_approve_business_and_authority_not_code(self) -> None:
         delivery = reference("verify-deliver.md")
@@ -507,6 +661,36 @@ class SupportingHarnessContractTest(unittest.TestCase):
         handoff = reference("handoff-context.md")
         for token in ("L0", "L1", "L2", "L3", "L4", "Task capsule", "fail closed"):
             self.assertIn(token, handoff)
+        for token in ("执行现场", "Task 绑定", "目标基线", "freshness", "可写性"):
+            self.assertIn(token, handoff)
+            self.assertIn(token, TASK_OWNER_TEMPLATE)
+
+    def test_handoff_uses_business_boundaries_instead_of_mechanical_thread_budgets(self) -> None:
+        handoff = reference("handoff-context.md")
+        for token in (
+            "上下文同一性门",
+            "目标结果",
+            "验收",
+            "owner",
+            "交付边界",
+            "独立 side-task capsule",
+            "已交付后新缺陷",
+            "新的独立用户结果",
+            "固定轮次、分钟、token 或压缩次数",
+        ):
+            self.assertIn(token, handoff)
+
+
+class ExecutionSitePublicContractTest(unittest.TestCase):
+    def test_public_docs_explain_that_old_workspaces_are_not_new_task_entrypoints(self) -> None:
+        for token in (
+            "旧工作现场",
+            "新任务",
+            "同一任务",
+            "只读追溯",
+            "不能默认复用",
+        ):
+            self.assertIn(token, README)
 
 
 if __name__ == "__main__":

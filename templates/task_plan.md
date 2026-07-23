@@ -51,10 +51,11 @@ summary: <one-line outcome>
 
 ## 4. Plan Portfolio
 
-状态只允许 `pending / in_progress / completed / blocked`；ID 只用于引用，不代表优先级。
+状态只允许 `pending / in_progress / completed / blocked`；ID 只用于引用，不代表优先级。跨 owner 的实施状态只在目标项目维护，来源任务只记录提案决策、目标入口和最终回执。
 
 #### P01｜<business-result>
 
+- 来源：原始需求 / 回灌提案 / 外部 handoff
 - 价值 / 解决的问题：
 - 交付结果：
 - 前置依赖：— / Pxx

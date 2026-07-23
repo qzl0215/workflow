@@ -2,6 +2,103 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.2.0-beta.5] - 2026-07-24
+
+### Added
+
+- A single execution-site validity check before mutating a new or resumed Task, covering Task binding, target baseline, freshness source, source fingerprint, dirty-change ownership, isolation and writability.
+- Execution-site evidence in bounded handoff capsules so a new executor can distinguish a fresh Task site, the same active Task, an absorbed historical site and a read-only inspection.
+- A context-identity gate that separates a new user result, post-delivery defect or cross-owner change into an independent side-task capsule instead of carrying forward a stale thread by habit.
+- Symlink-aware installer updates that preserve a managed source link and fail closed when the linked source differs from the candidate.
+
+### Changed
+
+- Allowed target movement during the same active Task without forcing an immediate rebase, while preserving project-defined synchronization before delivery.
+- Made 验收交付 record whether the site continues the same Task, remains read-only evidence or awaits authorized cleanup after the result reaches its target.
+- Strengthened 执行任务、验收交付 and 有界上下文交接 without adding a stage, status owner, Git-specific command or persistent workspace state.
+- Reconciled a concurrently installed workflow improvement into the release candidate instead of overwriting the managed local truth.
+
+### Fixed
+
+- Prevented a completed feature workspace already absorbed by its target from being silently reused for a new Task.
+- Prevented a clean feature branch or cached remote-tracking ref from being mistaken for proof that the execution site is current.
+- Prevented blanket `behind > 0` handling from rewriting active or published work without considering Task identity and project rules.
+- Prevented `update` from replacing a managed workflow symlink with an unrelated copied directory.
+
+### Release status
+
+- Published as the public `2.2.0-beta.5` prerelease after fresh verification and mainline integration.
+
+## [2.2.0-beta.4] - 2026-07-23
+
+### Added
+
+- A requirement maturity hard gate covering user and pain, target and observable success, scope and non-scope, constraints and trade-offs, and authority and ownership.
+- Stable numbered question batches so users can answer compactly with forms such as `1B 2A 3C`; independent high-value decisions may be asked together while dependent branches remain sequential.
+- A decision-tree loop that reuses the same question number for vague, evasive, or contradictory answers and keeps drilling until each load-bearing branch is resolved, testable, explicitly deferred, or blocked.
+- A project-scoped standing release authorization for verified `workflow/` changes, allowing commit, push, mainline integration, and publication without repeated approval while retaining P0, scope, and no-force gates.
+
+### Changed
+
+- Made the requirement card a post-clarification result instead of a speculative discovery substitute.
+- Made decision challenge mandatory when requirement clarification still contains a key trade-off, vague answer, or contradiction.
+- Removed any total question-count ceiling while retaining a strict information-value gate and short batched feedback loops.
+
+### Fixed
+
+- Prevented standard and project work from skipping user judgment and immediately emitting a completed requirement card.
+- Prevented AI recommendations, silence, and vague agreement from being persisted as confirmed user requirements.
+- Prevented one-question-per-turn ceremony from slowing down independent decisions that users can answer efficiently in one numbered batch.
+
+### Release status
+
+- Integrated into the public `2.2.0-beta.5` prerelease; no separate public beta.4 tag was created.
+
+## [2.2.0-beta.3] - 2026-07-23
+
+### Added
+
+- A decision-ready evolution proposal that separates observed pain from the AI-inferred need, smallest change, business value, and accept / adjust / defer decision.
+- Owner-local handoff: current-project improvements collapse into appended Plan/Task work, while cross-project and cross-skill improvements use the existing bounded task capsule.
+
+### Changed
+
+- Replaced the occurrence-count promotion gate with model judgment over evidence, impact, change size, reversibility, and long-term ROI.
+- Made proposal acceptance authorize planning only; complete Plan confirmation, external-side-effect authorization, and fresh verification remain separate gates.
+- Routed 回灌改进、拆成任务、执行任务 by the current business question without adding a new stage or duplicating implementation status.
+
+### Fixed
+
+- Prevented an inferred user need from silently becoming a permanent rule.
+- Prevented a generated handoff prompt from being reported as completed before the target truth owner returns actual changes and fresh verification.
+
+### Release status
+
+- Integrated into the public `2.2.0-beta.5` prerelease; no separate public beta.3 tag was created.
+
+## [2.2.0-beta.2] - 2026-07-23
+
+### Added
+
+- An event-driven status snapshot that appears at the top of the next visible message only when stage, active references, valid results, or the active Plan/Task path changes.
+- Clickable Chinese labels for the workflow references actually used in the current work.
+- A compact text-only active path such as `✓ P01 → ● P02 / T03 → ○ P03`.
+
+### Changed
+
+- Removed host probing, native Plan/Task presentation, generated DAG visuals, and Ready Queue output from the user-facing status contract.
+- Split every real handoff into two mandatory user action exits: `建议下一步｜` and `回复建议｜`.
+- Kept status broadcasts non-blocking: AI may report a changed state and immediately continue working without asking the user to take over.
+- Applied the presentation contract without adding a new stage across 需求澄清、选定方案、拆成任务、执行任务、验收交付、提炼经验、回灌改进.
+
+### Fixed
+
+- Prevented removal of AI scheduling details such as `下一 Ready` from also removing the user's recommended next action and directly reusable reply.
+
+### Release status
+
+- Integrated into the public `2.2.0-beta.5` prerelease; no separate public beta.2 tag was created.
+
 ## [2.2.0-beta.1] - 2026-07-23
 
 ### Added
