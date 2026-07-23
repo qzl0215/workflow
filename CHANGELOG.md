@@ -2,6 +2,29 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.5.0] - 2026-07-24
+
+### Added
+
+- A user-level auto-update command for macOS, Linux and Windows that runs once at login or boot and then every 24 hours, outside the workflow invocation path.
+- A trusted `sync` action that accepts only the latest stable immutable GitHub Release, a unique `workflow.zip` asset, GitHub's SHA-256 digest and a package version matching the Release tag.
+- Single-source enforcement that rejects duplicate discoverable workflow skills and repairs same-version payload drift from the verified Release asset.
+
+### Changed
+
+- Replaced backup-preserving updates with a simpler candidate-first whole-directory replacement: validate in a temporary directory, remove the old active package, then activate the verified package at the canonical `workflow` path.
+- Made uninstall permanent after explicit confirmation; updates and removals no longer leave discoverable `backup`, `failed` or `removed` workflow copies.
+
+### Compatibility
+
+- Normal workflow calls remain fully offline and do not pay an update-check cost.
+- Existing source-managed symlink installations remain source-managed; remote `sync` refuses to replace a symlink with a copied package.
+- Historical installations can run one source update, enable the user-level updater, and then converge automatically to later stable Releases.
+
+### Release status
+
+- Stable public release target: `2.5.0`.
+
 ## [2.4.0] - 2026-07-24
 
 ### Changed
