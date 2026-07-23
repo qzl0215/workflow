@@ -1,134 +1,198 @@
 # workflow
 
-把一句还没想完整的复杂需求，推进成已经做完、验明白，并让下一次更省事的结果。纯问答、单文件明确小修和一次性轻操作默认不触发；显式调用时也只走零额外仪式的轻路径。
+**你说目标，workflow 帮你看清、做成，并让下一次更高效。**
 
-当前协议版本：`2.1.0-beta.3`。
+它把复杂工作统一成计划、执行、复盘三段七动作；遇到跨业务、产品、设计、技术或交付的复杂决策时，组织专家圆桌看见完整森林图景，再选路线、拆任务、实施、验收并把有效经验回灌到唯一真源。只安装 `workflow` 即可，不要求你再准备其他 skills，也不会为了显得完整给项目堆一套文档。
 
-你只需要说目标。workflow 会先查事实、收敛真正需求与推荐方案，再把工作编排成可验收的 Plan 和 Task，持续实施、验收、处理反馈，并把值得复用的经验写回正确位置。
+作者：zhonglin · MIT License
 
-它是 dependency-closed 的单 Skill：不默认安装任何其他 skill、脚本或特定平台能力；有用户指定或宿主原生能力时优先使用，缺失时才加载包内一个最小 fallback。
+当前协议版本：`2.2.0-beta.1`
 
-[下载或本地打开可视化 HTML](docs/index.html)
+[打开中文可视化介绍](docs/workflow-visual-map.html) · [查看完整工作协议](SKILL.md)
 
-## 你会感受到什么
+## 30 秒了解它在做什么
 
-- **先查再问**：能从项目、文档、代码和可用工具确认的事实不重新问你。
-- **先给推荐**：只有真实业务取舍才让你选择；安全、可逆且方向明确时给出默认并继续。
-- **小任务不被流程化**：根协议足够判断时直接做；零文档、零子 Agent、零额外确认、零机械 worktree，只做一次相称验证。
-- **一次批准后持续推进**：正式计划只设置一次开工批准，之后持续做到 AI 验收和授权范围内的交付。
-- **结果和进展不打架**：需求、正式方案、复杂实施合同、当前进展各有唯一真源。
-- **变化只重验影响面**：证据仍覆盖当前对象和输入时复用；发生实质变化时只重验受影响路径。
+适合这些任务：
 
-## 七阶段与一个开工门
+- 功能较复杂，需要跨多个文件或多个步骤；
+- 需求还比较散，需要先看全局、定方案和优先级；
+- 涉及 UI、视觉或动效，需要先定设计再写工程计划；
+- 要跨会话推进，或需要多人 / 多 Agent 协作；
+- 最终要有可复查的测试、交付或发布结果。
 
-| 阶段 | 只解决什么 | 典型产出 |
-|---|---|---|
-| 01 看清需求 | 为谁解决什么，边界、验收和最贵未知是什么 | 需求 baseline、事实、推断、未知、需求确认卡 |
-| 02 方案选型 | 最终做成什么样，为什么选择这条路线 | 推荐方向、最终 PRD / 体验草案、决定依据 |
-| 03 计划编排 | 怎样拆成低冲突、可验收的 Plan 与 Task | 在既有安全计划区或对话形成 Plan Portfolio、P-DAG、Task 业务索引、按需复杂合同 |
-| ◆开工门 | `plan_mode / approval_state` 是否允许写入，当前现场与基线是否安全 | 通过后才建立或确认相称隔离并开始产品写入 |
-| 04 执行建设 | 当前 Task 怎样做到并证明局部正确 | 实现产物、结构化返回、局部验证 |
-| 05 质量验收 | 当前结果是否简单、正确、完整 | AI 复核、代码瘦身、fresh 验收 |
-| 06 集成交付 | 怎样基于最新目标安全落地 | 冲突理解与合成、集成验证、授权内交付 |
-| 07 复盘升级（有信号才进入） | 什么应留下，哪里应永久变好 | 项目事实回写、可复用经验、受控进化；无信号直接 no-op 结束 |
+不适合纯问答、改一个错别字、一次性安全小操作。这些事情直接做更快。
 
-阶段是 AI 的责任边界和问题索引，不是多次会议或必须逐个加载的文件。根协议与现有证据足够时，一次连续执行可快速通过多个阶段。简单、可逆、无需正式计划的任务记录 `plan_mode=inline / approval_state=not-required`，用户原始执行请求直接作为范围内本地实施授权，不增加确认仪式或独立需求卡；正式路径从选择之时起就是 `plan_mode=formal`，草案无论只在对话、还是用户或宿主提供的一个既有安全计划区，都必须 `approval_state=approved` 才能开工。开工门先复用 Codex thread、用户或兼容 harness 已提供且满足归属、隔离和最新基线的工作现场；只有现有现场不足时才新建 Request branch / worktree。批准版计划只在需要迁移时原子迁入并删除临时草案，不保留两份可编辑副本，随后才开始首次实现写入。
+收到需求后，它先判断是否值得进入完整流程。纯问答、改一个错别字、一次性安全小操作会直接做；复杂任务进入三段七动作：
 
-## 四份唯一真源
+> 计划：需求澄清 → 选定方案 → 拆成任务<br>
+> 执行：执行任务 → 验收交付<br>
+> 复盘：提炼经验 → 回灌改进
 
-需要跨会话恢复、长期持久化或多人协作的 Request 使用 `<project>/plans/<request-id>/`。只有内容真实需要持久化时才建文件：
+七个动作是证据检查点，不是七场固定仪式：证据已存在就快速通过，轻任务整体走短路径，但价值判断、完整 Plan 确认、验收证据和外部授权不会降级。
 
-```text
-plans/<request-id>/
-├── findings.md
-├── task_plan.md
-├── implementation-plan.md   # 仅复杂实施按需创建
-└── progress.md
+## 本地已验证 ≠ 已交付
+
+当目标包含提交、合并或发布时，“验收交付”会固有地完成集成发布，不把本地测试绿色当作终点。workflow 先读取项目部署/发布文档以及项目规则、CI/脚本和仓库配置，确定真实 remote、目标分支、集成方式、版本、回滚与发布后检查；然后只在授权范围内连续完成：提交 → 合并 → 发布 → 发布后 smoke。
+
+项目要求 PR/MR、CI、直接 fast-forward、特定部署命令或 GitHub Release 时，以项目真源为准，workflow 不硬编码平台流程。用户已经明确要求“提交合并发布”且目标可由项目文档唯一确定时，不会在每一步重复索取同一授权；目标不明、未授权或存在破坏性例外时，才停在一个具体决策点。
+
+用户不承担代码审阅。AI 自己检查 diff、范围和测试，只把业务结果、风险与外部授权交给用户决定。PR/MR 仅在分支保护、必需 CI、项目规则或真实 reviewer 要求时使用；tag、Release、部署等节点也必须有独立价值，能由一个平台动作安全完成的步骤会合并，不为 Git 术语增加人工停顿。
+
+## 只有需要你接棒时才停下
+
+workflow 连续工作时不会为了播报进度而暂停。真正需要你纠正理解、选择方向、确认完整计划、提供外部输入、授权副作用、解除阻断或验收结果时，才用结论优先的短交接。下面用本包现有文件演示三种可点击交接；真实任务会链接到该项目的实际成果。
+
+### 场景一：方向决策
+
+> 结论｜推荐先验证单一路径，它覆盖核心价值且最容易回退。<br>
+> 阶段｜2/7 · 选定方案<br>
+> 回看｜✓ [需求澄清](references/understand-goal.md) · ● 选定方案 · ○ 拆成任务<br>
+> 待决策｜推荐方案成本最低；备选方案覆盖更全，但会提前引入维护负担。<br>
+> 最佳下一步｜回复“采用推荐方案”继续，或指出必须保留的备选能力。
+
+### 场景二：阻断或授权
+
+> 结论｜成果已在本地验明，但发布会产生外部影响，尚未执行。<br>
+> 阶段｜5/7 · 验收交付<br>
+> 回看｜✓ [选定方案](docs/workflow-visual-map.html) · ✓ [拆成任务](templates/) · ● 验收交付<br>
+> 风险｜继续发布会改变外部环境；保持本地不会产生副作用。<br>
+> 最佳下一步｜回复“授权发布”或“保持本地已验证”。
+
+### 场景三：最终完成
+
+> 结论｜纳入范围已完成并通过验收，未执行任何未授权外部动作。<br>
+> 阶段｜7/7 · 回灌改进<br>
+> 状态｜已完成<br>
+> 回看｜✓ [需求澄清](references/understand-goal.md) · ✓ [选定方案](docs/workflow-visual-map.html) · ✓ [拆成任务](templates/)<br>
+> 最佳下一步｜回复“继续下一目标”或直接提出新任务。
+
+## 不知道下一步时：四路未知
+
+workflow 不会把所有不确定都变成对用户的追问：
+
+| 未知 | 怎么处理 |
+|---|---|
+| 事实可查 | AI 查项目、数据、工具、配置和可信来源 |
+| 取舍待定 | 给推荐、代价和默认假设，必要时集中 Grill 决策者 |
+| 假设待验 | 做最小实验、原型、小样或可失败验收 |
+| 外部待解 | 写清 blocker、外部 owner、解锁条件与授权边界 |
+
+四路未知处理完都会回到当前业务动作，不再制造第二套阶段名称。
+
+## 专家圆桌如何看见整片森林
+
+当问题跨多个领域、角色目标冲突或重大路线难以取舍时，workflow 会先判断“把这件事做到 90 分，最重要的专家角色是谁”，再邀请最相关的 3–5 个视角参与。角色不写死；每个专家都要勾勒最终画面、关键依赖、最大盲区以及会改变判断的新证据。
+
+会议不是轮流发表套话，而是三段式：
+
+1. **独立发散**：所有专家看同一份事实，各自指出机会、依赖、盲区和会改变判断的新证据。
+2. **交叉质询**：互相挑战未经证明的假设、只顾局部的方案和遗漏的角色或生命周期。
+3. **主持收敛**：把信息合成完整森林图景——目标、业务主线、能力、基础依赖、约束、风险和 2–3 条可走路线；再给出推荐方案、必要备选和删除理由。
+
+简单、低风险、容易回退的任务不会为了“专家感”强行开会。没有多个 Agent 时也能顺序模拟多视角，但会明确说明这不是独立专家审查。
+
+## 安装
+
+需要 Python 3.9+，运行时不需要第三方 Python 包。
+
+### 推荐：复制给你的 Agent
+
+不需要先知道 skills 目录。把下面整段复制给当前 Agent，它会根据自己的运行环境完成安装和验证：
+
+> 请安装 GitHub 项目 `https://github.com/qzl0215/workflow`。先把仓库克隆到临时目录，再根据你当前 Agent 的配置确认 skills 父目录，不要猜固定路径；运行 `python3 scripts/install.py install --target "<skills父目录>"`。如果已经安装，则使用 `update`。最后运行同一脚本的 `check`，只有验证通过后才能告诉我安装完成。不要安装任何其他 skill，也不要覆盖没有备份的旧版本。
+
+### 自己在终端安装
+
+如果电脑上只有一个已存在的常见 Agent skills 目录，安装器会自动识别：
+
+```bash
+git clone --depth 1 https://github.com/qzl0215/workflow.git
+cd workflow
+python3 scripts/install.py install
 ```
 
-| 文件 | 面向谁 | 唯一拥有 | 不保存什么 |
-|---|---|---|---|
-| `findings.md` | 人与 AI | 完整需求 baseline、背景、事实、推断、未知、授权与方案依据；顶部字段直接渲染“需求确认卡｜我将按此继续” | 最终 PRD、任务编排、运行进展 |
-| `task_plan.md` | 人 | 一屏决策、最终 PRD / 体验方案、范围、Plan Portfolio、P-DAG、Task 业务索引、所有 Plan / Task 依赖与波次、规划基线和正式批准状态 | 第二份授权事实、执行阶段、工作项状态、实际验收结果 |
-| `implementation-plan.md` | AI | 从已批准计划派生的只读 P/T DAG，以及复杂 Task 的输入、写域、DONE、验证、停止条件合同 | 简单 Task、拓扑决定、运行进展、实际验收结果 |
-| `progress.md` | 人与 AI | “当前 / 工作进展 / 验收记录”三块最新快照 | 第二份定义、派生调度表、事件日记、完整日志 |
+先只读查看识别结果：
 
-不为迁移制造兼容副本，也不默认建立每 Plan、每 Agent、每证据或每次交接的文档。完整日志、截图和构建物留在原产物位置，四份真源只保存可决定下一步的信息。
+```bash
+python3 scripts/install.py detect
+```
 
-四个模板都是菜单，不是待填满的表单：只保留当前 Request 的真实章节、节点和字段；不存在的 Plan/Task、空表和占位内容必须删除。
+如果发现多个目录或没有识别到，请明确指定你的 Agent skills 父目录：
 
-## P / T 双 DAG 怎样读
+```bash
+python3 scripts/install.py install --target "/path/to/agent/skills"
+```
 
-`task_plan.md` 是 Plan / Task 依赖、波次与汇合拓扑的唯一 owner。它先展示 P-DAG：每个 `Pxx` 是一个可独立验收的业务结果，边表示业务结果的依赖和汇合。
+安装结果为 `<skills父目录>/workflow`。自动识别只使用已配置的 `AGENT_SKILLS_DIR` 或本机已经存在的常见目录；有歧义时会停止，不会替你猜。
 
-复杂实施再由 `implementation-plan.md` 展示从已批准计划派生的只读双图：先看 P-DAG 的业务结果全景，再看按 Plan 分组的 T-DAG。每个 Task 带执行波次；同波次、无依赖的节点可并行，Plan 内边留在组内，跨 Plan 边明确写在组外。图节点与摘要表中的 `Pxx / Pxx-Txx` 都必须能点击定位同 ID 摘要或合同；拓扑变化先更新 `task_plan.md`，再同步派生图与受影响合同。
+安装后检查：
 
-简单 Task 直接在 `task_plan.md` 的业务索引中写最小 inline 约定。只有需要委派、跨会话、复杂依赖或高写冲突控制的 Task 才展开完整合同；一个 Request 只使用一份 `implementation-plan.md`，不按 Agent 数量复制。
-
-## 用户交互预算
-
-- 看清需求结束时，如果关键事实已查清、剩余假设都有安全可逆默认，workflow 从 `findings.md`（简单路径则从当前对话事实）展示一张简短的“需求确认卡｜我将按此继续”，不问泛化的确认问题，随后自动进入方案选型。
-- 只有答案会改变用户结果、范围、验收、授权或难逆风险且没有安全默认时才暂停。一轮围绕一个决策主题，通常只问 1–3 个互斥问题，并说明推荐与影响。
-- 存在必须由人承担的体验、成本、风险或难逆方向取舍时，在方案选型阶段呈现最合适的选择材料并等待一次决定；已选方向不在正式计划中重复询问。
-- 选择正式计划路径时，用户一次批准需求 baseline、最终方案、范围和编排；批准门不取决于 `task_plan.md` 是否已经落盘。开工后默认连续推进，只有新的业务契约变化、未授权外部副作用或没有安全默认的难逆决定才中断。
-- 用户只要求计划时，交付计划后结束，不进入开工门或实施。
-- 验收反馈先按缺陷、遗漏、同目标优化、新 Plan 或新 Request 分类；未受影响工作继续，不把每条反馈直接塞进正在执行的 Task。
-
-## Native-first 与安全降级
-
-同一关注点只保留一个方法 owner：
-
-1. 用户明确指定方法时遵循用户选择，并让结果回到四份真源。
-2. 否则，宿主已有设计、协作、调试、验证、浏览或 Git 等原生能力时，直接使用对应原生能力。
-3. 业务阶段协议只给边界和输出；宿主缺少某项方法时，才为该关注点加载包内一个最小 fallback。命中原生能力后不执行、不叠加同类 fallback。
-
-这种选择不创建第二份计划、状态或确认，也不把任何外部 skill 写成运行前提。没有独立 Agent 时，同一 AI 可以顺序切换责任角色并如实标注；没有浏览器、Git、网络或权限时，明确未覆盖项，不伪造结果。
-
-## 并行与最小上下文
-
-默认 solo。UI、多文件、阶段数量或概念角色都不能单独成为派 Agent 的理由；只有独立决策、独立写域或高风险 fresh 证据的收益明确高于派发、等待、整合与复核成本时才并行，收益消失立即收敛。
-
-同一 Request 的协作者默认共享开工门确认的一个工作现场；需要 worktree 时也只共享这一份。总协调者唯一维护四份真源和 Git 生命周期；执行者不自行创建工作区、commit、rebase、push，也不越过合同写域。
-
-只有依赖独立、写域和共享资源不冲突、验证环境可并行且收益为正的 Task 才并行。同文件不同区域、共享 schema/API、lockfile、migration、生成物和 release candidate 默认合并 owner 或串行。
-
-复杂 Task 只获得其版本化合同、`progress.md` 当前切片和精确事实 / 代码引用；缺什么只请求具体 gap，不默认加载完整需求、专家讨论或其他 Task 历史。
-
-## 安装与自动更新
-
-仓库和运行包都是零 Python。你只需要一个能操作本地文件的 Agent。
-
-### 推荐：发给 Agent 的一句话
-
-第一次发送会安装，以后再次发送同一句会自动更新：
-
-> 请从 `https://github.com/qzl0215/workflow` 安装或更新 workflow：先唯一定位你当前实际使用的 skills 目录，无法唯一定位就停止；把最新 main 解析成一个不可变 commit SHA，再从同一 SHA 将 `SKILL.md`、`references/`、`templates/` 和 `tests/scenarios.md` 下载到临时目录，校验版本、必需文件与全部本地引用后，再原子替换 workflow；有旧版先整体备份，更新失败恢复备份，首次安装失败删除未完成目录；最后报告版本、来源 commit 和安装位置，不要猜固定目录。
-
-Agent 只把根协议、阶段 references、templates 和按需维护契约 `tests/scenarios.md` 放入实际使用的 `workflow` 目录；README、HTML 和其他仓库维护文件不会进入日常运行上下文。
+```bash
+python3 scripts/install.py check --target "/path/to/agent/skills"
+```
 
 ## 开始使用
 
-安装后直接描述目标：
+安装后，直接把复杂目标交给 Agent：
 
-> 用 workflow 推进这个需求。先查项目和现有事实；只有会改变结果且没有安全默认的决定才问我。先给推荐方向，需要正式计划时让我一次批准需求、最终方案、范围和编排；批准后持续实施和验收，直到证据覆盖当前对象、输入、环境与验收，并在我的授权范围内交付。
+> 用 workflow 帮我推进这个项目的新功能。先把目标说清楚；需要时组织专家圆桌，给我完整森林图景和推荐路线。如果涉及界面，先完成体验、视觉与动效选型，再写计划、实现并按真实使用验收。
 
-## 安全边界
+workflow 会按任务复杂度自动选择必要阶段。成熟项目不会被强行“补基建”；只有入口、约束、关键命令或验证路径真的缺失并阻断后续工作时，才优先补现有真源，极端情况下最多新建一份项目入口文档。
 
-- 能自行发现的事实不会重新问用户。
-- 未经明确授权，不 commit、push、merge、deploy、delete 或公开发布。
-- 没有与当前对象、输入、环境和验收匹配且仍有效的证据，不声称完成。
-- 目标分支或实质输入变化后，只让受影响证据失效并 fresh 重验相关路径。
-- 没有复用证据，不把一次经验永久写进 workflow。
-- 项目地基只补当前交付真正需要的入口、导航或设计契约，不默认铺治理文档。
+## 14 项按需能力如何保持思考深度
 
-## 维护检查
+七个主 owner 分别守住七个业务动作；七个 harness 在关键追问与反向挑战、体验塑形、设计真源、Agent 协调、并行成果合并、失败修复和上下文交接有价值时叠加。AI 自动选择 H0–H3 中最低但足够的深度；H2/H3 会说明为什么需要加深，硬门不能降级。
 
-把下面一句交给 Agent：
+UI 范围先用线框图确认旅程、信息架构和关键状态；用户认可方向后再投入高保真 demo。任务按 Plan/Task DAG 拆串并联，只并行文件域独立且收益高于协调成本的工作。估算聚焦 AI 执行路径、等待外部决策和风险缓冲，不把人的工作天数直接当成 AI 耗时。
 
-> 请维护检查当前 workflow 仓库：以 `SKILL.md`、阶段 `references/`、`templates/` 和 `tests/scenarios.md` 为真源，检查 frontmatter、全部相对引用与文件可达性、版本和安装提示词同步、零 Python、敏感信息、冲突标记及实际 diff；再逐项判断受影响行为场景能否从协议导出，给出通过、失败、证据位置和最小修复建议，不要只做关键词匹配。
+## 它如何避免把事情做重
 
-MIT licensed. <sub>Maintained by zhonglin.</sub>
+| 原则 | 实际行为 |
+|---|---|
+| 一个入口 | 包内只有一个根 `SKILL.md`，所有能力都已编排在同一个包内 |
+| 按需读取 | 默认一次只读取当前阶段的一份 reference，不把整套流程塞进上下文 |
+| 专家按需会诊 | 复杂决策才发散和质询；简单任务不走形式 |
+| 关键问题集中问 | Grill 一次尽量问完相互独立的高价值问题，不用无限对话消耗用户 |
+| 设计先于计划 | UI 任务先完成体验、视觉、动效和完整状态选型；非 UI 明确跳过 |
+| 最小项目就绪 | 项目能开工就不改；缺什么只补真正阻断的那一处 |
+| 证据先于完成 | 没有刚刚跑出的验证证据，就不声称任务已经完成 |
+| 文档服从决策 | 只补有明确读者问题和唯一 owner 的真源；失去价值就合并或删除 |
+| 副作用先授权 | 未经明确授权，不 commit、push、merge、deploy、delete 或公开发布 |
+
+缺少 subagent、浏览器、memory 或 Git 时，workflow 会改用当前环境能提供的安全路径，并明确哪些验证没有做；不会伪造 PR、发布或完成状态。
+
+## 更新与卸载
+
+更新前会自动保留旧版本备份：
+
+```bash
+python3 scripts/install.py update --target "/path/to/agent/skills"
+```
+
+卸载只会把目录改名为可恢复备份，不会永久删除：
+
+```bash
+python3 scripts/install.py uninstall --target "/path/to/agent/skills" --yes
+```
+
+## 项目维护
+
+运行完整检查：
+
+```bash
+python3 -B -m unittest discover -s tests -p 'test_*.py' -v
+python3 -B scripts/workflow_doctor.py
+python3 -B scripts/release_check.py
+```
+
+贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)，安全问题见 [SECURITY.md](SECURITY.md)，来源与 clean-room 边界见 [NOTICE.md](NOTICE.md)。本项目按 [MIT License](LICENSE) 发布。
+
+---
 
 ## English
 
-`workflow` turns an incomplete request into a verified delivery through seven stages and one explicit start gate. Four sources of truth hold the requirement baseline and findings, the human-approved PRD and orchestration, complex AI-facing Task contracts, and the current progress snapshot. It prefers user-selected or host-native capabilities, loads one minimal fallback only when needed, and never treats another skill as a prerequisite.
+`workflow` is a dependency-closed AI skill that turns an incomplete goal into a verified delivery. For complex decisions it runs an expert roundtable, maps the full problem landscape, and converges on a recommended route before experience design, planning, implementation, debugging, verification, and delivery. Install this repository only; no other custom skill or third-party Python package is required.
+
+Ask your agent to clone `https://github.com/qzl0215/workflow`, identify its own skills parent directory, run `python3 scripts/install.py install --target "<skills-directory>"`, and verify with the `check` action. The installer can also safely auto-detect one existing common skills directory with `python3 scripts/install.py install`; ambiguity fails closed.
+
+See the [visual introduction](docs/workflow-visual-map.html), or run `python3 -B scripts/release_check.py` to verify a checkout.
