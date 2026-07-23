@@ -108,8 +108,8 @@ class DocumentationContractTest(unittest.TestCase):
     def test_first_public_stage_is_requirement_clarification(self) -> None:
         skill = (PACKAGE / "SKILL.md").read_text()
         self.assertIn("计划：需求澄清 → 选定方案 → 拆成任务", skill)
-        self.assertEqual(next(iter(visual_generator_module().ACTION_STORIES)), "需求澄清")
-        self.assertIn('id="slide-需求澄清"', (PACKAGE / "docs/workflow-visual-map.html").read_text())
+        self.assertEqual(next(iter(visual_generator_module().STAGE_QUESTIONS)), "需求澄清")
+        self.assertIn('data-stage="需求澄清"', (PACKAGE / "docs/workflow-visual-map.html").read_text())
 
     def test_github_release_metadata_carries_forward_the_previous_public_version(self) -> None:
         skill = (PACKAGE / "SKILL.md").read_text()
@@ -154,83 +154,22 @@ class DocumentationContractTest(unittest.TestCase):
         for token in [*stages, *UNKNOWN_ROUTES, *routes]:
             self.assertIn(token, generated)
 
-    def test_action_registry_is_the_single_user_content_model(self) -> None:
+    def test_stage_questions_are_a_small_user_facing_content_model(self) -> None:
         module = visual_generator_module()
-        actions = module.ACTION_STORIES
-        self.assertEqual(tuple(actions), STAGES)
-        required = {
-            "promise", "question", "ai", "user", "outcome", "evidence", "next",
-            "fallback", "owner", "harnesses", "documents", "case", "deep",
-            "pain", "solution", "best_practice",
-        }
-        for name, action in actions.items():
+        questions = module.STAGE_QUESTIONS
+        self.assertEqual(tuple(questions), STAGES)
+        for name, question in questions.items():
             with self.subTest(stage=name):
-                self.assertEqual(set(action), required)
-                self.assertTrue(action["owner"].endswith(".md"))
-                self.assertTrue(action["documents"])
-                self.assertTrue(action["deep"])
+                self.assertLessEqual(len(question), 18)
+                self.assertTrue(question.endswith("？"))
 
-    def test_user_layer_has_a_hard_copy_budget_and_no_maintainer_language(self) -> None:
-        actions = visual_generator_module().ACTION_STORIES
-        maintainer_words = re.compile(r"\b(?:owner|harness|reference|DAG|digest|fresh|blocker)\b|L0[–-]L4", re.I)
-        user_fields = ("promise", "question", "ai", "user", "outcome", "evidence", "next", "fallback")
-        for name, action in actions.items():
-            with self.subTest(stage=name):
-                for field in user_fields:
-                    value = action[field]
-                    self.assertLessEqual(len(value), 32, f"{name}.{field} exceeds 32 chars: {value}")
-                    self.assertIsNone(maintainer_words.search(value), f"{name}.{field}: {value}")
-                total = sum(len(action[field]) for field in user_fields)
-                self.assertLessEqual(total, 150, f"{name} user layer exceeds 150 chars")
-
-    def test_actions_cover_all_capabilities_and_document_examples(self) -> None:
+    def test_visual_model_covers_all_capabilities_and_document_templates(self) -> None:
         module = visual_generator_module()
-        actions = module.ACTION_STORIES
-        owners = {action["owner"] for action in actions.values()}
-        harnesses = {item for action in actions.values() for item in action["harnesses"]}
-        documents = {item for action in actions.values() for item in action["documents"]}
-        self.assertEqual(owners, set(module.PRIMARY_OWNER_FILES))
-        self.assertEqual(harnesses, set(module.HARNESS_FILES))
-        self.assertTrue(set(module.VISUAL_TEMPLATE_NAMES).issubset(documents))
-        self.assertEqual(actions["回灌改进"]["documents"], ("目标真源",))
-        self.assertIn("index.md", actions["拆成任务"]["documents"])
-        self.assertIn("并行成果：各自验完，再串行合入", " ".join(actions["验收交付"]["deep"]))
-        evolution_story = " ".join(str(actions["回灌改进"][field]) for field in actions["回灌改进"])
-        for token in ("小改动、大价值", "确认后", "正确项目"):
-            self.assertIn(token, evolution_story)
-        self.assertNotIn("两次独立复现", evolution_story)
-        delivery_story = " ".join(
-            str(actions["验收交付"][field])
-            for field in ("solution", "best_practice", "outcome", "evidence", "deep")
-        )
-        for token in ("项目发布真源", "集成发布", "发布后核验"):
-            self.assertIn(token, delivery_story)
+        self.assertEqual(len(module.PRIMARY_OWNER_FILES), 7)
+        self.assertEqual(len(module.HARNESS_FILES), 7)
+        self.assertEqual(len(module.VISUAL_TEMPLATE_NAMES), 7)
 
-        examples = module.DOCUMENT_EXAMPLES
-        self.assertEqual(documents, set(examples))
-        for filename in module.VISUAL_TEMPLATE_NAMES:
-            sample = examples[filename]
-            with self.subTest(document=filename):
-                lines = [line for line in sample.splitlines() if line.strip()]
-                self.assertGreaterEqual(len(lines), 5)
-                self.assertLessEqual(len(lines), 12)
-                self.assertGreaterEqual(len(sample), 80)
-                self.assertLessEqual(len(sample), 360)
-
-    def test_action_update_statuses_are_derived_from_changelog_sections(self) -> None:
-        module = visual_generator_module()
-        release = """## [test]
-### Added
-- 提炼经验
-### Changed
-- 需求澄清、选定方案
-"""
-        statuses = module.derive_action_statuses(release)
-        self.assertEqual(statuses["提炼经验"], "本版新增")
-        self.assertEqual(statuses["需求澄清"], "本版强化")
-        self.assertEqual(statuses["回灌改进"], "保持稳定")
-
-    def test_visual_build_allows_current_release_to_omit_stable_actions(self) -> None:
+    def test_visual_build_uses_the_current_release_without_publishing_release_noise(self) -> None:
         def mutate(package: Path) -> None:
             skill = (package / "SKILL.md").read_text()
             version = re.search(r"^version:\s*(\S+)$", skill, re.M)
@@ -252,12 +191,9 @@ class DocumentationContractTest(unittest.TestCase):
 
         result, generated = self.run_copied_visual(mutate)
         self.assertEqual(result.returncode, 0, result.stdout)
-        self.assertIsNotNone(
-            re.search(r'"name": "需求澄清".*?"status": "本版强化"', generated, re.DOTALL)
-        )
-        self.assertIsNotNone(
-            re.search(r'"name": "回灌改进".*?"status": "保持稳定"', generated, re.DOTALL)
-        )
+        self.assertIn("需求澄清", generated)
+        self.assertNotIn("本版强化", generated)
+        self.assertNotIn("保持稳定", generated)
 
     def test_visual_build_still_rejects_a_missing_current_release(self) -> None:
         def mutate(package: Path) -> None:
@@ -277,7 +213,7 @@ class DocumentationContractTest(unittest.TestCase):
         result, _ = self.run_copied_visual(mutate)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(
-            "visual map source error: current changelog does not support the visual action update states",
+            "visual map source error: current changelog does not support the visual self-introduction",
             result.stdout,
         )
 
@@ -290,34 +226,31 @@ class DocumentationContractTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("stale visual map", result.stdout)
 
-    def test_generated_action_payload_carries_the_complete_relationship(self) -> None:
+    def test_visual_map_is_a_concise_self_description(self) -> None:
         generated = (PACKAGE / "docs/workflow-visual-map.html").read_text()
         for token in (
-            '"question":',
-            '"ai":',
-            '"user":',
-            '"outcome":',
-            '"evidence":',
-            '"next":',
-            '"documents":',
-            '"deep":',
-            '"status":',
-            "## 已确认方案",
-            "## 验证证据",
+            "我是 workflow",
+            "我只有一条主链",
+            "大多数时候，我会自己往前走",
+            "这些节点，我一定等你",
+            "遇到不确定，我不会一股脑问你",
+            "我是单包协议",
         ):
             self.assertIn(token, generated)
+        self.assertNotIn('id="workflow-actions"', generated)
+        self.assertLess(len(generated), 40000)
 
     def test_visual_map_leads_with_the_user_result_and_main_path(self) -> None:
         generated = (PACKAGE / "docs/workflow-visual-map.html").read_text()
         for token in (
-            "把模糊目标，变成已验证结果。",
-            "AI 负责查清、想透、拆好、做成、验真",
+            "复杂工作，交给我推进到真的完成。",
+            "你给我目标",
             "不确定 → 承诺",
             "承诺 → 证据",
             "结果 → 能力",
-            'id="slide-cover"',
-            'id="slide-overview"',
-            'id="slide-install"',
+            'id="intro"',
+            'id="path"',
+            'id="install"',
             'data-user-layer',
             "prefers-reduced-motion",
         ):
@@ -328,46 +261,43 @@ class DocumentationContractTest(unittest.TestCase):
         self.assertNotIn("<script src=", generated)
         self.assertNotIn("@import url", generated)
 
-    def test_visual_map_is_an_interactive_presentation_deck(self) -> None:
+    def test_visual_map_is_a_fluid_responsive_document(self) -> None:
         generated = (PACKAGE / "docs/workflow-visual-map.html").read_text()
         for token in (
-            'class="deck"',
-            'class="slide cover-slide"',
-            'data-kind="action"',
-            'id="slide-需求澄清"',
-            'id="slide-回灌改进"',
-            'id="slide-install"',
-            'data-deck-prev',
-            'data-deck-next',
-            'data-slide-target',
+            'class="page-shell"',
+            'class="stage-grid"',
+            'data-stage="需求澄清"',
+            'data-stage="回灌改进"',
+            'id="install"',
             'data-copy-target="agent-prompt"',
-            'aria-label="演示文稿导航"',
-            "痛点",
-            "解决方案",
-            "最佳实践",
-            "安装 workflow",
-            "IntersectionObserver",
-            "scrollIntoView",
-            "PageDown",
+            'aria-label="页面导航"',
+            "安装我",
             "prefers-reduced-motion",
         ):
             self.assertIn(token, generated)
-        self.assertEqual(generated.count('data-kind="action"'), 7)
-        self.assertGreaterEqual(generated.count('class="slide '), 12)
-        self.assertIn("scroll-snap-type:y mandatory", generated)
+        self.assertEqual(generated.count('data-stage="'), 7)
+        self.assertIn("width:calc(100% - (2 * var(--gutter)))", generated)
+        self.assertIn("@media(min-width:1800px)", generated)
         self.assertIn("min-height:44px", generated)
+        self.assertNotIn("scroll-snap-type:y mandatory", generated)
+        self.assertNotIn('class="slide ', generated)
         generator = (PACKAGE / "scripts/generate_visual_map.py").read_text()
         self.assertNotIn("LEGACY_HTML_TEMPLATE", generator)
         self.assertNotIn("REFERENCE_STORIES", generator)
         script_index = generated.index("<script>")
-        for static_token in ("把模糊目标，变成已验证结果。", 'id="slide-需求澄清"', 'id="slide-install"'):
+        for static_token in ("复杂工作，交给我推进到真的完成。", 'data-stage="需求澄清"', 'id="install"'):
             self.assertLess(generated.index(static_token), script_index)
         for removed in (
+            'class="deck"',
+            'data-deck-prev',
+            'data-deck-next',
+            "IntersectionObserver",
+            "scrollIntoView",
+            "PageDown",
             'id="workbench"',
             'class="action-button"',
             'class="stats"',
             'id="router"',
-            'id="unknowns"',
             'id="case"',
             'id="forest"',
             'id="references"',
@@ -386,20 +316,18 @@ class DocumentationContractTest(unittest.TestCase):
         ):
             self.assertNotIn(legacy, generated)
 
-    def test_each_action_slide_teaches_pain_solution_practice_and_evidence(self) -> None:
+    def test_each_stage_card_answers_one_business_question(self) -> None:
         module = visual_generator_module()
         generated = (PACKAGE / "docs/workflow-visual-map.html").read_text()
-        for name, action in module.ACTION_STORIES.items():
+        for name, question in module.STAGE_QUESTIONS.items():
             with self.subTest(stage=name):
-                slide = re.search(
-                    rf'<section[^>]+id="slide-{re.escape(name)}".*?</section>',
+                card = re.search(
+                    rf'<article[^>]+data-stage="{re.escape(name)}".*?</article>',
                     generated,
                     re.S,
                 )
-                self.assertIsNotNone(slide)
-                source = slide.group(0)
-                for field in ("pain", "solution", "best_practice", "evidence"):
-                    self.assertIn(action[field], source)
+                self.assertIsNotNone(card)
+                self.assertIn(question, card.group(0))
 
     def test_user_layer_does_not_expose_maintenance_vocabulary(self) -> None:
         generated = (PACKAGE / "docs/workflow-visual-map.html").read_text()
