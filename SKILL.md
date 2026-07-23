@@ -1,7 +1,7 @@
 ---
 name: workflow
 description: 把复杂目标从“还没想完整”推进到“已经做完、验明白并让下一次更高效”的单技能工作流。围绕 AI 高投入产出比，完成目标澄清、方案选择、任务拆解、实施、验收、复盘和受控进化；不用于纯问答或一次性小操作。
-version: 2.2.0-beta.5
+version: 2.3.0
 author: zhonglin
 license: MIT
 ---

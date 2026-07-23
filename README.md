@@ -6,7 +6,7 @@
 
 作者：zhonglin · MIT License
 
-当前协议版本：`2.2.0-beta.5`
+当前协议版本：`2.3.0`
 
 [打开中文可视化介绍](docs/workflow-visual-map.html) · [查看完整工作协议](SKILL.md)
 

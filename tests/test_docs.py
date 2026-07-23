@@ -126,9 +126,15 @@ class DocumentationContractTest(unittest.TestCase):
     def test_visual_map_uses_the_current_skill_version(self) -> None:
         skill = (PACKAGE / "SKILL.md").read_text()
         generated = (PACKAGE / "docs/workflow-visual-map.html").read_text()
-        version = re.search(r"^version:\s*(\d+)\.(\d+)\.\d+-([A-Za-z]+)", skill, re.M)
+        version = re.search(
+            r"^version:\s*(\d+)\.(\d+)\.\d+(?:-([A-Za-z]+)(?:\.\d+)?)?$",
+            skill,
+            re.M,
+        )
         self.assertIsNotNone(version)
-        label = f"V{version.group(1)}.{version.group(2)} {version.group(3).upper()}"
+        label = f"V{version.group(1)}.{version.group(2)}"
+        if version.group(3):
+            label += f" {version.group(3).upper()}"
         self.assertIn(label, generated)
 
     def test_visual_map_is_fresh(self) -> None:
@@ -451,7 +457,7 @@ class DocumentationContractTest(unittest.TestCase):
         for token in ("Attribution", "Clean-room", "Excluded"):
             self.assertIn(token, notice)
         skill = (PACKAGE / "SKILL.md").read_text()
-        self.assertIn("version: 2.2.0-beta.5", skill)
+        self.assertIn("version: 2.3.0", skill)
         self.assertIn("author: zhonglin", skill)
 
     def test_workflow_has_project_scoped_standing_release_authorization(self) -> None:
@@ -466,6 +472,9 @@ class DocumentationContractTest(unittest.TestCase):
             "fresh",
             "P0",
             "禁止 force",
+            "默认发布正式版本",
+            "递增 minor 版本",
+            "只有项目 owner 明确要求时才创建预发布",
         ):
             self.assertIn(token, contributing)
 

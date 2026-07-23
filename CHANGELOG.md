@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.3.0] - 2026-07-24
+
+### Changed
+
+- Promoted the verified `2.2.0-beta.5` protocol to the stable public `2.3.0` release without changing its workflow behavior.
+- Made stable minor releases the public default: each normal publication increments the minor version, while prereleases require an explicit project-owner request.
+
+### Compatibility
+
+- `2.3.0` keeps the protocol, installer, package manifest and compatibility boundary verified in `2.2.0-beta.5`; only release metadata and the standing publication policy changed.
+- Existing beta installations can use the backup-preserving installer `update` action. The previous `2.2.0-beta.5` prerelease remains available as a rollback point.
+
+### Release status
+
+- Stable public release target: `2.3.0`.
+
 ## [2.2.0-beta.5] - 2026-07-24
 
 ### Added
