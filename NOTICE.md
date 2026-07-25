@@ -13,6 +13,8 @@ Their MIT permission notices are preserved through this repository's MIT License
 
 The requirement-discovery update in `2.2.0-beta.4` was conceptually informed by public `grill-me` decision-tree interviewing patterns. Its Chinese protocol, hard gates, numbered batch interaction, tests, and integration with workflow were independently rewritten for this project.
 
+The four method packs added in `2.8.0` were conceptually informed by the project's PUA/P10 methodology catalog and widely known company operating principles. The routing, grouping, Chinese prompts, stop rules, tests, and workflow integration were independently rewritten; company personas, slogans, internal operating details, and PUA voice are not included.
+
 ## Clean-room
 
 All other workflow, readiness, solution/design, execution, debugging, delivery, portability, template, and tooling text in this candidate was newly organized from functional requirements, observable behavior, and general engineering principles. Unlicensed wording, historical logs, platform-specific implementations, and private operating details were not copied.

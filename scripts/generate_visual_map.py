@@ -14,6 +14,8 @@ from pathlib import Path
 PACKAGE = Path(__file__).resolve().parents[1]
 SKILL = PACKAGE / "SKILL.md"
 REFERENCES = PACKAGE / "references"
+ADAPTERS = PACKAGE / "adapters"
+METHODS = PACKAGE / "methods"
 TEMPLATES = PACKAGE / "templates"
 CHANGELOG = PACKAGE / "CHANGELOG.md"
 OUTPUT = PACKAGE / "docs/workflow-visual-map.html"
@@ -32,25 +34,30 @@ PRIMARY_OWNER_FILES = (
     "decide-solution.md",
     "plan-tasks.md",
     "execute-tasks.md",
-    "verify-deliver.md",
+    "verify-results.md",
     "learn-review.md",
     "evolve-system.md",
 )
 
 HARNESS_FILES = (
-    "challenge-decisions.md",
     "shape-experience.md",
     "maintain-design.md",
     "coordinate-agents.md",
-    "merge-parallel-work.md",
     "fix-failures.md",
     "handoff-context.md",
+    "deliver-release.md",
+)
+ADAPTER_FILES = ("merge-parallel-work.md",)
+METHOD_PACK_FILES = (
+    "strategic-value.md",
+    "essence-subtraction.md",
+    "experiment-attack.md",
+    "delivery-compounding.md",
 )
 
 VISUAL_TEMPLATE_NAMES = (
     "index.md",
     "findings.md",
-    "pre-plan-contract.md",
     "task_plan.md",
     "implementation-plan.md",
     "progress.md",
@@ -147,11 +154,21 @@ def render_unknown_cards(unknown_rows: list[list[str]]) -> str:
     return "".join(cards)
 
 
+def routed_targets(route_rows: list[list[str]]) -> list[tuple[str, str, str]]:
+    targets: list[tuple[str, str, str]] = []
+    for kind, signal, raw_targets in route_rows:
+        for target in re.findall(r"(?:references|adapters|methods)/[A-Za-z0-9_-]+\.md", raw_targets):
+            targets.append((kind, signal, target))
+    return targets
+
+
 def render_reference_index(route_rows: list[list[str]]) -> str:
     items: list[str] = []
-    for kind, signal, target in route_rows:
+    roots = {"references": REFERENCES, "adapters": ADAPTERS, "methods": METHODS}
+    for kind, signal, target in routed_targets(route_rows):
+        directory, filename = target.split("/", 1)
         filename = Path(target).name
-        ref_text = (REFERENCES / filename).read_text(encoding="utf-8")
+        ref_text = (roots[directory] / filename).read_text(encoding="utf-8")
         title = re.search(r"^#\s+(.+)$", ref_text, re.MULTILINE)
         if title is None:
             raise ValueError(f"missing reference title: {filename}")
@@ -206,7 +223,7 @@ def build() -> tuple[str, str]:
         source_section(skill_text, "## 按需路由", "## 文件真源"),
         3,
     )
-    if len(state_rows) != 7 or len(unknown_rows) != 4 or len(route_rows) != 14:
+    if len(state_rows) != 7 or len(unknown_rows) != 4 or len(route_rows) != 15:
         raise ValueError(
             "unexpected contract shape: "
             f"states={len(state_rows)}, unknowns={len(unknown_rows)}, routes={len(route_rows)}"
@@ -216,16 +233,28 @@ def build() -> tuple[str, str]:
     if tuple(UNKNOWN_SUMMARIES) != tuple(row[0] for row in unknown_rows):
         raise ValueError("unknown summary registry does not match canonical route order")
 
-    routed_files = {Path(row[2]).name for row in route_rows}
-    if set(PRIMARY_OWNER_FILES) | set(HARNESS_FILES) != routed_files:
-        raise ValueError("capability registry does not match routed references")
+    routed_files = {target for _kind, _signal, target in routed_targets(route_rows)}
+    expected_routes = {
+        *(f"references/{name}" for name in PRIMARY_OWNER_FILES),
+        *(f"references/{name}" for name in HARNESS_FILES),
+        *(f"adapters/{name}" for name in ADAPTER_FILES),
+        *(f"methods/{name}" for name in METHOD_PACK_FILES),
+    }
+    if expected_routes != routed_files:
+        raise ValueError("capability registry does not match routed modules")
     missing_templates = [
         filename for filename in VISUAL_TEMPLATE_NAMES if not (TEMPLATES / filename).is_file()
     ]
     if missing_templates:
         raise ValueError(f"missing visual templates: {', '.join(missing_templates)}")
 
-    digest_paths = [SKILL, CHANGELOG, *sorted(REFERENCES.glob("*.md"))]
+    digest_paths = [
+        SKILL,
+        CHANGELOG,
+        *sorted(REFERENCES.glob("*.md")),
+        *sorted(ADAPTERS.glob("*.md")),
+        *sorted(METHODS.glob("*.md")),
+    ]
     digest_paths.extend(TEMPLATES / name for name in VISUAL_TEMPLATE_NAMES)
     digest = source_digest(digest_paths)
 
@@ -307,7 +336,7 @@ HTML_TEMPLATE = r'''<!doctype html>
         <div class="identity-facts">
           <span><b>01</b> 一条业务主链</span>
           <span><b>07</b> 七个证据检查点</span>
-          <span><b>14</b> 十四项按需能力</span>
+          <span><b>18</b> 十八项按需模块</span>
           <span><b>__VERSION__</b> 当前协议版本</span>
         </div>
       </aside>
@@ -411,7 +440,7 @@ HTML_TEMPLATE = r'''<!doctype html>
           <details class="maintenance">
             <summary>维护者：查看正式能力与文件索引</summary>
             <div class="maintenance-grid">
-              <div><h4>14 项按需能力</h4><ul class="reference-index">__REFERENCE_INDEX__</ul></div>
+              <div><h4>18 项按需模块</h4><ul class="reference-index">__REFERENCE_INDEX__</ul></div>
               <div><h4>工作文档模板</h4><div class="document-index">__DOCUMENT_INDEX__</div></div>
             </div>
           </details>

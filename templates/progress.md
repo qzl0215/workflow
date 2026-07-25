@@ -1,6 +1,6 @@
 # 进度与证据：<business-title>
 
-<!-- 只保存实际发生的动作、失败和证据。Plan/Task 状态与验收定义只在 task_plan。 -->
+<!-- 只保存实际发生的动作、失败和证据。Plan/Task 状态与验收定义只在 task_plan；不复制原始 stdout。 -->
 
 ## Handoff checkpoint
 
@@ -9,6 +9,8 @@
 - 已有证据位置：
 - 不要重复做：
 - 新上下文先读：task_plan Current Snapshot / 当前 Task / 本 checkpoint
+
+本 checkpoint 使用 rolling replacement，只保留当前恢复所需内容；完成 Task 压成 1–3 行结果与证据入口。
 
 ## Worker / Reviewer 记录
 

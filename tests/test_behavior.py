@@ -10,6 +10,8 @@ SKILL = (PACKAGE / "SKILL.md").read_text()
 README = (PACKAGE / "README.md").read_text()
 CHANGELOG = (PACKAGE / "CHANGELOG.md").read_text()
 REFERENCES = PACKAGE / "references"
+ADAPTERS = PACKAGE / "adapters"
+METHODS = PACKAGE / "methods"
 TASK_PLAN_TEMPLATE = (PACKAGE / "templates/task_plan.md").read_text()
 FINDINGS_TEMPLATE = (PACKAGE / "templates/findings.md").read_text()
 TASK_OWNER_TEMPLATE = (PACKAGE / "templates/task-owner-prompt.md").read_text()
@@ -29,19 +31,19 @@ PRIMARY_REFERENCES = [
     "decide-solution.md",
     "plan-tasks.md",
     "execute-tasks.md",
-    "verify-deliver.md",
+    "verify-results.md",
     "learn-review.md",
     "evolve-system.md",
 ]
 HARNESS_REFERENCES = [
-    "challenge-decisions.md",
     "shape-experience.md",
     "maintain-design.md",
     "coordinate-agents.md",
-    "merge-parallel-work.md",
     "fix-failures.md",
     "handoff-context.md",
+    "deliver-release.md",
 ]
+ADAPTER_FILES = ["merge-parallel-work.md"]
 SCHEMA_HEADINGS = [
     "## 何时进入",
     "## 已知输入",
@@ -58,6 +60,14 @@ LEGACY_STAGES = re.compile(
 
 def reference(name: str) -> str:
     return (REFERENCES / name).read_text()
+
+
+def method_pack(name: str) -> str:
+    return (METHODS / name).read_text()
+
+
+def adapter(name: str) -> str:
+    return (ADAPTERS / name).read_text()
 
 
 class CanonicalStageContractTest(unittest.TestCase):
@@ -145,8 +155,8 @@ class UserHandoffContractTest(unittest.TestCase):
         requirement_row = next(line for line in SKILL.splitlines() if line.startswith("| 需求澄清 |"))
         for token in (
             "需求成熟度硬门",
-            "需求卡是澄清完成后的结晶",
-            "禁止生成完成态需求卡",
+            "需求契约是澄清完成后的结晶",
+            "禁止生成完成态需求契约",
             "沉默不等于确认",
             "用户 / 场景 / 现状痛点",
             "目标结果与可观察成功标准",
@@ -165,20 +175,38 @@ class UserHandoffContractTest(unittest.TestCase):
         ):
             self.assertIn(token, FINDINGS_TEMPLATE)
 
+    def test_standard_and_project_requirements_need_sufficient_research_and_explicit_contract_confirmation(self) -> None:
+        goal = reference("understand-goal.md")
+        requirement_row = next(line for line in SKILL.splitlines() if line.startswith("| 需求澄清 |"))
+        for token in (
+            "项目真源 → 已连接工具与数据 → 官方一手来源 → 最小实验",
+            "调研充分性硬门",
+            "目标、范围、方案或风险",
+            "新增证据",
+            "需求契约",
+            "明确确认",
+            "标准任务",
+            "项目任务",
+            "轻任务",
+        ):
+            self.assertIn(token, goal)
+        for token in ("调研充分性硬门", "需求契约已获明确确认"):
+            self.assertIn(token, requirement_row)
+        for token in ("## 调研充分性硬门", "停止依据", "需求契约确认"):
+            self.assertIn(token, FINDINGS_TEMPLATE)
+
     def test_requirement_discovery_uses_numbered_batches_and_keeps_drilling(self) -> None:
         goal = reference("understand-goal.md")
-        challenge = reference("challenge-decisions.md")
-        for text in (goal, challenge):
-            for token in (
-                "编号问题批次",
-                "相互独立",
-                "有依赖",
-                "1B 2A 3C",
-                "同一编号",
-                "不设置总问题数上限",
-                "批量不等于问卷倾倒",
-            ):
-                self.assertIn(token, text)
+        for token in (
+            "编号问题批次",
+            "相互独立",
+            "有依赖",
+            "1B 2A 3C",
+            "同一编号",
+            "不设置总问题数上限",
+            "批量不等于问卷倾倒",
+        ):
+            self.assertIn(token, goal)
         for token in ("回答含糊", "继续追问", "决策树"):
             self.assertIn(token, goal)
 
@@ -306,24 +334,43 @@ class UnknownAndHarnessContractTest(unittest.TestCase):
         ):
             self.assertIn(token, SKILL)
 
-    def test_grill_is_a_dual_entry_decision_harness(self) -> None:
-        text = reference("challenge-decisions.md")
-        for token in ("问题入口", "方案入口", "Grill", "一次尽量合并关键问题", "会改变方向"):
-            self.assertIn(token, text)
+    def test_reverse_challenge_is_owned_by_requirement_and_solution_instead_of_a_duplicate_harness(self) -> None:
+        goal = reference("understand-goal.md")
+        solution = reference("decide-solution.md")
+        self.assertFalse((REFERENCES / "challenge-decisions.md").exists())
+        for token in ("决策树", "回答含糊", "同一编号"):
+            self.assertIn(token, goal)
+        for token in ("challenger", "交叉质询", "推翻条件", "奥卡姆硬门"):
+            self.assertIn(token, solution)
 
 
 class ReferenceArchitectureTest(unittest.TestCase):
-    def test_reference_set_is_exactly_seven_owners_and_seven_harnesses(self) -> None:
+    def test_semantic_owner_harness_and_adapter_registries_are_routed_without_count_equality(self) -> None:
         actual = sorted(path.name for path in REFERENCES.glob("*.md"))
         expected = sorted(PRIMARY_REFERENCES + HARNESS_REFERENCES)
         self.assertEqual(actual, expected)
 
         for name in expected:
             self.assertEqual(SKILL.count(f"`references/{name}`"), 1, name)
+        self.assertEqual(sorted(path.name for path in ADAPTERS.glob("*.md")), ADAPTER_FILES)
+        for name in ADAPTER_FILES:
+            self.assertEqual(SKILL.count(f"`adapters/{name}`"), 1, name)
+        for token in (
+            "owner 与 harness 不要求数量相等",
+            "独立问题",
+            "不同退出条件",
+            "唯一触发",
+            "低共触发率",
+            "单独加载收益",
+            "平台机械件归 adapter",
+        ):
+            self.assertIn(token, SKILL)
 
     def test_every_reference_uses_the_seven_section_schema(self) -> None:
-        for name in PRIMARY_REFERENCES + HARNESS_REFERENCES:
-            text = reference(name)
+        for name, text in [
+            *((name, reference(name)) for name in PRIMARY_REFERENCES + HARNESS_REFERENCES),
+            *((name, adapter(name)) for name in ADAPTER_FILES),
+        ]:
             positions = [text.index(heading) for heading in SCHEMA_HEADINGS]
             self.assertEqual(positions, sorted(positions), name)
             self.assertEqual(sum(text.count(heading) for heading in SCHEMA_HEADINGS), 7, name)
@@ -331,9 +378,32 @@ class ReferenceArchitectureTest(unittest.TestCase):
     def test_formal_references_do_not_reintroduce_legacy_stage_words(self) -> None:
         for name in PRIMARY_REFERENCES + HARNESS_REFERENCES:
             self.assertNotRegex(reference(name), LEGACY_STAGES, name)
+        for name in ADAPTER_FILES:
+            self.assertNotRegex(adapter(name), LEGACY_STAGES, name)
 
 
 class PlanningAndExecutionContractTest(unittest.TestCase):
+    def test_project_truth_uses_three_hot_sources_and_conditional_navigation(self) -> None:
+        handoff = reference("handoff-context.md")
+        index = (PACKAGE / "templates/index.md").read_text()
+        progress = (PACKAGE / "templates/progress.md").read_text()
+        self.assertFalse((PACKAGE / "templates/pre-plan-contract.md").exists())
+        for token in (
+            "三个热真源",
+            "`task_plan.md`",
+            "`findings.md`",
+            "`progress.md`",
+            "`implementation-plan.md`：仅在",
+            "`index.md`：仅在",
+            "不新建归档文档",
+        ):
+            self.assertIn(token, SKILL)
+        for token in ("decision receipt", "rolling handoff", "不创建 archive 文档"):
+            self.assertIn(token, handoff)
+        self.assertIn("不复制原始 stdout", progress)
+        for forbidden in ("生命周期", "当前阶段快照", "活跃 Task", "更新时间"):
+            self.assertNotIn(f"| {forbidden} |", index)
+
     def test_goal_owner_routes_unknowns_and_protects_document_budget(self) -> None:
         text = reference("understand-goal.md")
         for token in (
@@ -358,6 +428,66 @@ class PlanningAndExecutionContractTest(unittest.TestCase):
             "价值门 B",
             "AI 高 ROI",
             "删除测试",
+        ):
+            self.assertIn(token, text)
+
+    def test_solution_owner_selects_minimum_experts_and_routes_one_primary_and_one_challenger_pack(self) -> None:
+        text = reference("decide-solution.md")
+        for token in (
+            "会改变最终推荐的关键决策",
+            "lead + 必要补位 + challenger",
+            "独有判断",
+            "预期证据",
+            "推翻条件",
+            "退出条件",
+            "H2 默认最多 3 个",
+            "H3 默认最多 5 个",
+            "影响 × 不确定性 × 难逆性",
+            "一个主方法包",
+            "一个挑战方法包",
+            "每包只运行 1–2 个",
+        ):
+            self.assertIn(token, text)
+
+    def test_four_method_packs_cover_every_pua_method_once_and_are_lazy_loaded(self) -> None:
+        packs = {
+            "strategic-value.md": ("P10", "Amazon", "小米"),
+            "essence-subtraction.md": ("Tesla", "Apple", "拼多多"),
+            "experiment-attack.md": ("字节", "腾讯", "华为", "Netflix"),
+            "delivery-compounding.md": ("阿里", "京东", "美团", "百度"),
+        }
+        combined = "\n".join(method_pack(name) for name in packs)
+        for name, methods in packs.items():
+            text = method_pack(name)
+            self.assertLessEqual(len(text), 7000, name)
+            for method in methods:
+                self.assertIn(method, text)
+        for method in (item for methods in packs.values() for item in methods):
+            self.assertEqual(combined.count(method), 1, method)
+        for name in packs:
+            self.assertEqual(SKILL.count(f"`methods/{name}`"), 1, name)
+        self.assertIn("默认只加载一个主方法包和一个挑战方法包", SKILL)
+
+    def test_common_protocol_loading_paths_stay_within_context_budgets(self) -> None:
+        root_bytes = (PACKAGE / "SKILL.md").stat().st_size
+        requirement_bytes = root_bytes + (REFERENCES / "understand-goal.md").stat().st_size
+        method_sizes = sorted((path.stat().st_size for path in METHODS.glob("*.md")), reverse=True)
+        solution_bytes = root_bytes + (REFERENCES / "decide-solution.md").stat().st_size + sum(method_sizes[:2])
+        self.assertLessEqual(root_bytes, 15_000)
+        self.assertLessEqual(requirement_bytes, 23_000)
+        self.assertLessEqual(solution_bytes, 24_000)
+
+    def test_final_recommendation_has_a_vetoing_occam_gate_and_material_changes_invalidate_it(self) -> None:
+        text = reference("decide-solution.md")
+        for token in (
+            "奥卡姆硬门",
+            "只对最终推荐方案",
+            "否决",
+            "删除项",
+            "最简充分版",
+            "额外复杂度的举证",
+            "实质修改",
+            "旧回执失效",
         ):
             self.assertIn(token, text)
 
@@ -406,7 +536,7 @@ class PlanningAndExecutionContractTest(unittest.TestCase):
             self.assertIn(token, text)
 
     def test_verify_owner_bounds_browser_driver_debugging_without_weakening_evidence(self) -> None:
-        text = reference("verify-deliver.md")
+        text = reference("verify-results.md")
         for token in (
             "两种可见控制方式",
             "90 秒",
@@ -455,13 +585,14 @@ class PlanningAndExecutionContractTest(unittest.TestCase):
 
 class VerificationReviewAndEvolutionContractTest(unittest.TestCase):
     def test_evidence_acceptance_precedes_authorized_delivery(self) -> None:
-        text = reference("verify-deliver.md")
-        evidence = text.index("证据验收门")
-        delivery = text.index("授权交付门")
-        self.assertLess(evidence, delivery)
+        verification = reference("verify-results.md")
+        delivery = reference("deliver-release.md")
+        self.assertIn("所有任务必经", verification)
+        self.assertIn("结果已经通过验收", delivery)
+        self.assertLess(SKILL.index("references/verify-results.md"), SKILL.index("references/deliver-release.md"))
 
     def test_verification_owner_uses_one_rc_receipt_and_scoped_invalidation(self) -> None:
-        text = reference("verify-deliver.md")
+        text = reference("verify-results.md")
         progress = (PACKAGE / "templates/progress.md").read_text()
         for token in (
             "RC 证据回执",
@@ -481,10 +612,9 @@ class VerificationReviewAndEvolutionContractTest(unittest.TestCase):
             "fresh 运行",
             "exit code",
             "Task → Plan → 整体业务",
-            "commit、push、merge、deploy、delete",
-            "明确授权",
             "本地已验证",
-            "不得伪造",
+            "不能用授权",
+            "未覆盖项",
         ):
             self.assertIn(token, text)
 
@@ -552,15 +682,14 @@ class VerificationReviewAndEvolutionContractTest(unittest.TestCase):
 
 class IntegratedReleaseContractTest(unittest.TestCase):
     def test_final_report_shows_three_business_delivery_states_without_internal_ids(self) -> None:
-        delivery = reference("verify-deliver.md")
+        delivery = reference("deliver-release.md")
         for token in (
             "代码完成｜",
             "合并完成｜",
             "线上生效｜",
-            "三项都必须出现",
-            "合入的目标版本名称",
+            "三项都出现",
             "不得展示提交哈希",
-            "精确技术标识只写入",
+            "精确技术标识只写",
         ):
             self.assertIn(token, delivery)
         final_scenario = README.split("### 场景三：最终完成", 1)[1].split("## ", 1)[0]
@@ -569,74 +698,84 @@ class IntegratedReleaseContractTest(unittest.TestCase):
         self.assertNotRegex(final_scenario, r"\b[0-9a-f]{7,40}\b")
 
     def test_integrated_release_is_a_required_gate_when_delivery_is_requested(self) -> None:
-        delivery = reference("verify-deliver.md")
+        delivery = reference("deliver-release.md")
         for token in (
-            "### 集成发布门",
-            "不是可选收尾",
+            "集成发布不是可选收尾",
             "本地已验证只是中间状态",
-            "提交、合并和发布",
-            "提交合并发布",
+            "commit、push、merge",
+            "授权交付目标",
         ):
             self.assertIn(token, delivery)
 
     def test_release_contract_is_derived_from_project_truth(self) -> None:
-        delivery = reference("verify-deliver.md")
+        delivery = reference("deliver-release.md")
         for token in (
             "项目规则 → 部署/发布文档 → CI/脚本 → 仓库配置",
             "release contract",
             "remote、目标分支、集成方式、版本/tag/release、部署入口、回滚和发布后 smoke",
-            "不凭通用 workflow 猜平台命令",
+            "通用 workflow 不猜平台",
         ):
             self.assertIn(token, delivery)
 
     def test_integration_uses_latest_target_and_proves_real_delivery_state(self) -> None:
-        delivery = reference("verify-deliver.md")
+        delivery = reference("deliver-release.md")
         for token in (
             "fetch 最新目标",
-            "PR/MR 不是默认步骤",
+            "PR/MR 只在",
             "必需 CI",
             "fast-forward",
             "禁止 force",
-            "集成后 fresh 重验",
-            "真实远端与发布状态",
+            "集成结果上补 fresh 验证",
+            "核对真实远端与发布状态",
             "不逐步重复确认",
         ):
             self.assertIn(token, delivery)
         release_row = next(line for line in SKILL.splitlines() if line.startswith("| 验收交付 |"))
-        self.assertIn("项目发布真源", release_row)
-        self.assertIn("集成发布", release_row)
+        self.assertIn("按需加载项目发布真源", release_row)
+        self.assertIn("条件交付", release_row)
 
     def test_delivery_records_workspace_disposition_without_automatic_cleanup(self) -> None:
-        delivery = reference("verify-deliver.md")
+        delivery = reference("deliver-release.md")
         for token in (
             "现场处置",
             "保留只读",
             "等待授权清理",
             "继续同一 Task",
-            "不得自动删除",
             "不得绑定新 Task",
         ):
             self.assertIn(token, delivery)
 
+    def test_semantic_response_changes_verify_persistent_cache_upgrade_paths(self) -> None:
+        delivery = reference("verify-results.md")
+        for token in (
+            "响应身份、排序、归属或过滤语义",
+            "跨刷新持久缓存",
+            "版本化、失效或兼容迁移",
+            "带旧缓存的升级路径",
+            "只测空缓存不算完成",
+            "无持久缓存不增加此门",
+        ):
+            self.assertIn(token, delivery)
+
     def test_humans_approve_business_and_authority_not_code(self) -> None:
-        delivery = reference("verify-deliver.md")
+        delivery = reference("verify-results.md")
         for token in (
             "默认用户不审代码",
-            "业务结果、风险与外部授权",
+            "业务结果和风险",
             "AI 负责 diff 自审",
-            "不得要求用户确认代码",
+            "不把代码判断转嫁给非技术用户",
         ):
             self.assertIn(token, delivery)
         self.assertIn("用户不承担代码审阅", README)
 
     def test_release_graph_keeps_only_steps_with_independent_value(self) -> None:
-        delivery = reference("verify-deliver.md")
+        delivery = reference("deliver-release.md")
         for token in (
             "最小发布图",
-            "PR/MR 不是默认步骤",
-            "分支保护、必需 CI、项目规则或真实 reviewer",
-            "没有独立价值的节点必须删除",
-            "一个平台动作安全完成",
+            "PR/MR 只在",
+            "分支保护、必需 CI、项目规则或真实 reviewer 要求",
+            "没有独立价值的节点删除",
+            "一个平台动作安全完成时合并",
         ):
             self.assertIn(token, delivery)
 
@@ -678,25 +817,19 @@ class SupportingHarnessContractTest(unittest.TestCase):
             self.assertIn(token, text)
 
     def test_parallel_merge_restores_late_merger_responsibility(self) -> None:
-        text = reference("merge-parallel-work.md")
+        text = adapter("merge-parallel-work.md")
         for token in (
             "独立 worktree",
-            "创建前先 fetch 最新目标分支",
-            "项目发布契约决定是否使用 CI 或 MR",
-            "允许修改同一原始文件",
+            "fetch 最新目标",
             "合并队列",
             "后合并者",
             "rebase",
             "MERGE_NOTE",
-            "文本冲突",
             "语义冲突",
-            "rebase --continue",
-            "不得 rebase --abort",
-            "前提假设、时间先后、不变量",
             "不得整文件选边",
-            "双方验证命令",
-            "项目规则",
-            "长期授权",
+            "--continue",
+            "双方验证",
+            "不授予外部动作权限",
         ):
             self.assertIn(token, text)
 

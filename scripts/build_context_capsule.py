@@ -54,6 +54,9 @@ LEGACY_STAGE_ALIASES = {
     "verify": "验收交付",
     "finish": "验收交付",
 }
+MAX_SELECTED_BYTES = 24 * 1024
+MAX_SELECTED_RATIO = 0.35
+RATIO_BUDGET_MIN_SOURCE_BYTES = 24 * 1024
 
 
 @dataclass(frozen=True)
@@ -368,6 +371,17 @@ def build_capsule(task_dir: Path, plan_id: str, task_id: str, stage: str | None 
     )
     selected_bytes = len(selected.encode("utf-8"))
     ratio = round(selected_bytes / source_total_bytes, 4) if source_total_bytes else None
+    budget_reasons: list[str] = []
+    if selected_bytes > MAX_SELECTED_BYTES:
+        budget_reasons.append(f"selected_bytes {selected_bytes} > {MAX_SELECTED_BYTES}")
+    if (
+        source_total_bytes >= RATIO_BUDGET_MIN_SOURCE_BYTES
+        and ratio is not None
+        and ratio > MAX_SELECTED_RATIO
+    ):
+        budget_reasons.append(f"selected_ratio {ratio} > {MAX_SELECTED_RATIO}")
+    if budget_reasons:
+        missing.append("context-budget: " + "; ".join(budget_reasons))
 
     return {
         "schema_version": 2,
@@ -391,6 +405,10 @@ def build_capsule(task_dir: Path, plan_id: str, task_id: str, stage: str | None 
             "source_total_bytes": source_total_bytes,
             "selected_bytes": selected_bytes,
             "selected_ratio": ratio,
+            "budget_status": "exceeded" if budget_reasons else "within",
+            "max_selected_bytes": MAX_SELECTED_BYTES,
+            "max_selected_ratio": MAX_SELECTED_RATIO,
+            "ratio_budget_min_source_bytes": RATIO_BUDGET_MIN_SOURCE_BYTES,
         },
         "slices": {
             "snapshot": snapshot_text,
@@ -429,6 +447,7 @@ def render_markdown(capsule: dict[str, object]) -> str:
         f"- Stage / Plan / Task: `{capsule['stage']}` / `{capsule['plan_id']}` / `{capsule['task_id']}`",
         f"- Fail closed: `{'yes' if capsule['fail_closed'] else 'no'}`",
         f"- Selected context: `{metrics['selected_bytes']}` / `{metrics['source_total_bytes']}` bytes (`{metrics['selected_ratio']}`)",
+        f"- Context budget: `{metrics['budget_status']}` (max `{metrics['max_selected_bytes']}` bytes; ratio `{metrics['max_selected_ratio']}` after source floor `{metrics['ratio_budget_min_source_bytes']}` bytes)",
         "",
         "## L0｜Location",
         "",

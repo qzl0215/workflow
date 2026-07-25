@@ -23,6 +23,8 @@
 - **L3 目标证据**：只加载能回答已记录 gap 的代码、日志、reference 或历史决策。
 - **L4 全历史**：只用于一致性争议、审计或 L3 仍不足，并记录原因。
 
+先过**活动上下文预算门**：L0–L2 默认选择量不得超过 24 KiB；四份源文件合计至少 24 KiB 时，选择比例还不得超过 35%。小型任务不按比例误杀。超限先做语义压缩；仍需 L3/L4 时记录 `gap / target / expected_answer / level` 后只加载目标切片，不能静默读取全文。
+
 先过**上下文同一性门**：只有目标结果、验收、owner、交付边界和 source fingerprint 仍属于同一份业务合同时，才继续沿用当前 Task capsule。出现已交付后新缺陷、新的独立用户结果、跨项目或 skill owner、需要独立回滚的新交付时，建立**独立 side-task capsule**；宿主与用户授权允许时交给 fresh task，否则也只从 capsule 继续，不默认携带旧线程全文。新增 Plan 解决范围编排，不自动证明旧线程仍是最佳上下文容器。是否切分依据业务边界、证据失效和上下文污染风险，不按固定轮次、分钟、token 或压缩次数机械决定。
 
 ## 核心动作
@@ -34,6 +36,7 @@
 5. 缺上下文时以 `gap / target / expected_answer / level` 请求具体切片；收到答案立即停止升级。
 6. 摘要、计划和实际文件冲突时以正式真源与 fresh 检查为准并 fail closed，不静默猜测。
 7. 阶段切换、fresh 委派、第二次压缩、共享资源等待或高风险动作前重建 capsule。
+8. 动作结束时做语义压缩：task_plan 把完成工作收成里程碑，findings 把关闭问题收成 decision receipt，progress 以 rolling handoff 替换旧现场；原始日志只保留位置，不创建 archive 文档。
 
 ## 写入真源
 

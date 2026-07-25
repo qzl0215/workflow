@@ -8,22 +8,25 @@ import sys
 from pathlib import Path
 
 
-REQUIRED_REFERENCES = (
+OWNER_REFERENCES = (
     "understand-goal.md",
     "decide-solution.md",
     "plan-tasks.md",
     "execute-tasks.md",
-    "verify-deliver.md",
+    "verify-results.md",
     "learn-review.md",
     "evolve-system.md",
-    "challenge-decisions.md",
+)
+HARNESS_REFERENCES = (
     "shape-experience.md",
     "maintain-design.md",
     "coordinate-agents.md",
-    "merge-parallel-work.md",
     "fix-failures.md",
     "handoff-context.md",
+    "deliver-release.md",
 )
+REQUIRED_REFERENCES = OWNER_REFERENCES + HARNESS_REFERENCES
+REQUIRED_ADAPTERS = ("merge-parallel-work.md",)
 
 REQUIRED_TEMPLATES = (
     "index.md",
@@ -32,7 +35,12 @@ REQUIRED_TEMPLATES = (
     "implementation-plan.md",
     "progress.md",
     "task-owner-prompt.md",
-    "pre-plan-contract.md",
+)
+REQUIRED_METHOD_PACKS = (
+    "strategic-value.md",
+    "essence-subtraction.md",
+    "experiment-attack.md",
+    "delivery-compounding.md",
 )
 LEGACY_REFERENCES = (
     "project-discovery.md",
@@ -91,16 +99,16 @@ PROTOCOL_OWNERS = {
     "# 选定方案\n": "references/decide-solution.md",
     "# 拆成任务\n": "references/plan-tasks.md",
     "# 执行任务\n": "references/execute-tasks.md",
-    "# 验收交付\n": "references/verify-deliver.md",
+    "# 验收结果\n": "references/verify-results.md",
     "# 提炼经验\n": "references/learn-review.md",
     "# 回灌改进\n": "references/evolve-system.md",
-    "# 关键追问与反向挑战\n": "references/challenge-decisions.md",
     "# 体验塑形\n": "references/shape-experience.md",
     "# 维护设计真源\n": "references/maintain-design.md",
     "# 协调 Agent\n": "references/coordinate-agents.md",
-    "# 并行成果合并\n": "references/merge-parallel-work.md",
     "# 修复失败\n": "references/fix-failures.md",
     "# 有界上下文交接\n": "references/handoff-context.md",
+    "# 授权交付\n": "references/deliver-release.md",
+    "# Git/worktree 并行合并适配器\n": "adapters/merge-parallel-work.md",
 }
 PUBLIC_TARGETS = {
     ".gitignore",
@@ -112,6 +120,8 @@ PUBLIC_TARGETS = {
     "CONTRIBUTING.md",
     "CHANGELOG.md",
     *(f"references/{name}" for name in REQUIRED_REFERENCES),
+    *(f"adapters/{name}" for name in REQUIRED_ADAPTERS),
+    *(f"methods/{name}" for name in REQUIRED_METHOD_PACKS),
     *(f"templates/{name}" for name in REQUIRED_TEMPLATES),
     "scripts/workflow_doctor.py",
     "scripts/build_context_capsule.py",
@@ -132,6 +142,7 @@ MAX_PACKAGE_BYTES = 400_000
 MAX_REFERENCE_LINES = 1_200
 CONFLICT_MARKERS = ("<<<<<<<", "=======", ">>>>>>>")
 REFERENCE_LINK = re.compile(r"references/([A-Za-z0-9_-]+\.md)")
+ADAPTER_LINK = re.compile(r"adapters/([A-Za-z0-9_-]+\.md)")
 SECRET_ASSIGNMENT = re.compile(
     r"(?i)(?:api[_-]?key|secret|password|access[_-]?token)\s*[:=]\s*['\"]?[^\s'\"]{8,}"
 )
@@ -188,6 +199,8 @@ def main() -> int:
     package = Path(sys.argv[1] if len(sys.argv) > 1 else Path(__file__).resolve().parents[1]).resolve()
     skill = package / "SKILL.md"
     refs = package / "references"
+    adapters = package / "adapters"
+    methods = package / "methods"
     templates = package / "templates"
     errors: list[str] = []
     warnings: list[str] = []
@@ -243,6 +256,30 @@ def main() -> int:
     if reference_lines > MAX_REFERENCE_LINES:
         error(errors, refs, f"references total {reference_lines} lines; budget is {MAX_REFERENCE_LINES}")
 
+    actual_adapters = sorted(adapters.glob("*.md")) if adapters.exists() else []
+    actual_adapter_names = {path.name for path in actual_adapters}
+    expected_adapter_names = set(REQUIRED_ADAPTERS)
+    for name in sorted(expected_adapter_names - actual_adapter_names):
+        error(errors, adapters / name, "missing required adapter")
+    for name in sorted(actual_adapter_names - expected_adapter_names):
+        error(errors, adapters / name, "orphan or unowned adapter")
+    for name in REQUIRED_ADAPTERS:
+        if skill_text.count(f"`adapters/{name}`") != 1:
+            error(errors, skill, f"must route exactly once to adapters/{name}")
+    markdown.extend(actual_adapters)
+
+    actual_method_packs = sorted(methods.glob("*.md")) if methods.exists() else []
+    actual_method_names = {path.name for path in actual_method_packs}
+    expected_method_names = set(REQUIRED_METHOD_PACKS)
+    for name in sorted(expected_method_names - actual_method_names):
+        error(errors, methods / name, "missing required method pack")
+    for name in sorted(actual_method_names - expected_method_names):
+        error(errors, methods / name, "orphan or unowned method pack")
+    for name in REQUIRED_METHOD_PACKS:
+        if skill_text.count(f"`methods/{name}`") != 1:
+            error(errors, skill, f"must route exactly once to methods/{name}")
+    markdown.extend(actual_method_packs)
+
     actual_templates = {path.name for path in templates.glob("*.md")} if templates.exists() else set()
     expected_templates = set(REQUIRED_TEMPLATES)
     for name in sorted(expected_templates - actual_templates):
@@ -279,8 +316,13 @@ def main() -> int:
                 error(errors, path, f"broken reference link: references/{target}")
             elif path.parent == refs:
                 error(errors, path, f"reference-to-reference deep link is not allowed: references/{target}")
+        for target in set(ADAPTER_LINK.findall(text)):
+            if not (adapters / target).is_file():
+                error(errors, path, f"broken adapter link: adapters/{target}")
+            elif path.parent in {refs, adapters, methods}:
+                error(errors, path, f"deep adapter link is not allowed: adapters/{target}")
 
-    protocol_files = [skill, *actual_refs, *sorted(templates.glob("*.md"))]
+    protocol_files = [skill, *actual_refs, *actual_adapters, *actual_method_packs, *sorted(templates.glob("*.md"))]
     for path in protocol_files:
         matches = sorted({match.group(0) for match in LEGACY_STAGE_WORD.finditer(read(path))})
         if matches:

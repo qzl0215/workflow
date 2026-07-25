@@ -263,6 +263,69 @@ SHOULD_NOT_BE_LOADED
             self.assertIn("E01", selected)
             self.assertNotIn("SHOULD_NOT_BE_LOADED", selected)
 
+    def test_small_task_is_not_rejected_only_because_selected_ratio_is_high(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            result = self.run_capsule(self.make_task(Path(temp)))
+            self.assertEqual(result.returncode, 0, result.stdout)
+            metrics = json.loads(result.stdout)["metrics"]
+            self.assertLess(metrics["source_total_bytes"], metrics["ratio_budget_min_source_bytes"])
+            self.assertEqual(metrics["budget_status"], "within")
+
+    def test_long_unrelated_history_does_not_expand_the_active_capsule(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            task_dir = self.make_task(Path(temp))
+            baseline = json.loads(self.run_capsule(task_dir).stdout)
+            with (task_dir / "findings.md").open("a") as stream:
+                stream.write("\n## Closed history\n" + ("UNRELATED_EVIDENCE\n" * 3000))
+            with (task_dir / "progress.md").open("a") as stream:
+                stream.write("\n## Old raw output\n" + ("UNRELATED_LOG\n" * 3000))
+            result = self.run_capsule(task_dir)
+            self.assertEqual(result.returncode, 0, result.stdout)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["metrics"]["selected_bytes"], baseline["metrics"]["selected_bytes"])
+            self.assertEqual(payload["metrics"]["budget_status"], "within")
+            self.assertNotIn("UNRELATED_", json.dumps(payload["slices"], ensure_ascii=False))
+
+    def test_referenced_slice_over_24_kib_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            task_dir = self.make_task(Path(temp))
+            (task_dir / "findings.md").write_text(
+                "| 证据 ID | 事实 | 来源 |\n|---|---|---|\n| E01 | " + ("x" * (25 * 1024)) + " | test |\n"
+            )
+            result = self.run_capsule(task_dir, allow_missing=True)
+            self.assertEqual(result.returncode, 0, result.stdout)
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["fail_closed"])
+            self.assertEqual(payload["metrics"]["budget_status"], "exceeded")
+            self.assertTrue(any("selected_bytes" in item for item in payload["missing_refs"]))
+
+    def test_large_source_with_over_35_percent_active_slice_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            task_dir = self.make_task(Path(temp))
+            (task_dir / "findings.md").write_text(
+                "| 证据 ID | 事实 | 来源 |\n"
+                "|---|---|---|\n"
+                "| E01 | " + ("a" * (12 * 1024)) + " | test |\n"
+                "| E99 | " + ("b" * (13 * 1024)) + " | old |\n"
+            )
+            result = self.run_capsule(task_dir, allow_missing=True)
+            self.assertEqual(result.returncode, 0, result.stdout)
+            payload = json.loads(result.stdout)
+            self.assertLess(payload["metrics"]["selected_bytes"], payload["metrics"]["max_selected_bytes"])
+            self.assertGreater(payload["metrics"]["selected_ratio"], payload["metrics"]["max_selected_ratio"])
+            self.assertTrue(payload["fail_closed"])
+            self.assertTrue(any("selected_ratio" in item for item in payload["missing_refs"]))
+
+    def test_simple_task_does_not_require_an_implementation_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            task_dir = self.make_task(Path(temp))
+            (task_dir / "implementation-plan.md").unlink()
+            result = self.run_capsule(task_dir)
+            self.assertEqual(result.returncode, 0, result.stdout)
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["fail_closed"])
+            self.assertNotIn("implementation-plan.md", json.dumps(payload["missing_refs"]))
+
     def test_capsule_carries_active_stage_result_routes(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             task_dir = self.make_task(Path(temp))

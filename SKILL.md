@@ -1,7 +1,7 @@
 ---
 name: workflow
 description: 把复杂目标从“还没想完整”推进到“已经做完、验明白并让下一次更高效”的单技能工作流。围绕 AI 高投入产出比，完成目标澄清、方案选择、任务拆解、实施、验收、复盘和受控进化；不用于纯问答或一次性小操作。
-version: 2.7.0
+version: 2.8.0
 author: zhonglin
 license: MIT
 ---
@@ -23,8 +23,8 @@ workflow 是复杂工作的 AI 总导演。对使用者，它只呈现一条容�
 ## 不变量
 
 1. 一切围绕 AI 高 ROI：优先增加用户结果、降低关键风险和减少未来重复成本；低价值环节可省，高价值判断不可因 AI 执行快而省。
-2. 先查项目、工具和已有真源；只向用户询问无法自行发现、且会改变目标、取舍、验收或授权的问题。
-3. 需求卡只在需求澄清通过后生成；仍有会改变目标、范围、验收、优先级或授权的用户判断时必须先追问，AI 推荐和用户沉默都不能代替回答。
+2. 调研按项目真源、已连接工具与数据、官方一手来源、最小实验推进；新增证据不再改变目标、范围、方案或风险时停止，只向用户询问无法自行发现的关键判断。
+3. 标准/项目任务的需求契约只在调研充分性与需求成熟度硬门通过后生成，并须用户明确确认；AI 推荐和沉默不能代替确认，轻任务保留快速通道。
 4. 一次只持久化一个当前动作；出口不满足就回到产生缺口的动作，不把纠错、体验或会诊另记为阶段。
 5. 证据驱动检查点可以快速通过，但硬门不得跳过；执行速度不能替代业务价值、验收证据和授权。
 6. 能补现有真源就不建新文档；文档必须有独立读者问题和唯一 owner，失去价值就合并或删除。
@@ -43,11 +43,11 @@ workflow 是复杂工作的 AI 总导演。对使用者，它只呈现一条容�
 
 | 阶段 | 已知输入 | 主要产物 | 通过证据 | 缺口返回 |
 |---|---|---|---|---|
-| 需求澄清 | 请求、事实、约束、已有真源 | 目标、价值、验收、未知分流与授权边界 | 价值门 A 与需求成熟度硬门通过，关键用户判断已有回答、明确延期或转为 blocker，下一动作无需猜关键事实 | 继续调查、关键追问或 blocker |
+| 需求澄清 | 请求、事实、约束、已有真源 | 目标、价值、验收、未知分流与授权边界 | 价值门 A、调研充分性硬门与需求成熟度硬门通过，关键用户判断已有回答；标准/项目任务的需求契约已获明确确认 | 继续调查、关键追问或 blocker |
 | 选定方案 | 已确认目标、证据、约束 | 90 分最终画面、推荐方案、取舍、边界与回滚点 | 价值门 B 通过，方向性未知已收敛或转为可验证假设 | 需求澄清 |
 | 拆成任务 | 已选方案；UI 范围另有体验结论 | Plan/Task、依赖、文件域、owner、验收和验证路径 | 用户确认完整 Plan，每个 Ready Task 可独立执行 | 需求澄清或选定方案 |
 | 执行任务 | 确认计划、当前 Ready Task | 范围内产物、diff、进度和 Task 级证据 | 产物满足 Task 验收且有 fresh evidence | 上游缺口、纠错回路或 blocker |
-| 验收交付 | 实际产物、验收、项目发布真源与授权 | Task→Plan→业务证据、集成发布与真实交付状态 | 证据、授权、集成发布三门通过 | 执行任务、上游缺口或 blocker |
+| 验收交付 | 实际产物、验收；按需加载项目发布真源与授权 | Task→Plan→业务证据；有交付目标时补真实交付状态 | 证据门通过；条件交付的授权与发布门按实际目标通过 | 执行任务、上游缺口或 blocker |
 | 提炼经验 | 计划、实际结果、失败与偏差证据 | 可复用经验、no-op 结论或候选改进 | 分级复盘完成，没有用叙事替代证据 | 对应产生偏差的动作 |
 | 回灌改进 | 痛点证据、回灌提案、用户决策 | 目标 owner 的受控更新或 no-op | 用户确认、fresh 验证完成且外部副作用已授权 | 提炼经验、拆成任务或 side task |
 
@@ -105,7 +105,7 @@ AI 按动作自动选择最低但足够的深度；用户不必先学会挑工�
 
 ## 按需路由
 
-默认只读当前动作的主 owner；出现明确触发信号才叠加 harness。每个 reference 由根入口路由一次，reference 之间不互相深链。
+默认只读当前动作的主 owner；出现明确触发信号才叠加 harness。每个 reference 由根入口路由一次，reference 之间不互相深链。owner 与 harness 不要求数量相等；能力只有同时拥有独立问题、不同退出条件、唯一触发、低共触发率和单独加载收益才独立成文件，平台机械件归 adapter。
 
 | 类型 | 触发信号 | 仅读取 |
 |---|---|---|
@@ -113,28 +113,28 @@ AI 按动作自动选择最低但足够的深度；用户不必先学会挑工�
 | 主 owner | 需要勾勒最终画面、专家森林或方案取舍 | `references/decide-solution.md` |
 | 主 owner | 方案已定，需要 Plan/Task、必要依赖图和验收 | `references/plan-tasks.md` |
 | 主 owner | 已有确认计划，需要逐 Task 实施 | `references/execute-tasks.md` |
-| 主 owner | 准备声明完成、交付或执行外部副作用 | `references/verify-deliver.md` |
+| 主 owner | 准备声明 Task、Plan 或业务结果完成 | `references/verify-results.md` |
 | 主 owner | 交付后判断这次应沉淀什么 | `references/learn-review.md` |
 | 主 owner | 候选经验需要进入长期真源 | `references/evolve-system.md` |
-| harness | 需求澄清仍有关键取舍、含糊回答或矛盾，或方案需要高价值追问和反向挑战 | `references/challenge-decisions.md` |
 | harness | UI、视觉、交互、动效或无障碍范围 | `references/shape-experience.md` |
 | harness | 多个界面需要稳定、唯一设计真源 | `references/maintain-design.md` |
 | harness | 需要独立视角、并行实施或 fresh review | `references/coordinate-agents.md` |
-| harness | 同仓多线程成果需要 rebase、消解冲突或串行合入 | `references/merge-parallel-work.md` |
 | harness | bug、测试失败、异常、空结果或连续失败 | `references/fix-failures.md` |
 | harness | 上下文将满、跨会话或切换执行者 | `references/handoff-context.md` |
-
+| harness | 已验收结果需要 commit、push、merge、deploy、公开发布或其他外部写入 | `references/deliver-release.md` |
+| adapter | 授权交付中的同仓并行成果需要 rebase、冲突消解或串行合入 | `adapters/merge-parallel-work.md` |
+| 方法包 | 方案瓶颈需要大厂方法论时，默认只加载一个主方法包和一个挑战方法包 | `methods/strategic-value.md` · `methods/essence-subtraction.md` · `methods/experiment-attack.md` · `methods/delivery-compounding.md` |
 ## 文件真源与文档预算
 
-项目任务默认把最小真源放在 `<project>/plans/<yymmdd-summary>/`：
+项目任务默认把三个热真源放在 `<project>/plans/<yymmdd-summary>/`：
 
 - `task_plan.md`：范围、Plan/Task、owner、验收、必要时的依赖图和唯一 `status` 真源。
 - `findings.md`：事实、来源、推断、未知、比较和决策依据。
-- `implementation-plan.md`：只在复杂实施需要时保存技术导航；不保存状态。
 - `progress.md`：实际动作、失败、验证证据和 handoff。
-- `index.md`：只在多个任务需要统一发现入口时建立；不是第二状态真源。
+- `implementation-plan.md`：仅在复杂实施、委派、跨会话或写冲突需要技术导航时创建；不保存状态。
+- `index.md`：仅在多个任务需要统一定位时创建，只指向任务目录。
 
-每新增一份文档必须回答“谁在什么时刻用它作什么决策”；否则写回现有 owner。复盘优先补短事实、验收或入口，不复制日志、模板或整段历史。
+每新增一份文档必须回答“谁在什么时刻用它作什么决策”；否则写回现有 owner。动作结束时做语义压缩：完成 Plan/Task 收成里程碑，关闭问题批次收成决策回执，原始日志只留证据位置，rolling handoff 只保留当前恢复所需内容；不新建归档文档。
 
 ## 角色、权限与降级
 

@@ -14,17 +14,17 @@ EXPECTED_REFERENCES = {
     "decide-solution.md",
     "plan-tasks.md",
     "execute-tasks.md",
-    "verify-deliver.md",
+    "verify-results.md",
     "learn-review.md",
     "evolve-system.md",
-    "challenge-decisions.md",
     "shape-experience.md",
     "maintain-design.md",
     "coordinate-agents.md",
-    "merge-parallel-work.md",
     "fix-failures.md",
     "handoff-context.md",
+    "deliver-release.md",
 }
+EXPECTED_ADAPTERS = {"merge-parallel-work.md"}
 LEGACY_STAGES = (
     "看清目标",
     "Intake",
@@ -108,7 +108,7 @@ class WorkflowDoctorTest(unittest.TestCase):
 
     def test_reference_to_reference_deep_link_fails_closed(self) -> None:
         reference = self.package / "references/understand-goal.md"
-        reference.write_text(reference.read_text() + "\nreferences/verify-deliver.md\n")
+        reference.write_text(reference.read_text() + "\nreferences/verify-results.md\n")
         result = self.run_doctor()
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("reference-to-reference deep link", result.stdout)
@@ -126,12 +126,16 @@ class WorkflowDoctorTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("protocol `# 修复失败", result.stdout)
 
-    def test_reference_registry_has_seven_owners_and_seven_harnesses(self) -> None:
+    def test_semantic_reference_and_adapter_registries_do_not_require_equal_counts(self) -> None:
         references = self.package / "references"
         self.assertEqual({path.name for path in references.glob("*.md")}, EXPECTED_REFERENCES)
+        adapters = self.package / "adapters"
+        self.assertEqual({path.name for path in adapters.glob("*.md")}, EXPECTED_ADAPTERS)
         skill = (self.package / "SKILL.md").read_text()
         self.assertEqual(skill.count("| 主 owner |"), 7)
-        self.assertEqual(skill.count("| harness |"), 7)
+        self.assertNotEqual(skill.count("| 主 owner |"), skill.count("| harness |"))
+        self.assertEqual(skill.count("| adapter |"), 1)
+        self.assertIn("owner 与 harness 不要求数量相等", skill)
 
     def test_templates_have_one_status_owner_and_no_duplicate_legacy_tools(self) -> None:
         expected = {
@@ -141,7 +145,6 @@ class WorkflowDoctorTest(unittest.TestCase):
             "implementation-plan.md",
             "progress.md",
             "task-owner-prompt.md",
-            "pre-plan-contract.md",
         }
         templates = self.package / "templates"
         self.assertEqual({path.name for path in templates.glob("*.md")}, expected)

@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.8.0] - 2026-07-25
+
+### Added
+
+- Added a research-sufficiency gate, explicit requirement-contract confirmation for standard/project work, and the evidence ladder from project truth through minimal experiments.
+- Added four lazy-loaded PUA/P10 method packs: strategic value, essence subtraction, experiment attack, and delivery compounding.
+- Added minimum-cover expert capsules and a vetoing Occam gate for the final recommendation and every material revision.
+- Added a measurable activity-context budget with long-history, oversized-slice, ratio, and conditional implementation-plan coverage.
+
+### Changed
+
+- Kept seven business action owners while replacing the fixed 7+7 topology with seven owners, six orthogonal harnesses, and one Git/worktree adapter.
+- Folded decision challenge into requirement and solution owners; split required result verification from conditional authorized delivery.
+- Reduced project hot truth to `task_plan.md`, `findings.md`, and `progress.md`; made implementation navigation and multi-task index conditional.
+- Rebased the package on immutable 2.7.0 while preserving the local persistent-cache upgrade acceptance gate.
+
+### Removed
+
+- Removed `challenge-decisions.md`, `verify-deliver.md`, the reference-level parallel merge harness, and `pre-plan-contract.md`.
+- Removed fixed owner/harness count equality as an architectural invariant.
+
 ## [2.7.0] - 2026-07-25
 
 ### Changed

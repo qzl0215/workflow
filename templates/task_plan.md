@@ -8,7 +8,7 @@ summary: <one-line outcome>
 ---
 
 # 用户计划：<business-title>
-<!-- 唯一范围与状态真源。证据理由见 findings；技术步骤见 implementation-plan；实际结果见 progress。删除不适用章节。 -->
+<!-- 唯一范围与状态真源。证据理由见 findings；实际结果见 progress；复杂实施才创建 implementation-plan。删除不适用章节。 -->
 
 ## Current Snapshot
 
@@ -85,7 +85,7 @@ Ready 由“范围纳入 + 依赖 completed + 无 blocker + 授权具备”实�
 
 | Task | 用户价值 / 产物 | 依赖 | 文件域 / 共享资源 | 上下文引用 | DONE / 验证 | 状态 |
 |---|---|---|---|---|---|---|
-| P01-T01 | | — | | `findings:E01`; `implementation:P01-T01` | | pending |
+| P01-T01 | | — | | `findings:E01`；复杂时 `implementation:P01-T01` | | pending |
 
 ## 6. 执行门槛
 - 目标和边界已经看清；方案已经选定。
@@ -100,11 +100,13 @@ Ready 由“范围纳入 + 依赖 completed + 无 blocker + 授权具备”实�
 
 ## Completed milestones
 
+完成的 Plan/Task 只保留 1–3 行业务结果与证据入口；详细历史留在 Git 和 progress 的证据位置，不复制为归档章节。
+
 | Plan | 业务结果 | 交付状态 | progress 证据 | 完成时间 |
 |---|---|---|---|---|
 
 ## 真源链接
 
 - `findings.md`：证据与为什么。
-- `implementation-plan.md`：复杂任务怎么做；不保存状态。
 - `progress.md`：实际发生、验证和 handoff。
+- `implementation-plan.md`（若存在）：复杂任务怎么做；不保存状态。

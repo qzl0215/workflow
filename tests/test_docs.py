@@ -72,13 +72,14 @@ def visual_source_digest(package: Path) -> str:
         package / "SKILL.md",
         package / "CHANGELOG.md",
         *sorted((package / "references").glob("*.md")),
+        *sorted((package / "adapters").glob("*.md")),
+        *sorted((package / "methods").glob("*.md")),
     ]
     paths.extend(
         package / "templates" / name
         for name in (
             "index.md",
             "findings.md",
-            "pre-plan-contract.md",
             "task_plan.md",
             "implementation-plan.md",
             "progress.md",
@@ -148,9 +149,9 @@ class DocumentationContractTest(unittest.TestCase):
         source = (PACKAGE / "SKILL.md").read_text()
         generated = (PACKAGE / "docs/workflow-visual-map.html").read_text()
         stages = re.findall(rf"^\| ({'|'.join(STAGES)}) \|", source, re.M)
-        routes = re.findall(r"`(references/[A-Za-z0-9_-]+\.md)`", source)
+        routes = re.findall(r"`((?:references|adapters|methods)/[A-Za-z0-9_-]+\.md)`", source)
         self.assertEqual(stages, list(STAGES))
-        self.assertEqual(len(routes), 14)
+        self.assertEqual(len(routes), 18)
         for token in [*stages, *UNKNOWN_ROUTES, *routes]:
             self.assertIn(token, generated)
 
@@ -166,8 +167,10 @@ class DocumentationContractTest(unittest.TestCase):
     def test_visual_model_covers_all_capabilities_and_document_templates(self) -> None:
         module = visual_generator_module()
         self.assertEqual(len(module.PRIMARY_OWNER_FILES), 7)
-        self.assertEqual(len(module.HARNESS_FILES), 7)
-        self.assertEqual(len(module.VISUAL_TEMPLATE_NAMES), 7)
+        self.assertEqual(len(module.HARNESS_FILES), 6)
+        self.assertEqual(len(module.ADAPTER_FILES), 1)
+        self.assertEqual(len(module.METHOD_PACK_FILES), 4)
+        self.assertEqual(len(module.VISUAL_TEMPLATE_NAMES), 6)
 
     def test_visual_build_uses_the_current_release_without_publishing_release_noise(self) -> None:
         def mutate(package: Path) -> None:
@@ -341,6 +344,10 @@ class DocumentationContractTest(unittest.TestCase):
         generated = (PACKAGE / "docs/workflow-visual-map.html").read_text()
         for filename in (*visual_generator_module().PRIMARY_OWNER_FILES, *visual_generator_module().HARNESS_FILES):
             self.assertIn(f"references/{filename}", generated)
+        for filename in visual_generator_module().ADAPTER_FILES:
+            self.assertIn(f"adapters/{filename}", generated)
+        for filename in visual_generator_module().METHOD_PACK_FILES:
+            self.assertIn(f"methods/{filename}", generated)
         for filename in visual_generator_module().VISUAL_TEMPLATE_NAMES:
             self.assertIn(filename, generated)
 
@@ -375,7 +382,10 @@ class DocumentationContractTest(unittest.TestCase):
             "计划、执行、复盘",
             "三段七动作",
             "四路未知",
-            "14 项按需能力",
+            "18 项按需模块",
+            "四个懒加载包",
+            "奥卡姆硬门",
+            "三个热真源",
             "发现小改进时，先提案再动手",
             "小改动、大价值",
             "正确归属地",
@@ -411,6 +421,8 @@ class DocumentationContractTest(unittest.TestCase):
             *(path for path in sorted(PACKAGE.glob("*.md")) if path.name != "CHANGELOG.md"),
             PACKAGE / "docs/workflow-visual-map.html",
             *sorted((PACKAGE / "references").glob("*.md")),
+            *sorted((PACKAGE / "adapters").glob("*.md")),
+            *sorted((PACKAGE / "methods").glob("*.md")),
             *sorted((PACKAGE / "templates").glob("*.md")),
         ]
         offenders = []
@@ -486,9 +498,9 @@ class DocumentationContractTest(unittest.TestCase):
             return result, generated
 
     def test_release_gate_fails_when_target_file_is_missing(self) -> None:
-        result = self.run_copied_release(lambda package: (package / "references/verify-deliver.md").unlink())
+        result = self.run_copied_release(lambda package: (package / "references/verify-results.md").unlink())
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("missing target files: references/verify-deliver.md", result.stdout)
+        self.assertIn("missing target files: references/verify-results.md", result.stdout)
 
     def test_release_gate_fails_on_sensitive_assignment(self) -> None:
         def mutate(package: Path) -> None:
@@ -510,7 +522,9 @@ class DocumentationContractTest(unittest.TestCase):
 
     def test_visual_map_stales_when_reference_or_plan_contract_changes(self) -> None:
         for relative in (
-            "references/verify-deliver.md",
+            "references/verify-results.md",
+            "adapters/merge-parallel-work.md",
+            "methods/strategic-value.md",
             "templates/task_plan.md",
             "templates/task-owner-prompt.md",
         ):
