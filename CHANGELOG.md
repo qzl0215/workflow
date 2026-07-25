@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.7.0] - 2026-07-25
+
+### Changed
+
+- 为浏览器验收增加有界止损：两种可见控制方式均失败或连接器诊断达到 90 秒后，停止在交付主链反复调试驱动。
+- 将浏览器驱动故障与产品验收分流；非交互目标允许用直达 URL、ready 信号、可见内容、网络状态和回归契约组成 fresh 证据。
+- 交互本身是验收目标且替代证据不足时，必须明确标记未覆盖并返回 Task 或 blocker，禁止把连接器失败写成产品通过。
+
+### Release status
+
+- Stable public release target: `2.7.0`.
+
 ## [2.6.0] - 2026-07-25
 
 ### Changed

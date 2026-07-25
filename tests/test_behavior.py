@@ -405,6 +405,23 @@ class PlanningAndExecutionContractTest(unittest.TestCase):
         ):
             self.assertIn(token, text)
 
+    def test_verify_owner_bounds_browser_driver_debugging_without_weakening_evidence(self) -> None:
+        text = reference("verify-deliver.md")
+        for token in (
+            "两种可见控制方式",
+            "90 秒",
+            "驱动故障",
+            "产品验收",
+            "直达 URL",
+            "ready 信号",
+            "可见业务内容",
+            "网络状态",
+            "交互本身",
+            "明确未覆盖",
+            "不得写成产品通过",
+        ):
+            self.assertIn(token, text)
+
     def test_mutating_task_requires_one_execution_site_validity_check(self) -> None:
         text = reference("execute-tasks.md")
         for token in (
