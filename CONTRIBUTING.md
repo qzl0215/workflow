@@ -13,12 +13,10 @@ Contributions are welcome when they improve an observable workflow result withou
 
 ```bash
 python3 -B -m unittest discover -s tests -p 'test_*.py' -v
-python3 -B scripts/workflow_doctor.py
-python3 -B scripts/generate_visual_map.py --check
 python3 -B scripts/release_check.py
 ```
 
-If the root route or state table changes, regenerate the visual map. If templates change, update every reader/writer test. Never commit credentials, private paths, production reports, generated caches, or organization-specific release implementations.
+The full test suite runs once on the final source candidate. `release_check.py` then owns the doctor and generated visual check; do not repeat those checks as separate release ceremonies. If the root route or state table changes, regenerate the visual map before the gate. If templates change, update every reader/writer test. Never commit credentials, private paths, production reports, generated caches, or organization-specific release implementations.
 
 ## Pull requests
 
@@ -28,7 +26,7 @@ Describe the user outcome, removed or merged complexity, tests and actual result
 
 项目 owner `qzl0215` 于 2026-07-24 为公开仓库 `qzl0215/workflow` 的维护授予持续授权：当变更范围仅限本仓库，并且上面的 Required checks 已在最终候选上 fresh 通过时，Agent 可以连续完成 commit、push、合并到主版本和发布，不再重复请求授权。该授权同时覆盖为兼容最新主版本所必需的语义合并与集成后重验。
 
-默认发布正式版本，并在每次公开发布时递增 minor 版本，例如从 `2.3.0` 升至 `2.4.0`。只有项目 owner 明确要求时才创建预发布；既有 beta 标签和 Release 保留为历史与回滚点，不删除、不改写。
+默认发布正式版本并遵循 SemVer：向后兼容的修复或流程收紧递增 patch，新增兼容能力递增 minor，破坏性变更递增 major。只有项目 owner 明确要求时才创建预发布；既有标签和 Release 保留为历史与回滚点，不删除、不改写。
 
 持续授权不降低安全和范围边界：
 

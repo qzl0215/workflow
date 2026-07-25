@@ -411,9 +411,24 @@ class DocumentationContractTest(unittest.TestCase):
             "P0",
             "禁止 force",
             "默认发布正式版本",
-            "递增 minor 版本",
+            "遵循 SemVer",
+            "递增 patch",
+            "递增 minor",
+            "递增 major",
             "只有项目 owner 明确要求时才创建预发布",
         ):
+            self.assertIn(token, contributing)
+
+    def test_release_checks_use_one_full_suite_and_one_composite_gate(self) -> None:
+        contributing = (PACKAGE / "CONTRIBUTING.md").read_text()
+        self.assertEqual(
+            contributing.count("python3 -B -m unittest discover -s tests -p 'test_*.py' -v"),
+            1,
+        )
+        self.assertEqual(contributing.count("python3 -B scripts/release_check.py"), 1)
+        self.assertNotIn("python3 -B scripts/workflow_doctor.py", contributing)
+        self.assertNotIn("python3 -B scripts/generate_visual_map.py --check", contributing)
+        for token in ("release_check.py", "doctor", "generated visual check", "do not repeat"):
             self.assertIn(token, contributing)
 
     def test_formal_sources_do_not_publish_legacy_stage_words(self) -> None:

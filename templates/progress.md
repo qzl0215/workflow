@@ -19,8 +19,10 @@
 
 ## 验证证据
 
-| 时间 | Plan / Task | Source fingerprint / 影响面 | 命令 / 检查 | RC receipt / 是否复用 / 耗时 | 输出 / 证据位置 | 结论 |
+| 时间 | Plan / Task | Command-scoped tree/hash / impact set | 命令身份 / 环境类别 | RC receipt / 是否复用 / 耗时 | 输出 / 证据位置 | 结论 |
 |---|---|---|---|---|---|---|
+
+同一 scoped 内容、命令和环境类别可直接复用；路径、commit、内容等价 rebase、复制目录和相同制品不使回执失效。
 
 ## 失败与继承
 

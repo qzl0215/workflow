@@ -99,7 +99,16 @@ class CanonicalStageContractTest(unittest.TestCase):
         self.assertNotRegex(SKILL, LEGACY_STAGES)
 
     def test_light_work_fast_passes_without_weakening_evidence(self) -> None:
-        for token in ("轻任务", "快速通过", "证据驱动检查点", "不降低验收", "不建立项目文档"):
+        for token in ("默认快刀", "轻任务", "快速通过", "证据驱动检查点", "不降低验收", "不建立项目文档"):
+            self.assertIn(token, SKILL)
+        for token in (
+            "文件数量、项目重要、常规发布或修改 workflow 自身",
+            "不能单独触发升级",
+            "难逆产品或架构决策",
+            "数据迁移、权限、安全或生产风险",
+            "跨系统兼容性",
+            "连续失败或证据冲突",
+        ):
             self.assertIn(token, SKILL)
 
 
@@ -150,13 +159,15 @@ class UserHandoffContractTest(unittest.TestCase):
         self.assertIn("事实可查", goal)
         self.assertIn("不问用户", goal)
 
-    def test_requirement_card_cannot_replace_requirement_discovery(self) -> None:
+    def test_recommended_contract_is_the_default_discovery_interface(self) -> None:
         goal = reference("understand-goal.md")
         requirement_row = next(line for line in SKILL.splitlines() if line.startswith("| 需求澄清 |"))
         for token in (
             "需求成熟度硬门",
-            "需求契约是澄清完成后的结晶",
-            "禁止生成完成态需求契约",
+            "推荐需求契约（待确认）",
+            "默认需求发现界面",
+            "默认最多一批高价值问题",
+            "只有仍存在会改变目标、范围、验收或授权的未知",
             "沉默不等于确认",
             "用户 / 场景 / 现状痛点",
             "目标结果与可观察成功标准",
@@ -195,20 +206,18 @@ class UserHandoffContractTest(unittest.TestCase):
         for token in ("## 调研充分性硬门", "停止依据", "需求契约确认"):
             self.assertIn(token, FINDINGS_TEMPLATE)
 
-    def test_requirement_discovery_uses_numbered_batches_and_keeps_drilling(self) -> None:
+    def test_requirement_discovery_uses_one_high_value_exception_batch(self) -> None:
         goal = reference("understand-goal.md")
         for token in (
-            "编号问题批次",
-            "相互独立",
-            "有依赖",
-            "1B 2A 3C",
-            "同一编号",
-            "不设置总问题数上限",
-            "批量不等于问卷倾倒",
+            "默认最多一批高价值问题",
+            "完整推荐",
+            "关键例外",
+            "目标、范围、验收或授权",
+            "第二批",
+            "实质缺口",
         ):
             self.assertIn(token, goal)
-        for token in ("回答含糊", "继续追问", "决策树"):
-            self.assertIn(token, goal)
+        self.assertNotIn("不设置总问题数上限", goal)
 
     def test_later_stages_continue_until_a_real_handoff_trigger(self) -> None:
         plan = reference("plan-tasks.md")
@@ -389,7 +398,11 @@ class PlanningAndExecutionContractTest(unittest.TestCase):
         progress = (PACKAGE / "templates/progress.md").read_text()
         self.assertFalse((PACKAGE / "templates/pre-plan-contract.md").exists())
         for token in (
-            "三个热真源",
+            "复杂项目才启用三个热真源",
+            "简单任务默认零新增项目文档",
+            "标准任务默认零新增项目文档",
+            "需要持久恢复",
+            "一份最小 `task_plan.md`",
             "`task_plan.md`",
             "`findings.md`",
             "`progress.md`",
@@ -434,6 +447,9 @@ class PlanningAndExecutionContractTest(unittest.TestCase):
     def test_solution_owner_selects_minimum_experts_and_routes_one_primary_and_one_challenger_pack(self) -> None:
         text = reference("decide-solution.md")
         for token in (
+            "H0/H1 默认单视角",
+            "不加载专家或方法包",
+            "项目重要或修改 workflow 自身",
             "会改变最终推荐的关键决策",
             "lead + 必要补位 + challenger",
             "独有判断",
@@ -596,7 +612,10 @@ class VerificationReviewAndEvolutionContractTest(unittest.TestCase):
         progress = (PACKAGE / "templates/progress.md").read_text()
         for token in (
             "RC 证据回执",
-            "source fingerprint + impact set + environment + verification profile",
+            "command-scoped source tree/hash + verification command + environment class",
+            "路径和 commit 元数据",
+            "commit、rebase、复制目录和相同制品",
+            "impact set",
             "同一输入不得重复运行",
             "只使受影响证据失效",
             "生产形态预检",
@@ -725,7 +744,8 @@ class IntegratedReleaseContractTest(unittest.TestCase):
             "必需 CI",
             "fast-forward",
             "禁止 force",
-            "集成结果上补 fresh 验证",
+            "内容等价检查",
+            "每个唯一最终源码内容最多一次全量验证",
             "核对真实远端与发布状态",
             "不逐步重复确认",
         ):
@@ -771,6 +791,8 @@ class IntegratedReleaseContractTest(unittest.TestCase):
     def test_release_graph_keeps_only_steps_with_independent_value(self) -> None:
         delivery = reference("deliver-release.md")
         for token in (
+            "定向测试 → 一次源码全量测试 → commit/rebase → 内容等价检查 → 发布同一制品 → 安装烟测",
+            "真实环境类别",
             "最小发布图",
             "PR/MR 只在",
             "分支保护、必需 CI、项目规则或真实 reviewer 要求",
@@ -807,6 +829,8 @@ class SupportingHarnessContractTest(unittest.TestCase):
     def test_agent_coordination_separates_expert_views_from_implementation(self) -> None:
         text = reference("coordinate-agents.md")
         for token in (
+            "默认 solo",
+            "独立 Reviewer 不是默认门",
             "只读独立视角",
             "确认计划后",
             "文件域隔离",
@@ -828,10 +852,24 @@ class SupportingHarnessContractTest(unittest.TestCase):
             "语义冲突",
             "不得整文件选边",
             "--continue",
-            "双方验证",
+            "内容等价时复用",
             "不授予外部动作权限",
         ):
             self.assertIn(token, text)
+
+    def test_final_process_occam_gate_removes_cost_without_new_reports(self) -> None:
+        verification = reference("verify-results.md")
+        for token in (
+            "六问流程奥卡姆门",
+            "专家会诊",
+            "subagent",
+            "方法包",
+            "新增文档",
+            "新证据",
+            "恢复能力",
+            "不创建独立报告",
+        ):
+            self.assertIn(token, verification)
 
     def test_failure_loop_and_handoff_remain_bounded(self) -> None:
         failure = reference("fix-failures.md")

@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.8.1] - 2026-07-26
+
+### Changed
+
+- Made the minimum sufficient fast path the default; file count, project importance, routine release work, and workflow self-modification no longer escalate a task by themselves.
+- Replaced questionnaire-first clarification with a complete recommended requirement contract and at most one default batch of material exceptions.
+- Tiered project truth by recovery need: simple work creates no documents, standard work uses at most one minimal plan when persistence is required, and only complex projects use the three hot sources.
+- Bound reusable verification to command-scoped source content, verification command, and environment class so content-equivalent rebases, copies, and artifacts reuse evidence.
+- Converged routine delivery on one final source validation, content equivalence, one released artifact, and a fresh installation smoke test.
+- Added a six-question process Occam gate without adding a new owner, harness, method pack, status, or report.
+- Adopted normal SemVer patch/minor/major selection for future stable releases.
+
 ## [2.8.0] - 2026-07-25
 
 ### Added

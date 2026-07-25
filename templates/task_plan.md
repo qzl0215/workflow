@@ -8,7 +8,7 @@ summary: <one-line outcome>
 ---
 
 # 用户计划：<business-title>
-<!-- 唯一范围与状态真源。证据理由见 findings；实际结果见 progress；复杂实施才创建 implementation-plan。删除不适用章节。 -->
+<!-- 仅在需要持久恢复时创建。标准任务使用紧凑模式，只保留决策摘要、范围、验收、当前 Task、下一步和必要证据；复杂项目才配套 findings/progress。复杂实施才创建 implementation-plan。删除不适用章节。 -->
 
 ## Current Snapshot
 
@@ -107,6 +107,6 @@ Ready 由“范围纳入 + 依赖 completed + 无 blocker + 授权具备”实�
 
 ## 真源链接
 
-- `findings.md`：证据与为什么。
-- `progress.md`：实际发生、验证和 handoff。
+- `findings.md`（复杂项目若存在）：证据与为什么。
+- `progress.md`（复杂项目若存在）：实际发生、验证和 handoff。
 - `implementation-plan.md`（若存在）：复杂任务怎么做；不保存状态。

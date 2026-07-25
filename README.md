@@ -6,7 +6,7 @@
 
 作者：zhonglin · MIT License
 
-当前协议版本：`2.8.0`
+当前协议版本：`2.8.1`
 
 [打开中文可视化介绍](docs/workflow-visual-map.html) · [查看完整工作协议](SKILL.md)
 
@@ -14,7 +14,7 @@
 
 适合这些任务：
 
-- 功能较复杂，需要跨多个文件或多个步骤；
+- 有难逆决策、安全/生产风险、跨系统兼容性或重大未知；
 - 需求还比较散，需要先看全局、定方案和优先级；
 - 涉及 UI、视觉或动效，需要先定设计再写工程计划；
 - 要跨会话推进，或需要多人 / 多 Agent 协作；
@@ -22,7 +22,7 @@
 
 不适合纯问答、改一个错别字、一次性安全小操作。这些事情直接做更快。
 
-收到需求后，它先判断是否值得进入完整流程。纯问答、改一个错别字、一次性安全小操作会直接做；复杂任务进入三段七动作：
+收到需求后默认走最低充分的快刀路径。文件多、项目重要、常规发布或修改 workflow 自身不会自动升级；只有难逆决策、迁移/权限/安全/生产风险、跨系统兼容、方向不明、连续失败/证据冲突或真实恢复协作需求才进入完整项目流程：
 
 > 计划：需求澄清 → 选定方案 → 拆成任务<br>
 > 执行：执行任务 → 验收交付<br>
@@ -30,7 +30,7 @@
 
 七个动作是证据检查点，不是七场固定仪式：证据已存在就快速通过，轻任务整体走短路径，但价值判断、完整 Plan 确认、验收证据和外部授权不会降级。
 
-需求澄清不会先替用户编一张完整需求卡。workflow 按“项目真源 → 已连接工具与数据 → 官方一手来源 → 最小实验”调查；新增证据不再改变目标、范围、方案或风险时才停止。真正需要人判断的目标、范围、成功标准、优先级与授权整理成编号问题批次。标准和项目任务只有在调研充分、承重分支关闭、完整需求契约获用户明确确认后才进入方案；轻任务保留快速通道。
+需求澄清先按“项目真源 → 已连接工具与数据 → 官方一手来源 → 最小实验”调查，然后直接给出完整的“推荐需求契约（待确认）”，让用户纠正关键例外。默认最多一批高价值问题；只有第一批暴露了仍会改变目标、范围、验收或授权的实质缺口才继续追问。标准和项目任务仍须明确确认完整契约，AI 推荐和沉默不能代替确认。
 
 ## 开工前先证明工作现场仍有效
 
@@ -38,7 +38,7 @@ workflow 不会因为目录还在、分支干净或历史测试通过，就默�
 
 ## 本地已验证 ≠ 已交付
 
-“验收交付”先由必经的验收 owner 证明结果；只有目标包含提交、合并或发布时，才加载授权交付 harness，不让普通本地任务携带发布规则。交付 harness 读取项目部署/发布文档以及项目规则、CI/脚本和仓库配置，确定真实 remote、目标分支、集成方式、版本、回滚与发布后检查；然后只在授权范围内完成集成发布：提交 → 合并 → 发布 → 发布后 smoke。
+“验收交付”先由必经的验收 owner 证明结果；只有目标包含提交、合并或发布时才加载授权交付 harness，不因此升级整项工作。它从项目部署/发布文档解析真实集成发布契约，把“提交 → 合并 → 发布 → 发布后 smoke”收敛为“定向测试 → 一次源码全量测试 → commit/rebase → 内容等价检查 → 发布同一制品 → 安装 smoke”；相同 command-scoped 内容、命令和环境可复用回执，真实环境边界始终 fresh 烟测。
 
 项目要求 PR/MR、CI、直接 fast-forward、特定部署命令或 GitHub Release 时，以项目真源为准，workflow 不硬编码平台流程。用户已经明确要求“提交合并发布”且目标可由项目文档唯一确定时，不会在每一步重复索取同一授权；目标不明、未授权或存在破坏性例外时，才停在一个具体决策点。
 
@@ -107,7 +107,7 @@ workflow 不会把所有不确定都变成对用户的追问：
 
 ## 专家圆桌如何看见整片森林
 
-当问题跨多个领域、角色目标冲突或重大路线难以取舍时，workflow 先列出会改变最终推荐的关键决策，再选择 `lead + 必要补位 + challenger`。H2 默认最多 3 个视角，H3 默认最多 5 个；每个专家都要说明独有判断、方法、预期证据、推翻条件和退出条件。
+H0/H1 默认单视角，不加载专家、subagent、独立 Reviewer 或方法包。当问题跨多个领域、角色目标冲突、证据互相冲突或重大路线难以取舍时，workflow 才列出会改变最终推荐的关键决策，再选择 `lead + 必要补位 + challenger`。H2 默认最多 3 个视角，H3 默认最多 5 个。
 
 会议不是轮流发表套话，而是三段式：
 
@@ -181,11 +181,11 @@ UI 范围先用线框图确认旅程、信息架构和关键状态；用户认�
 | 一个入口 | 包内只有一个根 `SKILL.md`，所有能力都已编排在同一个包内 |
 | 按需读取 | 默认读取当前 owner；方案只加主包和挑战包，交付与 adapter 仅在真实触发时加载 |
 | 专家按需会诊 | 复杂决策才发散和质询；简单任务不走形式 |
-| 关键问题集中问 | 独立问题按编号成批提问，有依赖的分支逐层深挖，不用问卷倾倒 |
+| 推荐契约先行 | 调研后先给完整推荐，默认最多一批关键例外，不做长问卷 |
 | 设计先于计划 | UI 任务先完成体验、视觉、动效和完整状态选型；非 UI 明确跳过 |
 | 最小项目就绪 | 项目能开工就不改；缺什么只补真正阻断的那一处 |
-| 证据先于完成 | 没有刚刚跑出的验证证据，就不声称任务已经完成 |
-| 文档服从决策 | 项目默认只有 task_plan、findings、progress 三个热真源；实施导航和索引按需 |
+| 证据先于完成 | 同一内容、命令和环境复用回执；输入变化或跨真实环境才 fresh |
+| 文档服从恢复 | 简单任务零文档；标准任务仅持久恢复时一份最小计划；复杂项目才用三个热真源 |
 | 副作用先授权 | 未经明确授权，不 commit、push、merge、deploy、delete 或公开发布 |
 
 缺少 subagent、浏览器、memory 或 Git 时，workflow 会改用当前环境能提供的安全路径，并明确哪些验证没有做；不会伪造 PR、发布或完成状态。
@@ -228,7 +228,6 @@ python3 scripts/install.py uninstall --target "/path/to/agent/skills" --yes
 
 ```bash
 python3 -B -m unittest discover -s tests -p 'test_*.py' -v
-python3 -B scripts/workflow_doctor.py
 python3 -B scripts/release_check.py
 ```
 
@@ -238,7 +237,7 @@ python3 -B scripts/release_check.py
 
 ## English
 
-`workflow` is a dependency-closed AI skill that turns an incomplete goal into a verified delivery. For complex decisions it runs an expert roundtable, maps the full problem landscape, and converges on a recommended route before experience design, planning, implementation, debugging, verification, and delivery. Install this repository only; no other custom skill or third-party Python package is required.
+`workflow` is a dependency-closed AI skill that turns an incomplete goal into a verified delivery. It defaults to the minimum sufficient process, proposes a complete requirement contract after focused research, and escalates only for material uncertainty, risk, compatibility, or recovery needs. Install this repository only; no other custom skill or third-party Python package is required.
 
 Ask your agent to clone `https://github.com/qzl0215/workflow`, identify its own skills parent directory, run `python3 scripts/install.py install --target "<skills-directory>"`, enable the explicit user-level daily updater with `enable-auto-update`, and verify with `check`. The single active package lives at `<skills-directory>/workflow`; verified updates replace it without retaining discoverable backups. Ambiguous targets and duplicate workflow skills fail closed.
 
