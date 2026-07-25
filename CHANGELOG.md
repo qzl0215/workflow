@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.6.0] - 2026-07-25
+
+### Changed
+
+- 将 DAG 从默认交付物收敛为真实分支、跨 owner 或共享资源冲突时才启用的条件化机制；线性小任务默认使用紧凑 Task 表。
+- 引入单一 RC 证据回执：相同 `source fingerprint + impact set + environment + verification profile` 可直接复用，输入变化时只失效受影响验证。
+- 将生产形态预检纳入 Verify：覆盖冷/热路径、真实数据规模、资源峰值，以及大 payload、缓存和序列化风险。
+- 在 `progress.md` 中记录 RC receipt、复用状态与验证耗时，便于直接识别重复验证成本。
+
+### Release status
+
+- Stable public release target: `2.6.0`.
+
 ## [2.5.0] - 2026-07-24
 
 ### Added

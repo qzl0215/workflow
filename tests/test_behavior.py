@@ -379,6 +379,20 @@ class PlanningAndExecutionContractTest(unittest.TestCase):
         ):
             self.assertIn(token, text)
 
+    def test_plan_owner_only_requires_dag_for_real_branching_or_shared_resources(self) -> None:
+        text = reference("plan-tasks.md")
+        template = (PACKAGE / "templates/task_plan.md").read_text()
+        for token in (
+            "DAG 触发门",
+            "两个以上分支",
+            "跨 owner",
+            "共享资源",
+            "紧凑 Task 表",
+            "不得为了形式生成 DAG",
+        ):
+            self.assertIn(token, text)
+        self.assertIn("不满足 DAG 触发门时删除本节", template)
+
     def test_execute_owner_keeps_scope_and_fresh_task_evidence(self) -> None:
         text = reference("execute-tasks.md")
         for token in (
@@ -428,6 +442,24 @@ class VerificationReviewAndEvolutionContractTest(unittest.TestCase):
         evidence = text.index("证据验收门")
         delivery = text.index("授权交付门")
         self.assertLess(evidence, delivery)
+
+    def test_verification_owner_uses_one_rc_receipt_and_scoped_invalidation(self) -> None:
+        text = reference("verify-deliver.md")
+        progress = (PACKAGE / "templates/progress.md").read_text()
+        for token in (
+            "RC 证据回执",
+            "source fingerprint + impact set + environment + verification profile",
+            "同一输入不得重复运行",
+            "只使受影响证据失效",
+            "生产形态预检",
+            "cold / warm",
+            "真实规模",
+            "资源峰值",
+            "payload / 缓存 / 序列化",
+        ):
+            self.assertIn(token, text)
+        for token in ("RC receipt", "是否复用", "耗时"):
+            self.assertIn(token, progress)
         for token in (
             "fresh 运行",
             "exit code",

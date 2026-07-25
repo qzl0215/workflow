@@ -71,6 +71,8 @@ summary: <one-line outcome>
 
 ### Plan DAG
 
+<!-- 仅在存在两个以上分支、汇合、跨 owner、共享资源竞争或表格无法直接表达的依赖时保留；不满足 DAG 触发门时删除本节。 -->
+
 ```mermaid
 flowchart LR
   P01["P01｜result"] --> P02["P02｜result"]
@@ -79,6 +81,7 @@ flowchart LR
 ## 5. Task Register
 
 Ready 由“范围纳入 + 依赖 completed + 无 blocker + 授权具备”实时计算，不作为第五种状态。
+单 Plan、少量串行 Task 默认只使用本紧凑 Task 表；仅在通过 DAG 触发门时增加局部 DAG。
 
 | Task | 用户价值 / 产物 | 依赖 | 文件域 / 共享资源 | 上下文引用 | DONE / 验证 | 状态 |
 |---|---|---|---|---|---|---|

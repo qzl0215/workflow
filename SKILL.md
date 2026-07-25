@@ -1,7 +1,7 @@
 ---
 name: workflow
 description: 把复杂目标从“还没想完整”推进到“已经做完、验明白并让下一次更高效”的单技能工作流。围绕 AI 高投入产出比，完成目标澄清、方案选择、任务拆解、实施、验收、复盘和受控进化；不用于纯问答或一次性小操作。
-version: 2.5.0
+version: 2.6.0
 author: zhonglin
 license: MIT
 ---
@@ -111,7 +111,7 @@ AI 按动作自动选择最低但足够的深度；用户不必先学会挑工�
 |---|---|---|
 | 主 owner | 需要澄清价值、补最小事实或处理未知 | `references/understand-goal.md` |
 | 主 owner | 需要勾勒最终画面、专家森林或方案取舍 | `references/decide-solution.md` |
-| 主 owner | 方案已定，需要 Plan/Task、DAG 和验收 | `references/plan-tasks.md` |
+| 主 owner | 方案已定，需要 Plan/Task、必要依赖图和验收 | `references/plan-tasks.md` |
 | 主 owner | 已有确认计划，需要逐 Task 实施 | `references/execute-tasks.md` |
 | 主 owner | 准备声明完成、交付或执行外部副作用 | `references/verify-deliver.md` |
 | 主 owner | 交付后判断这次应沉淀什么 | `references/learn-review.md` |
@@ -128,7 +128,7 @@ AI 按动作自动选择最低但足够的深度；用户不必先学会挑工�
 
 项目任务默认把最小真源放在 `<project>/plans/<yymmdd-summary>/`：
 
-- `task_plan.md`：范围、Plan/Task DAG、owner、验收和唯一 `status` 真源。
+- `task_plan.md`：范围、Plan/Task、owner、验收、必要时的依赖图和唯一 `status` 真源。
 - `findings.md`：事实、来源、推断、未知、比较和决策依据。
 - `implementation-plan.md`：只在复杂实施需要时保存技术导航；不保存状态。
 - `progress.md`：实际动作、失败、验证证据和 handoff。

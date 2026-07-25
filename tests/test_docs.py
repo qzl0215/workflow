@@ -119,7 +119,7 @@ class DocumentationContractTest(unittest.TestCase):
         self.assertIsNotNone(version)
         current = version.group(1)
         self.assertIn(f"当前协议版本：`{current}`", readme)
-        self.assertIn(f"## [{current}] - 2026-07-24", changelog)
+        self.assertRegex(changelog, rf"(?m)^## \[{re.escape(current)}\] - \d{{4}}-\d{{2}}-\d{{2}}$")
         self.assertIn("### Migration from 2.1.0-beta.3", changelog)
         self.assertIn("## [2.1.0-beta.3] - 2026-07-21", changelog)
 
