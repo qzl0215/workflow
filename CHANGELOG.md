@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.8.2] - 2026-07-27
+
+### Changed
+
+- Moved project freshness from an Act-only safeguard to the research entrance: a new request whose conclusions depend on mutable project state refreshes the project truth once, pins its source fingerprint, and keeps the same site through research, planning, and implementation.
+- Kept the rule intentionally small: conceptual questions do not refresh, resumed work keeps its bound site, there is no commit-count threshold, and the target is synchronized only once more before delivery.
+
 ## [2.8.1] - 2026-07-26
 
 ### Changed

@@ -206,6 +206,29 @@ class UserHandoffContractTest(unittest.TestCase):
         for token in ("## 调研充分性硬门", "停止依据", "需求契约确认"):
             self.assertIn(token, FINDINGS_TEMPLATE)
 
+    def test_current_state_research_binds_one_fresh_snapshot_before_discovery(self) -> None:
+        goal = reference("understand-goal.md")
+        execution = reference("execute-tasks.md")
+        for token in (
+            "依赖可变项目现状",
+            "调研前",
+            "项目定义的 freshness 机制",
+            "固定 source fingerprint",
+        ):
+            self.assertIn(token, SKILL)
+        for token in (
+            "新需求",
+            "调研前",
+            "刷新目标真源",
+            "固定 source fingerprint",
+            "纯概念问答",
+            "不按落后提交数设置阈值",
+            "交付前",
+        ):
+            self.assertIn(token, goal)
+        for token in ("调研入口已绑定", "同一现场", "不重复创建"):
+            self.assertIn(token, execution)
+
     def test_requirement_discovery_uses_one_high_value_exception_batch(self) -> None:
         goal = reference("understand-goal.md")
         for token in (
