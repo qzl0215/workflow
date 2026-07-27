@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.11.1] - 2026-07-27
+
+### Fixed
+
+- Bounded legacy mixed-status Plan indexes to the `Active` section during normal work, preventing completed summaries from entering context before a specific recovery or audit need exists.
+
 ## [2.11.0] - 2026-07-27
 
 ### Added

@@ -1064,6 +1064,14 @@ class ProjectKnowledgeRetirementContractTest(unittest.TestCase):
                              (review, ("Knowledge Delta", "长期真源发生变化", "不为每个 Task", "新建"))):
             for token in tokens:
                 self.assertIn(token, text)
+
+    def test_legacy_index_reads_stop_after_the_active_section(self) -> None:
+        handoff = reference("handoff-context.md")
+        for text in (SKILL, handoff):
+            for token in ("旧索引", "`Active` 区段", "下一个同级标题", "不得整文件读取"):
+                self.assertIn(token, text)
+
+
 class ExecutionSitePublicContractTest(unittest.TestCase):
     def test_public_docs_explain_that_old_workspaces_are_not_new_task_entrypoints(self) -> None:
         for token in (
