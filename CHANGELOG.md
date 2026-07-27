@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.10.0] - 2026-07-27
+
+### Added
+
+- Added a solution-confirmation causal chain that connects the decision-relevant intermediate actions to their positive effects, negative consequences, and the trade-off the user is being asked to accept.
+
+### Changed
+
+- Made direction handoffs explain real costs, limits, long-term trade-offs, and available mitigation or rollback without expanding ordinary implementation steps.
+- Kept lightweight, safely reversible choices on the fast path instead of forcing a mechanical confirmation template.
+
 ## [2.9.0] - 2026-07-27
 
 ### Added

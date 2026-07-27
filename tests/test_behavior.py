@@ -159,6 +159,25 @@ class UserHandoffContractTest(unittest.TestCase):
         self.assertIn("事实可查", goal)
         self.assertIn("不问用户", goal)
 
+    def test_solution_confirmation_exposes_the_decision_causal_chain(self) -> None:
+        solution = reference("decide-solution.md")
+        for token in (
+            "方案确认因果链",
+            "关键中间动作",
+            "正面效果",
+            "负面后果",
+            "用户需要接受的取舍",
+            "不展开普通实现步骤",
+            "轻量、无实质取舍",
+        ):
+            self.assertIn(token, solution)
+        self.assertIn(
+            "关键中间动作 → 正面效果与负面后果 → 用户需要接受的取舍",
+            solution,
+        )
+        for token in ("关键动作｜", "正面效果｜", "负面后果｜"):
+            self.assertIn(token, README)
+
     def test_recommended_contract_is_the_default_discovery_interface(self) -> None:
         goal = reference("understand-goal.md")
         requirement_row = next(line for line in SKILL.splitlines() if line.startswith("| 需求澄清 |"))
