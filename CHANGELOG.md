@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.12.0] - 2026-07-27
+
+### Added
+
+- Added a proactive requirement-clarification trigger whenever a surface request still requires direction-changing inference about the real user result, without waiting for the user to ask for clarification.
+- Added the target chain `表面请求 → 当前痛点 → 本质目标 → 成功信号` and persisted it in the findings template.
+- Added a question-leverage rule that selects one batch of 1–3 questions by decision impact, uncertainty, error cost, and user effort, with the current understanding or recommendation attached to every question.
+
+### Changed
+
+- Focused clarification on why the work matters, what must actually change, and which outcome matters most, while retaining self-service research and the zero-question fast path for clear, reversible work.
+
 ## [2.11.1] - 2026-07-27
 
 ### Fixed

@@ -261,6 +261,46 @@ class UserHandoffContractTest(unittest.TestCase):
             self.assertIn(token, goal)
         self.assertNotIn("不设置总问题数上限", goal)
 
+    def test_requirement_clarification_proactively_finds_the_underlying_goal(self) -> None:
+        goal = reference("understand-goal.md")
+        metadata = SKILL.split("---", 2)[1]
+        for token in (
+            "表面请求",
+            "真实用户结果",
+            "不要求用户先说“澄清需求”",
+        ):
+            self.assertIn(token, metadata)
+        for token in (
+            "不依赖用户说出“澄清需求”",
+            "表面请求与真实用户结果之间",
+            "主动进入需求澄清",
+        ):
+            self.assertIn(token, SKILL)
+        for token in (
+            "表面请求 → 当前痛点 → 本质目标 → 成功信号",
+            "1–3 个最高杠杆问题",
+            "问题杠杆",
+            "当前理解或推荐",
+            "为什么做、真正要改变什么、什么结果最重要",
+        ):
+            self.assertIn(token, goal)
+        for token in (
+            "不等你先说“澄清需求”",
+            "表面请求 → 当前痛点 → 本质目标 → 成功信号",
+            "1–3 个最高杠杆问题",
+        ):
+            self.assertIn(token, README)
+        for token in (
+            "## 目标链",
+            "表面请求",
+            "当前痛点",
+            "本质目标",
+            "成功信号",
+            "当前理解或推荐",
+            "默认只保留 1–3 个最高杠杆问题",
+        ):
+            self.assertIn(token, FINDINGS_TEMPLATE)
+
     def test_later_stages_continue_until_a_real_handoff_trigger(self) -> None:
         plan = reference("plan-tasks.md")
         execute = reference("execute-tasks.md")
