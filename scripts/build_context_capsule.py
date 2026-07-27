@@ -7,6 +7,7 @@ the thread directory. Missing required slices fail closed with exit code 2.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -54,9 +55,7 @@ LEGACY_STAGE_ALIASES = {
     "verify": "验收交付",
     "finish": "验收交付",
 }
-MAX_SELECTED_BYTES = 24 * 1024
-MAX_SELECTED_RATIO = 0.35
-RATIO_BUDGET_MIN_SOURCE_BYTES = 24 * 1024
+SOFT_SELECTED_BYTES = 24 * 1024
 
 
 @dataclass(frozen=True)
@@ -296,7 +295,35 @@ def clean_slice(text: str) -> str:
     return text.strip() if text.strip() else "_not available_"
 
 
-def build_capsule(task_dir: Path, plan_id: str, task_id: str, stage: str | None = None) -> dict[str, object]:
+def plan_is_completed(plan_text: str) -> bool:
+    return bool(
+        re.search(
+            r"^[ \t]*-[ \t]*状态[ \t]*[：:][ \t]*completed[ \t]*$",
+            plan_text,
+            re.MULTILINE | re.IGNORECASE,
+        )
+    )
+
+
+def source_fingerprint(texts: dict[str, str]) -> str:
+    digest = hashlib.sha256()
+    digest.update(b"context-capsule-schema-v2\n")
+    for name in sorted(texts):
+        digest.update(name.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(texts[name].encode("utf-8"))
+        digest.update(b"\0")
+    return f"sha256:{digest.hexdigest()}"
+
+
+def build_capsule(
+    task_dir: Path,
+    plan_id: str,
+    task_id: str,
+    stage: str | None = None,
+    *,
+    include_completed: bool = False,
+) -> dict[str, object]:
     paths = {
         "task_plan": task_dir / "task_plan.md",
         "findings": task_dir / "findings.md",
@@ -311,9 +338,6 @@ def build_capsule(task_dir: Path, plan_id: str, task_id: str, stage: str | None 
 
     if not texts["task_plan"]:
         missing.append("task_plan.md")
-    if not texts["progress"]:
-        missing.append("progress.md")
-
     snapshot = find_named_section(texts["task_plan"], "Current Snapshot")
     stage_results_section = find_named_section(texts["task_plan"], "阶段成果路由")
     handoff = find_named_section(texts["progress"], "Handoff checkpoint")
@@ -329,12 +353,18 @@ def build_capsule(task_dir: Path, plan_id: str, task_id: str, stage: str | None 
         ("task_plan.md#Current Snapshot", snapshot_text),
         (f"task_plan.md#{plan_id}", plan_text),
         (f"task_plan.md#{task_id}", task_text),
-        ("progress.md#Handoff checkpoint", handoff_text),
     ]:
         if value:
             loaded.append(label)
         else:
             missing.append(label)
+    if handoff_text:
+        loaded.append("progress.md#Handoff checkpoint")
+
+    if plan_text and plan_is_completed(plan_text) and not include_completed:
+        raise ValueError(
+            "完成 Plan 默认不进入活动上下文；只有审计或具体历史缺口可用 --include-completed 显式追溯"
+        )
 
     implementation = find_id_section(texts["implementation_plan"], task_id, task=True)
     implementation_text = implementation.text if implementation else find_table_slice(texts["implementation_plan"], task_id)
@@ -356,12 +386,10 @@ def build_capsule(task_dir: Path, plan_id: str, task_id: str, stage: str | None 
     ]
 
     source_total_bytes = sum(path.stat().st_size for path in paths.values() if path.exists())
-    selected = "\n\n".join(
+    stable_selected = "\n\n".join(
         part
         for part in [
-            snapshot_text,
             stage_results_section.text if stage_results_section else "",
-            handoff_text,
             plan_text,
             task_text,
             implementation_text,
@@ -369,22 +397,20 @@ def build_capsule(task_dir: Path, plan_id: str, task_id: str, stage: str | None 
         ]
         if part
     )
+    dynamic_selected = "\n\n".join(part for part in [snapshot_text, handoff_text] if part)
+    selected = "\n\n".join(part for part in [stable_selected, dynamic_selected] if part)
     selected_bytes = len(selected.encode("utf-8"))
     ratio = round(selected_bytes / source_total_bytes, 4) if source_total_bytes else None
-    budget_reasons: list[str] = []
-    if selected_bytes > MAX_SELECTED_BYTES:
-        budget_reasons.append(f"selected_bytes {selected_bytes} > {MAX_SELECTED_BYTES}")
-    if (
-        source_total_bytes >= RATIO_BUDGET_MIN_SOURCE_BYTES
-        and ratio is not None
-        and ratio > MAX_SELECTED_RATIO
-    ):
-        budget_reasons.append(f"selected_ratio {ratio} > {MAX_SELECTED_RATIO}")
-    if budget_reasons:
-        missing.append("context-budget: " + "; ".join(budget_reasons))
+    warnings: list[str] = []
+    if selected_bytes > SOFT_SELECTED_BYTES:
+        warnings.append(
+            f"selected_bytes {selected_bytes} > soft observation {SOFT_SELECTED_BYTES}; "
+            "compress or measure actual cached/uncached tokens before expanding context"
+        )
 
     return {
         "schema_version": 2,
+        "source_fingerprint": source_fingerprint(texts),
         "task_dir": str(task_dir.resolve()),
         "stage": stage,
         "plan_id": plan_id,
@@ -393,10 +419,11 @@ def build_capsule(task_dir: Path, plan_id: str, task_id: str, stage: str | None 
         "fail_closed": bool(missing),
         "loaded": loaded,
         "external_refs": external_refs,
+        "warnings": warnings,
         "not_loaded": [
             "complete chat history",
             "complete workflow truth-source files",
-            "completed Plan details",
+            "completed Plan details unless explicitly requested for audit",
             "unreferenced findings and artifacts",
             "unrelated project documentation",
         ],
@@ -405,10 +432,9 @@ def build_capsule(task_dir: Path, plan_id: str, task_id: str, stage: str | None 
             "source_total_bytes": source_total_bytes,
             "selected_bytes": selected_bytes,
             "selected_ratio": ratio,
-            "budget_status": "exceeded" if budget_reasons else "within",
-            "max_selected_bytes": MAX_SELECTED_BYTES,
-            "max_selected_ratio": MAX_SELECTED_RATIO,
-            "ratio_budget_min_source_bytes": RATIO_BUDGET_MIN_SOURCE_BYTES,
+            "budget_status": "warning" if warnings else "within",
+            "soft_selected_bytes": SOFT_SELECTED_BYTES,
+            "budget_unit": "bytes_observation_not_token_gate",
         },
         "slices": {
             "snapshot": snapshot_text,
@@ -432,6 +458,7 @@ def render_markdown(capsule: dict[str, object]) -> str:
     loaded = capsule["loaded"]
     external_refs = capsule["external_refs"]
     missing = capsule["missing_refs"]
+    warnings = capsule["warnings"]
     not_loaded = capsule["not_loaded"]
     stage_results = capsule["stage_results"]
     assert isinstance(stage_results, list)
@@ -447,23 +474,16 @@ def render_markdown(capsule: dict[str, object]) -> str:
         f"- Stage / Plan / Task: `{capsule['stage']}` / `{capsule['plan_id']}` / `{capsule['task_id']}`",
         f"- Fail closed: `{'yes' if capsule['fail_closed'] else 'no'}`",
         f"- Selected context: `{metrics['selected_bytes']}` / `{metrics['source_total_bytes']}` bytes (`{metrics['selected_ratio']}`)",
-        f"- Context budget: `{metrics['budget_status']}` (max `{metrics['max_selected_bytes']}` bytes; ratio `{metrics['max_selected_ratio']}` after source floor `{metrics['ratio_budget_min_source_bytes']}` bytes)",
+        f"- Source fingerprint: `{capsule['source_fingerprint']}`",
+        f"- Context observation: `{metrics['budget_status']}` (soft `{metrics['soft_selected_bytes']}` bytes; actual token telemetry remains authoritative)",
         "",
         "## L0｜Location",
         "",
         f"`{capsule['task_dir']}` → `{capsule['plan_id']}` → `{capsule['task_id']}`",
         "",
-        "## L1｜Current Snapshot",
-        "",
-        clean_slice(str(slices["snapshot"])),
-        "",
         "## L1｜Active stage results",
         "",
         *(rendered_stage_results or ["_none registered_"]),
-        "",
-        "## L1｜Handoff checkpoint",
-        "",
-        clean_slice(str(slices["handoff"])),
         "",
         "## L2｜Current Plan",
         "",
@@ -481,11 +501,20 @@ def render_markdown(capsule: dict[str, object]) -> str:
         "",
         *(evidence or ["_none referenced_"]),
         "",
+        "## L1｜Current Snapshot",
+        "",
+        clean_slice(str(slices["snapshot"])),
+        "",
+        "## L1｜Handoff checkpoint",
+        "",
+        clean_slice(str(slices["handoff"])),
+        "",
         "## L3/L4｜Context accounting",
         "",
         "- Loaded: " + (", ".join(f"`{item}`" for item in loaded) if loaded else "none"),
         "- External refs for project adapter: " + (", ".join(f"`{item}`" for item in external_refs) if external_refs else "none"),
         "- Not loaded: " + ", ".join(str(item) for item in not_loaded),
+        "- Warnings: " + (", ".join(f"`{item}`" for item in warnings) if warnings else "none"),
         "- Missing refs: " + (", ".join(f"`{item}`" for item in missing) if missing else "none"),
         f"- Upgrade: {capsule['upgrade_rule']}",
     ]
@@ -502,6 +531,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--stage", help="可选阶段断言；task_plan 没有阶段时作为旧计划兼容输入")
     parser.add_argument("--format", choices=("markdown", "json"), default="markdown")
     parser.add_argument("--allow-missing", action="store_true", help="Return zero even when the capsule fails closed")
+    parser.add_argument(
+        "--include-completed",
+        action="store_true",
+        help="Explicitly load a completed Plan for audit or a recorded historical gap",
+    )
     return parser.parse_args()
 
 
@@ -517,7 +551,13 @@ def main() -> int:
         return 2
 
     try:
-        capsule = build_capsule(args.task_dir, plan_id, task_id, args.stage)
+        capsule = build_capsule(
+            args.task_dir,
+            plan_id,
+            task_id,
+            args.stage,
+            include_completed=args.include_completed,
+        )
     except ValueError as error:
         print(str(error), file=sys.stderr)
         return 2

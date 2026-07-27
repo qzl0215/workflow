@@ -114,6 +114,7 @@ SHOULD_NOT_BE_LOADED
         *,
         stage: str | None = None,
         allow_missing: bool = False,
+        include_completed: bool = False,
     ) -> subprocess.CompletedProcess[str]:
         command = [
             sys.executable,
@@ -132,6 +133,8 @@ SHOULD_NOT_BE_LOADED
             command.extend(("--stage", stage))
         if allow_missing:
             command.append("--allow-missing")
+        if include_completed:
+            command.append("--include-completed")
         return subprocess.run(
             command,
             text=True,
@@ -268,7 +271,7 @@ SHOULD_NOT_BE_LOADED
             result = self.run_capsule(self.make_task(Path(temp)))
             self.assertEqual(result.returncode, 0, result.stdout)
             metrics = json.loads(result.stdout)["metrics"]
-            self.assertLess(metrics["source_total_bytes"], metrics["ratio_budget_min_source_bytes"])
+            self.assertLess(metrics["selected_bytes"], metrics["soft_selected_bytes"])
             self.assertEqual(metrics["budget_status"], "within")
 
     def test_long_unrelated_history_does_not_expand_the_active_capsule(self) -> None:
@@ -284,37 +287,61 @@ SHOULD_NOT_BE_LOADED
             payload = json.loads(result.stdout)
             self.assertEqual(payload["metrics"]["selected_bytes"], baseline["metrics"]["selected_bytes"])
             self.assertEqual(payload["metrics"]["budget_status"], "within")
+            self.assertNotEqual(payload["source_fingerprint"], baseline["source_fingerprint"])
             self.assertNotIn("UNRELATED_", json.dumps(payload["slices"], ensure_ascii=False))
 
-    def test_referenced_slice_over_24_kib_fails_closed(self) -> None:
+    def test_byte_budget_is_a_soft_observation_and_ratio_is_not_a_gate(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             task_dir = self.make_task(Path(temp))
             (task_dir / "findings.md").write_text(
-                "| 证据 ID | 事实 | 来源 |\n|---|---|---|\n| E01 | " + ("x" * (25 * 1024)) + " | test |\n"
+                "| 证据 ID | 事实 | 来源 |\n|---|---|---|\n"
+                "| E01 | " + ("x" * (25 * 1024)) + " | test |\n"
+                "| E99 | " + ("y" * (26 * 1024)) + " | old |\n"
             )
-            result = self.run_capsule(task_dir, allow_missing=True)
+            result = self.run_capsule(task_dir)
             self.assertEqual(result.returncode, 0, result.stdout)
             payload = json.loads(result.stdout)
-            self.assertTrue(payload["fail_closed"])
-            self.assertEqual(payload["metrics"]["budget_status"], "exceeded")
-            self.assertTrue(any("selected_bytes" in item for item in payload["missing_refs"]))
+            self.assertFalse(payload["fail_closed"])
+            self.assertEqual(payload["metrics"]["budget_status"], "warning")
+            self.assertGreater(payload["metrics"]["selected_ratio"], 0.35)
+            self.assertNotIn("max_selected_ratio", payload["metrics"])
+            self.assertTrue(any("selected_bytes" in item for item in payload["warnings"]))
+            self.assertFalse(payload["missing_refs"])
 
-    def test_large_source_with_over_35_percent_active_slice_fails_closed(self) -> None:
+    def test_minimal_task_does_not_require_progress(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             task_dir = self.make_task(Path(temp))
-            (task_dir / "findings.md").write_text(
-                "| 证据 ID | 事实 | 来源 |\n"
-                "|---|---|---|\n"
-                "| E01 | " + ("a" * (12 * 1024)) + " | test |\n"
-                "| E99 | " + ("b" * (13 * 1024)) + " | old |\n"
-            )
-            result = self.run_capsule(task_dir, allow_missing=True)
+            (task_dir / "progress.md").unlink()
+            result = self.run_capsule(task_dir)
             self.assertEqual(result.returncode, 0, result.stdout)
             payload = json.loads(result.stdout)
-            self.assertLess(payload["metrics"]["selected_bytes"], payload["metrics"]["max_selected_bytes"])
-            self.assertGreater(payload["metrics"]["selected_ratio"], payload["metrics"]["max_selected_ratio"])
-            self.assertTrue(payload["fail_closed"])
-            self.assertTrue(any("selected_ratio" in item for item in payload["missing_refs"]))
+            self.assertFalse(payload["fail_closed"])
+            self.assertNotIn("progress.md", json.dumps(payload["missing_refs"]))
+            self.assertEqual(payload["slices"]["handoff"], "")
+
+    def test_completed_plan_is_cold_by_default_and_requires_explicit_audit(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            task_dir = self.make_task(Path(temp))
+            task_plan = task_dir / "task_plan.md"
+            task_plan.write_text(
+                task_plan.read_text().replace(
+                    "- 业务 DONE：示例可工作",
+                    "- 业务 DONE：示例可工作\n- 状态：completed",
+                )
+            )
+            default = self.run_capsule(task_dir, allow_missing=True)
+            self.assertEqual(default.returncode, 2, default.stdout)
+            self.assertIn("完成 Plan 默认不进入活动上下文", default.stdout)
+
+            audit = self.run_capsule(task_dir, include_completed=True)
+            self.assertEqual(audit.returncode, 0, audit.stdout)
+            self.assertFalse(json.loads(audit.stdout)["fail_closed"])
+
+    def test_markdown_puts_stable_task_contract_before_dynamic_handoff(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            result = self.run_capsule(self.make_task(Path(temp)), output="markdown")
+            self.assertEqual(result.returncode, 0, result.stdout)
+            self.assertLess(result.stdout.index("L2｜Current Task"), result.stdout.index("L1｜Handoff checkpoint"))
 
     def test_simple_task_does_not_require_an_implementation_plan(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.11.0] - 2026-07-27
+
+### Added
+
+- Added a repo-native project knowledge entry that navigates to code, runtime, normative, rationale, authorization, active-work, and derived truth owners without copying code facts into a second encyclopedia.
+- Added a retirement gate that removes completed Plans from default context immediately while preserving decisions, experiments, acceptance, rollback, and residual-risk evidence until each item has an owner and recovery path.
+
+### Changed
+
+- Made `progress.md` and implementation details conditional for minimal Task capsules, moved stable Task contracts before dynamic handoff state for cache reuse, and changed fixed byte and selection-ratio limits into observable warnings rather than correctness failures.
+- Added explicit audit-only loading for completed Plans and content fingerprints for derived context capsules.
+
 ## [2.10.0] - 2026-07-27
 
 ### Added

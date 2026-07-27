@@ -57,3 +57,10 @@
 - 用户可见结果：
 - 清理与回滚：
 - 遗留风险：
+
+## Knowledge Delta（按需）
+
+<!-- 只有退休提升了信息或长期真源实际变化时保留；不为每个 Task 填写，不创建独立 Delta 文档。 -->
+
+| Plan | 信息类别 | promoted / already_owned / intentionally_ephemeral | 目标 owner / 恢复位置 | fresh 证据 |
+|---|---|---|---|---|

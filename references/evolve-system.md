@@ -19,6 +19,10 @@
 
 提案门与写入门分开：模型可以主动提出需求，但不能把推断直接变成长期规则。用户级承载跨项目稳定偏好，项目级承载当前项目事实与路径，skill 级承载可复用方法；workflow 归入 skill 级。
 
+需要长期 AI 导航时建立**项目知识入口**：优先复用根 `AGENTS.md`、README、TRUTH 或等价 owner，只做导航、不复制代码事实、不新建中央知识库；现有入口都无法定位真相时才最多新增一份。
+
+长期 claim 用 `subject × claim type × scope × version / fingerprint` 定位。候选实现归源码/配置/构建/测试，部署运行态归目标制品或环境探测，规范要求归合同/Schema/政策/规范测试，设计理由归领域 owner，授权与验收归获批回执，活动工作状态归唯一当前 Plan，派生导航携带输入/生成器/schema fingerprint。同一 subject、claim type、scope 和 version / fingerprint 冲突时 fail closed；不得以代码推断已部署或让派生索引覆盖输入真源。稳定规则在前、动态状态与 fingerprint 在后，以复用缓存。
+
 ## 核心动作
 
 1. 生成最小提案，只保留**痛点问题、推断需求、最小改造、预期价值、接受 / 调整 / 暂不做**；事实与推断分开，价值用产出质量、交互次数、无意义 token 和上下文质量表达。
@@ -26,12 +30,12 @@
 3. 先分清缺陷还是新需求：**原验收未满足**就修正原 P/T；只有**新的用户结果**才追加新 Plan，不能用“回灌”掩盖漏做。
 4. 按 owner-local handoff 路由：目标 owner 在当前上下文时做**零距离 handoff**并进入“拆成任务”；目标在其他项目或 skill 时生成 **side-task capsule**，来源任务保持“回灌改进”，输入充分的目标任务从“拆成任务”开始。
 5. 用户级或无项目场景先找现有稳定 owner；**无 owner**或 owner 冲突时 fail closed，请用户决定，不随意创建长期文件。
-6. 获批 Plan 先写失败验收，再做满足结果的最小真源变更；同步真实 writer、reader、测试和派生物，并检查单入口、重复规则、孤儿、平台硬编码与文档预算。
+6. 获批 Plan 先写失败验收，再做满足结果的最小真源变更；同步真实 writer、reader、测试和派生物，并检查项目知识入口、单入口、重复规则、claim 冲突、孤儿、平台硬编码与文档预算。
 7. handoff 提示词生成不算完成；目标 owner 必须回传**实际变更与 fresh 验证**、残余风险和真实交付状态，来源才可关闭回灌。
 
 ## 写入真源
 
-事实、模型推断、提案和用户决策写来源 `findings.md`；实施范围与状态只写目标 owner 的 `task_plan.md`，实际证据写其 `progress.md`。项目事实写项目 owner，用户稳定偏好写用户级现有 owner，skill 改进写目标 skill 的协议 owner。side-task capsule 只是派生输入，不复制实施状态。
+事实、模型推断、提案和用户决策写来源 `findings.md`；实施范围与状态只写目标 owner 的 `task_plan.md`，实际证据写其 `progress.md`。项目事实按 claim 类型写入代码、配置、测试、部署探测或领域文档 owner；用户稳定偏好写用户级现有 owner，skill 改进写目标 skill 的协议 owner。side-task capsule 和派生导航只是可重建输入，不复制实施状态。
 
 ## 停止 / 通过
 

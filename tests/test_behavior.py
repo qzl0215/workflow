@@ -440,7 +440,7 @@ class PlanningAndExecutionContractTest(unittest.TestCase):
         progress = (PACKAGE / "templates/progress.md").read_text()
         self.assertFalse((PACKAGE / "templates/pre-plan-contract.md").exists())
         for token in (
-            "复杂项目才启用三个热真源",
+            "复杂项目只有真实恢复需求时才启用热真源",
             "简单任务默认零新增项目文档",
             "标准任务默认零新增项目文档",
             "需要持久恢复",
@@ -456,6 +456,7 @@ class PlanningAndExecutionContractTest(unittest.TestCase):
         for token in ("decision receipt", "rolling handoff", "不创建 archive 文档"):
             self.assertIn(token, handoff)
         self.assertIn("不复制原始 stdout", progress)
+        self.assertIn("默认列表只登记 `status: active`", index)
         for forbidden in ("生命周期", "当前阶段快照", "活跃 Task", "更新时间"):
             self.assertNotIn(f"| {forbidden} |", index)
 
@@ -1037,6 +1038,32 @@ class RootCauseClosureContractTest(unittest.TestCase):
         self.assertIn("不建独立故障报告", failure)
 
 
+class ProjectKnowledgeRetirementContractTest(unittest.TestCase):
+    def test_project_knowledge_has_one_entry_and_claim_owners(self) -> None:
+        evolution = reference("evolve-system.md")
+        for token in ("项目知识入口", "AGENTS.md", "README", "TRUTH", "只做导航", "不复制代码事实",
+                      "不新建中央知识库", "候选实现", "部署运行态", "规范要求", "设计理由",
+                      "授权与验收", "活动工作状态", "派生导航", "version / fingerprint", "fail closed"):
+            self.assertIn(token, evolution)
+        for token in ("项目知识导航", "完成 Plan 立即退出日常上下文", "退休检查"):
+            self.assertIn(token, README)
+
+    def test_completed_plan_exits_hot_path_and_passes_retirement_gate(self) -> None:
+        review = reference("learn-review.md")
+        task_plan = (PACKAGE / "templates/task_plan.md").read_text()
+        for token in ("完成 Plan", "默认上下文", "立即退出", "显式追溯"):
+            self.assertIn(token, reference("handoff-context.md"))
+        for token in ("用户决定、范围与授权", "采用与拒绝方案", "稳定事实与规范不变量",
+                      "外部观察、人工验收与失败实验", "迁移、回滚、事故与审计证据",
+                      "遗留风险、延期与未交付项", "恢复位置与保留期限"):
+            self.assertIn(token, review)
+            self.assertIn(token, task_plan)
+        for text, tokens in ((review + task_plan, ("退休检查", "promoted", "already_owned",
+                                                   "intentionally_ephemeral", "unresolved", "不得物理删除")),
+                             (reference("deliver-release.md"), ("物理删除", "精确删除授权", "恢复位置")),
+                             (review, ("Knowledge Delta", "长期真源发生变化", "不为每个 Task", "新建"))):
+            for token in tokens:
+                self.assertIn(token, text)
 class ExecutionSitePublicContractTest(unittest.TestCase):
     def test_public_docs_explain_that_old_workspaces_are_not_new_task_entrypoints(self) -> None:
         for token in (

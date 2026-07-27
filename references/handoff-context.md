@@ -23,20 +23,22 @@
 - **L3 目标证据**：只加载能回答已记录 gap 的代码、日志、reference 或历史决策。
 - **L4 全历史**：只用于一致性争议、审计或 L3 仍不足，并记录原因。
 
-先过**活动上下文预算门**：L0–L2 默认选择量不得超过 24 KiB；四份源文件合计至少 24 KiB 时，选择比例还不得超过 35%。小型任务不按比例误杀。超限先做语义压缩；仍需 L3/L4 时记录 `gap / target / expected_answer / level` 后只加载目标切片，不能静默读取全文。
+先看**活动上下文软预算**：24 KiB 只作为需要压缩或实测 token 的观察信号，不再按固定字节比例 fail closed。上下文成本以可用平台报告的未缓存、缓存写入、缓存命中和总 token 为准；平台没有 token 遥测时如实报告字节观察，不能冒充 token 结论。仍需 L3/L4 时记录 `gap / target / expected_answer / level` 后只加载目标切片，不能静默读取全文。
+
+完成 Plan 在业务完成后立即退出默认上下文；普通 capsule、项目索引和 onboard 只载入活动 Plan。只有一致性争议、事故、审计或已记录的具体 gap 才显式追溯完成 Plan，并在读取后回到活动上下文，不能让冷历史重新变成状态真源。
 
 先过**上下文同一性门**：只有目标结果、验收、owner、交付边界和 source fingerprint 仍属于同一份业务合同时，才继续沿用当前 Task capsule。出现已交付后新缺陷、新的独立用户结果、跨项目或 skill owner、需要独立回滚的新交付时，建立**独立 side-task capsule**；宿主与用户授权允许时交给 fresh task，否则也只从 capsule 继续，不默认携带旧线程全文。新增 Plan 解决范围编排，不自动证明旧线程仍是最佳上下文容器。是否切分依据业务边界、证据失效和上下文污染风险，不按固定轮次、分钟、token 或压缩次数机械决定。
 
 ## 核心动作
 
-1. 构建 **Task capsule**：目标、当前动作、活动阶段成果路由、执行现场、Task 绑定、目标基线、freshness、source fingerprint、可写性、脏改动归属、输入/证据路径、允许/禁止文件、已完成、失败与排除假设、验收、验证命令、权限、blocker、下一步。
+1. 构建 **Task capsule**：先放稳定的目标、Plan/Task 合同、验收、文件域和相关证据，再放易变的当前动作、handoff、source fingerprint、脏改动、权限、blocker 和下一步；稳定前缀优先获得缓存复用。
 2. 回灌 side task 额外携带发现来源、用户已确认需求、目标归属、最小方案、预期价值、禁止重复追问和结构化回传要求；目标 owner 只补会推翻方案的 fresh 事实。
 3. 明确“不要重复做”的动作和哪些证据可复用；source fingerprint 或环境变化时标记旧证据失效。
 4. 新执行者先验证 capsule 中最易过期、且会改变下一步的事实；可变更任务先重验执行现场有效性，不默认读完整聊天、所有计划和全仓文档。
 5. 缺上下文时以 `gap / target / expected_answer / level` 请求具体切片；收到答案立即停止升级。
 6. 摘要、计划和实际文件冲突时以正式真源与 fresh 检查为准并 fail closed，不静默猜测。
 7. 阶段切换、fresh 委派、第二次压缩、共享资源等待或高风险动作前重建 capsule。
-8. 动作结束时做语义压缩：task_plan 把完成工作收成里程碑，findings 把关闭问题收成 decision receipt，progress 以 rolling handoff 替换旧现场；原始日志只保留位置，不创建 archive 文档。
+8. 动作结束时做语义压缩：task_plan 把完成工作收成里程碑，findings 把关闭问题收成 decision receipt，progress 以 rolling handoff 替换旧现场；Plan 完成后触发退休检查并退出热路径，原始日志只保留位置，不创建 archive 文档。
 
 ## 写入真源
 

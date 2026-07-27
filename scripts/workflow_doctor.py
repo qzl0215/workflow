@@ -138,7 +138,7 @@ PUBLIC_TARGETS = {
     "docs/workflow-visual-map.html",
 }
 MAX_PACKAGE_FILES = 45
-MAX_PACKAGE_BYTES = 400_000
+SOFT_PACKAGE_BYTES = 400_000
 MAX_REFERENCE_LINES = 1_200
 CONFLICT_MARKERS = ("<<<<<<<", "=======", ">>>>>>>")
 REFERENCE_LINK = re.compile(r"references/([A-Za-z0-9_-]+\.md)")
@@ -221,8 +221,11 @@ def main() -> int:
     if len(package_files) > MAX_PACKAGE_FILES:
         error(errors, package, f"package has {len(package_files)} files; budget is {MAX_PACKAGE_FILES}")
     package_bytes = sum(path.stat().st_size for path in package_files)
-    if package_bytes > MAX_PACKAGE_BYTES:
-        error(errors, package, f"package is {package_bytes} bytes; budget is {MAX_PACKAGE_BYTES}")
+    if package_bytes > SOFT_PACKAGE_BYTES:
+        warnings.append(
+            f"{package}: package is {package_bytes} bytes; soft observation is {SOFT_PACKAGE_BYTES}; "
+            "runtime loading-path budgets remain authoritative"
+        )
     for extra in sorted(relative_files - PUBLIC_TARGETS):
         error(errors, package / extra, "file is not owned by the public target manifest")
     for link in package.rglob("*"):

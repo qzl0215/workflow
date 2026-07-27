@@ -66,6 +66,14 @@ class WorkflowDoctorTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertIn("workflow_doctor: OK", result.stdout)
 
+    def test_total_package_bytes_warn_without_masquerading_as_runtime_context(self) -> None:
+        license_file = self.package / "LICENSE"
+        license_file.write_text(license_file.read_text() + ("x" * 400_000))
+        result = self.run_doctor()
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("soft observation", result.stdout)
+        self.assertIn("runtime loading-path budgets remain authoritative", result.stdout)
+
     def test_repository_ignores_generated_python_and_desktop_cache(self) -> None:
         ignore = (self.package / ".gitignore").read_text()
         for generated in ("__pycache__/", "*.py[cod]", ".DS_Store"):
