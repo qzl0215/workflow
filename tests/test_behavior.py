@@ -924,6 +924,100 @@ class SupportingHarnessContractTest(unittest.TestCase):
             self.assertIn(token, handoff)
 
 
+class RootCauseClosureContractTest(unittest.TestCase):
+    def test_local_single_point_failure_uses_a_proportionate_fast_path(self) -> None:
+        failure = reference("fix-failures.md")
+        for token in (
+            "单点 typo",
+            "局部条件错误",
+            "相称验证",
+            "不启动同源影响面审计",
+            "不新增项目文档",
+        ):
+            self.assertIn(token, failure)
+
+    def test_shared_mechanism_failure_requires_a_bounded_homologous_audit(self) -> None:
+        failure = reference("fix-failures.md")
+        for token in (
+            "共享底层机制",
+            "系统不变量",
+            "同源影响集",
+            "定向搜索",
+            "消费者",
+            "搜索边界",
+            "停止依据",
+        ):
+            self.assertIn(token, failure)
+        ordered = ["先分类", "识别不变量", "审计同源影响集", "按证据确定修复范围"]
+        positions = [failure.index(token) for token in ordered]
+        self.assertEqual(positions, sorted(positions))
+
+    def test_similar_symptoms_with_different_causes_are_excluded(self) -> None:
+        failure = reference("fix-failures.md")
+        for token in ("只有症状相似", "根因不同", "排除在当前范围外", "独立缺陷"):
+            self.assertIn(token, failure)
+
+    def test_unproven_neighbor_risk_needs_an_experiment_or_residual_risk(self) -> None:
+        failure = reference("fix-failures.md")
+        for token in (
+            "证据不足",
+            "最小实验",
+            "不得直接扩大改造",
+            "残余风险",
+            "独立 side task",
+        ):
+            self.assertIn(token, failure)
+
+    def test_high_risk_foundational_fix_remains_incomplete_after_mitigation(self) -> None:
+        failure = reference("fix-failures.md")
+        for token in (
+            "安全止血",
+            "退出条件",
+            "审计影响面",
+            "删除临时补丁",
+            "临时缓解不得描述为根因修复完成",
+        ):
+            self.assertIn(token, failure)
+
+    def test_shared_mechanism_acceptance_requires_three_evidence_layers(self) -> None:
+        verification = reference("verify-results.md")
+        for token in (
+            "共享机制级修复",
+            "症状证据",
+            "机制证据",
+            "影响面证据",
+            "原始页面恢复",
+            "验收门不通过",
+            "局部单点错误",
+            "相称验证",
+        ):
+            self.assertIn(token, verification)
+
+    def test_root_cause_closure_uses_progress_without_a_second_rule_owner(self) -> None:
+        failure = reference("fix-failures.md")
+        verification = reference("verify-results.md")
+        progress = (PACKAGE / "templates/progress.md").read_text()
+        for token in (
+            "当前症状",
+            "最小复现",
+            "已证实根因",
+            "被破坏的不变量",
+            "同源影响集",
+            "检查方法",
+            "已纳入修复",
+            "明确排除",
+            "尚未证实的风险",
+            "修复边界",
+            "停止依据",
+        ):
+            self.assertIn(token, progress)
+        decision_rule = "根因相同且影响已证实"
+        self.assertIn(decision_rule, failure)
+        for reader in (verification, progress, SKILL, README):
+            self.assertNotIn(decision_rule, reader)
+        self.assertIn("不建独立故障报告", failure)
+
+
 class ExecutionSitePublicContractTest(unittest.TestCase):
     def test_public_docs_explain_that_old_workspaces_are_not_new_task_entrypoints(self) -> None:
         for token in (

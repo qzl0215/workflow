@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.9.0] - 2026-07-27
+
+### Added
+
+- Added a root-cause closure and bounded homologous-defect audit for failures caused by shared mechanisms, public boundaries, or missing system invariants.
+- Added an optional `progress.md` evidence shape for the symptom, minimal reproduction, proven root cause, broken invariant, bounded impact set, included and excluded paths, residual risk, stopping basis, and verification.
+
+### Changed
+
+- Redefined the minimum fix as the smallest complete repair that removes the proven root cause across the proven homologous impact set, while retaining a proportionate fast path for isolated typos and local condition errors.
+- Required shared-mechanism fixes to pass symptom, mechanism, and impact-surface evidence; restoring only the original page or test no longer closes the result.
+
 ## [2.8.2] - 2026-07-27
 
 ### Changed
