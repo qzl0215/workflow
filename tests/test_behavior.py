@@ -756,6 +756,43 @@ class VerificationReviewAndEvolutionContractTest(unittest.TestCase):
         ):
             self.assertIn(token, text)
 
+    def test_high_actual_execution_cost_forces_review_before_completion(self) -> None:
+        verification = reference("verify-results.md")
+        delivery = reference("deliver-release.md")
+        review = reference("learn-review.md")
+
+        for token in (
+            "收尾复盘门",
+            "完成前判断是否复盘",
+        ):
+            self.assertIn(token, SKILL)
+        for token in ("收尾复盘门", "严格超过 1 小时", "严格超过 200 万", "没有可靠遥测时不猜"):
+            self.assertIn(token, README)
+        for token in (
+            "实际执行时间严格超过 1 小时",
+            "任务累计 token 严格超过 200 万",
+            "等待用户、审批和纯监控等待",
+            "平台没有可靠遥测时不猜",
+            "no-op",
+        ):
+            self.assertIn(token, review)
+        for text in (verification, delivery):
+            self.assertIn("收尾复盘门", text)
+            self.assertIn("不得直接完成", text)
+
+    def test_confirmed_complete_evolution_proposal_executes_without_duplicate_confirmation(self) -> None:
+        evolution = reference("evolve-system.md")
+        for token in (
+            "完整回灌提案",
+            "确认前不得写入",
+            "一次明确确认",
+            "直接进入回灌实施",
+            "不重复索取 Plan 确认",
+        ):
+            self.assertIn(token, evolution)
+        for token in ("完整回灌提案", "确认前不写入", "一次明确确认", "不再重复索取 Plan 确认"):
+            self.assertIn(token, README)
+
     def test_evolution_has_evidence_promotion_and_authority_boundaries(self) -> None:
         text = reference("evolve-system.md")
         self.assertNotIn("两次独立复现", text)
@@ -769,7 +806,7 @@ class VerificationReviewAndEvolutionContractTest(unittest.TestCase):
             "最小改造",
             "预期价值",
             "接受 / 调整 / 暂不做",
-            "提案接受只授权进入计划",
+            "完整回灌提案",
             "完整 Plan",
             "no-op",
             "唯一 owner",

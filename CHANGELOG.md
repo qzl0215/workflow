@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.14.0] - 2026-07-28
+
+### Added
+
+- Added one closeout review gate before completion, termination or a long-lived blocker handoff.
+- Made review mandatory when actual execution time strictly exceeds one hour or platform-reported task tokens strictly exceed two million, while refusing to guess unavailable telemetry.
+
+### Changed
+
+- Made a complete writeback proposal serve as the minimal full Plan: one explicit user confirmation now starts in-scope writeback without a duplicate Plan confirmation.
+- Kept no-op reviews valid and retained separate authorization for external side effects.
+
 ## [2.13.2] - 2026-07-28
 
 ### Changed
