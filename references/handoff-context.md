@@ -39,7 +39,7 @@
 5. 缺上下文时以 `gap / target / expected_answer / level` 请求具体切片；收到答案立即停止升级。
 6. 摘要、计划和实际文件冲突时以正式真源与 fresh 检查为准并 fail closed，不静默猜测。
 7. 阶段切换、fresh 委派、第二次压缩、共享资源等待或高风险动作前重建 capsule。
-8. 动作结束时做语义压缩：task_plan 把完成工作收成里程碑，findings 把关闭问题收成 decision receipt，progress 以 rolling handoff 替换旧现场；Plan 完成后触发退休检查并退出热路径，原始日志只保留位置，不创建 archive 文档。
+8. 动作结束时做语义压缩：task_plan 把完成工作收成里程碑，findings 原位重写同一决策主题的当前 decision receipt，不保留翻转流水，progress 以 rolling handoff 替换旧现场；Plan 完成后触发退休检查并退出热路径，原始日志只保留位置，不创建 archive 文档。
 
 ## 写入真源
 

@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.13.2] - 2026-07-28
+
+### Changed
+
+- Made each `findings.md` decision topic keep one current decision receipt instead of preserving flip-flop history as parallel conclusions.
+- Let clear, high-confidence newer user goals replace older decisions in place, while requiring user confirmation when supersession is ambiguous or an incorrect overwrite carries material risk.
+- Compressed expert, requirement, solution, and handoff writers onto the same current-decision rule; audit history stays in an existing audit system rather than the hot findings source.
+
 ## [2.13.1] - 2026-07-28
 
 ### Changed

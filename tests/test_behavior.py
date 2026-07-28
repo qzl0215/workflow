@@ -500,6 +500,30 @@ class PlanningAndExecutionContractTest(unittest.TestCase):
         for forbidden in ("生命周期", "当前阶段快照", "活跃 Task", "更新时间"):
             self.assertNotIn(f"| {forbidden} |", index)
 
+    def test_findings_keep_one_current_decision_without_flip_flop_noise(self) -> None:
+        goal = reference("understand-goal.md")
+        solution = reference("decide-solution.md")
+        coordination = reference("coordinate-agents.md")
+        handoff = reference("handoff-context.md")
+
+        self.assertIn("同一决策主题只保留一条当前有效的 decision receipt", SKILL)
+        for token in (
+            "最新目标或要求",
+            "高置信",
+            "原位重写",
+            "不并列保留来回过程",
+            "实质风险",
+            "先向用户确认",
+            "确认后仍只留最终结论",
+        ):
+            self.assertIn(token, FINDINGS_TEMPLATE)
+        for text in (goal, solution):
+            self.assertIn("最新目标或要求", text)
+            self.assertIn("覆盖旧结论", text)
+            self.assertIn("先向用户确认", text)
+        self.assertIn("只合并为一条当前 decision receipt", coordination)
+        self.assertIn("findings 原位重写同一决策主题的当前 decision receipt", handoff)
+
     def test_goal_owner_routes_unknowns_and_protects_document_budget(self) -> None:
         text = reference("understand-goal.md")
         for token in (

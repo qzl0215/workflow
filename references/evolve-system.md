@@ -49,7 +49,7 @@
 
 ## 写入真源
 
-事实、模型推断、提案和用户决策写来源 `findings.md`；实施范围与状态只写目标 owner 的 `task_plan.md`，实际写回回执写其 `progress.md`。项目事实按 claim 类型写入代码、配置、测试、部署探测或人和 AI 共用的领域文档 owner；用户稳定偏好写用户级现有 owner，skill 改进写目标 skill 的协议 owner。不建立 AI 专用知识真源；side-task capsule、Knowledge Delta 和派生导航只是可重建输入或证据，不复制实施状态与长期 claim。
+事实、模型推断、提案和用户决策写来源 `findings.md`；同一决策主题只保留当前有效的唯一回执，用户明确更新且覆盖关系清楚时重写旧结论，覆盖意图不清或有实质风险时先确认。实施范围与状态只写目标 owner 的 `task_plan.md`，实际写回回执写其 `progress.md`。项目事实按 claim 类型写入代码、配置、测试、部署探测或人和 AI 共用的领域文档 owner；用户稳定偏好写用户级现有 owner，skill 改进写目标 skill 的协议 owner。不建立 AI 专用知识真源；side-task capsule、Knowledge Delta 和派生导航只是可重建输入或证据，不复制实施状态与长期 claim。
 
 ## 停止 / 通过
 
