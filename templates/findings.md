@@ -60,7 +60,7 @@
 |---|---|---|---|---|
 | E01 | | | | |
 
-需要提升为长期 claim 时补 `subject / claim type / scope / version 或 fingerprint / owner`；普通调查证据不为形式扩写。
+需要提升为长期 claim 时只补 `use scenario / decision / action impact / canonical source / retrieval path`；普通调查证据不为形式扩写，可变事实优先回到代码、配置或 fresh 探测。
 
 ## 需求关系
 

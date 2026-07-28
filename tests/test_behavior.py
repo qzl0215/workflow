@@ -738,7 +738,8 @@ class VerificationReviewAndEvolutionContractTest(unittest.TestCase):
         self.assertNotIn("复现次数", text)
         for token in (
             "模型判断",
-            "奥卡姆删除测试",
+            "奥卡姆剃刀",
+            "最小充分路径",
             "痛点问题",
             "推断需求",
             "最小改造",
@@ -763,7 +764,8 @@ class VerificationReviewAndEvolutionContractTest(unittest.TestCase):
             "新的用户结果",
             "零距离 handoff",
             "side-task capsule",
-            "无 owner",
+            "无法唯一定位",
+            "唯一真源",
             "fail closed",
             "来源任务保持“回灌改进”",
             "目标任务从“拆成任务”开始",
@@ -1079,6 +1081,50 @@ class RootCauseClosureContractTest(unittest.TestCase):
 
 
 class ProjectKnowledgeRetirementContractTest(unittest.TestCase):
+    def test_long_term_knowledge_uses_a_minimal_consumption_and_discovery_gate(self) -> None:
+        review = reference("learn-review.md")
+        evolution = reference("evolve-system.md")
+        findings = (PACKAGE / "templates/findings.md").read_text()
+        progress = (PACKAGE / "templates/progress.md").read_text()
+        task_plan = (PACKAGE / "templates/task_plan.md").read_text()
+
+        for token in ("未来什么场景会用", "改变什么核心结论或行动", "怎样从问题找到唯一真源"):
+            self.assertIn(token, review + evolution)
+        gate = "说不清未来何时会用、会改变什么核心结论或行动、怎样从问题找到唯一真源的内容，不进入长期知识层"
+        self.assertIn(gate, evolution)
+        for reader in (SKILL, README, review, findings, progress, task_plan):
+            self.assertNotIn(gate, reader)
+        for token in ("use scenario", "decision / action impact", "canonical source", "retrieval path"):
+            self.assertIn(token, findings)
+        for token in ("消费场景 → 核心决策价值", "唯一真源 / 检索路径"):
+            self.assertIn(token, progress)
+        for token in ("消费价值与可发现性门", "长期知识层", "及时删除"):
+            self.assertIn(token, SKILL + README + task_plan)
+        for token in ("不为每条知识补 owner、失效条件或维护表单", "只有可变知识",
+                      "代码、配置或 fresh 探测"):
+            self.assertIn(token, evolution)
+
+    def test_temporary_evidence_is_deleted_by_default_without_a_new_retention_process(self) -> None:
+        review = reference("learn-review.md")
+        evolution = reference("evolve-system.md")
+        for token in ("临时证据", "验收和退休完成后及时删除", "不可重现",
+                      "审计、回滚或事故恢复", "复用现有证据系统", "不新建冷证据管理流程"):
+            self.assertIn(token, review + evolution)
+        for token in ("奥卡姆剃刀", "最小充分"):
+            self.assertIn(token, evolution)
+
+    def test_knowledge_writeback_integrates_truth_and_updates_navigation_only_on_topology_change(self) -> None:
+        evolution = reference("evolve-system.md")
+        for token in ("语义整合", "不是追加式补丁", "Knowledge Delta 只作回执",
+                      "知识拓扑变化", "新建、迁移、替换或废弃唯一真源", "不建立 AI 专用知识真源"):
+            self.assertIn(token, evolution)
+        for token in ("原 Plan 的退休事务", "不另开 Plan", "新的用户结果"):
+            self.assertIn(token, evolution)
+        for token in ("原 Plan 的退休事务", "不另开 Plan"):
+            self.assertIn(token, README)
+        for token in ("内容更新", "不机械改动根导航"):
+            self.assertIn(token, evolution)
+
     def test_project_knowledge_has_one_entry_and_claim_owners(self) -> None:
         evolution = reference("evolve-system.md")
         for token in ("项目知识入口", "AGENTS.md", "README", "TRUTH", "只做导航", "不复制代码事实",
@@ -1093,14 +1139,14 @@ class ProjectKnowledgeRetirementContractTest(unittest.TestCase):
         task_plan = (PACKAGE / "templates/task_plan.md").read_text()
         for token in ("完成 Plan", "默认上下文", "立即退出", "显式追溯"):
             self.assertIn(token, reference("handoff-context.md"))
-        for token in ("用户决定、范围与授权", "采用与拒绝方案", "稳定事实与规范不变量",
-                      "外部观察、人工验收与失败实验", "迁移、回滚、事故与审计证据",
-                      "遗留风险、延期与未交付项", "恢复位置与保留期限"):
+        for token in ("长期知识", "临时证据", "例外保留证据", "未解决项", "Plan 处置"):
             self.assertIn(token, review)
             self.assertIn(token, task_plan)
-        for text, tokens in ((review + task_plan, ("退休检查", "promoted", "already_owned",
-                                                   "intentionally_ephemeral", "unresolved", "不得物理删除")),
-                             (reference("deliver-release.md"), ("物理删除", "精确删除授权", "恢复位置")),
+        for forbidden in ("promoted / already_owned / intentionally_ephemeral / unresolved",
+                          "长期 owner / 证据位置", "恢复位置 / 保留期限"):
+            self.assertNotIn(forbidden, review + task_plan)
+        for text, tokens in ((review + task_plan, ("退休检查", "不得物理删除")),
+                             (reference("deliver-release.md"), ("物理删除", "精确删除授权", "现有证据系统")),
                              (review, ("Knowledge Delta", "长期真源发生变化", "不为每个 Task", "新建"))):
             for token in tokens:
                 self.assertIn(token, text)

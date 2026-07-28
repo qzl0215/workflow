@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.13.0] - 2026-07-28
+
+### Added
+
+- Added a minimal consumption-value and discoverability gate for long-term knowledge: future use scenario, changed core decision or action, and the route from the question to one canonical source.
+
+### Changed
+
+- Made knowledge promotion a semantic integration into the canonical owner instead of an append-only patch; Knowledge Delta now serves only as a writeback receipt.
+- Limited project knowledge navigation updates to topology changes such as creating, moving, replacing, or retiring an owner, while keeping ordinary owner-local content edits out of the root index.
+- Kept in-scope knowledge promotion inside the originating Plan retirement transaction; only new user outcomes or independently deliverable cross-owner changes create another Plan.
+- Removed mandatory per-claim owner, invalidation, maintenance, and net-value fields; mutable facts prefer code, configuration, or fresh probes.
+- Made temporary evidence deletion the default after verification and retirement; only non-reproducible evidence explicitly required for audit, rollback, or incident recovery may reuse an existing retention system.
+- Replaced the retirement classification matrix with a five-line check and prohibited a human/AI split knowledge source or a new cold-evidence management process.
+
 ## [2.12.0] - 2026-07-27
 
 ### Added

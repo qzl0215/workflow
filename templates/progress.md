@@ -60,7 +60,7 @@
 
 ## Knowledge Delta（按需）
 
-<!-- 只有退休提升了信息或长期真源实际变化时保留；不为每个 Task 填写，不创建独立 Delta 文档。 -->
+<!-- 只有退休提升了信息或长期真源实际变化时保留；不为每个 Task 填写，不创建独立 Delta 文档。Delta 只作写回回执，不成为长期 claim 真源。 -->
 
-| Plan | 信息类别 | promoted / already_owned / intentionally_ephemeral | 目标 owner / 恢复位置 | fresh 证据 |
+| Plan | claim / 处置 | 消费场景 → 核心决策价值 | 唯一真源 / 检索路径 | fresh 证据 |
 |---|---|---|---|---|
