@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.13.1] - 2026-07-28
+
+### Changed
+
+- Added three progressive UI decision gates: three static rough directions for `方向粗选`, one mock-data HTML for `方案精修`, and explicit `确认开动` before real implementation.
+- Kept parallel direction generation available whenever it reduces elapsed time, while bounding first-round cost through static fidelity, same-batch delivery, and no pre-selection HTML polish.
+- Deferred real field contracts, extreme fixtures, responsive behavior, interaction, and accessibility validation to implementation without weakening the final evidence gate.
+
 ## [2.13.0] - 2026-07-28
 
 ### Added

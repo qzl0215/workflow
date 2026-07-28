@@ -1,7 +1,7 @@
 ---
 name: workflow
 description: 复杂目标工作流。表面请求与真实用户结果仍需推断时主动澄清，不要求用户先说“澄清需求”；覆盖方案、计划、实施、验收、复盘和进化。不用于纯问答或一次性小操作。
-version: 2.13.0
+version: 2.13.1
 author: zhonglin
 license: MIT
 ---

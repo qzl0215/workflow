@@ -906,6 +906,27 @@ class SupportingHarnessContractTest(unittest.TestCase):
         for token in ("journey/flow", "空", "加载", "错误", "reduced-motion", "键盘", "焦点"):
             self.assertIn(token, text)
 
+    def test_visual_work_uses_three_progressive_decision_gates(self) -> None:
+        experience = reference("shape-experience.md")
+        solution = reference("decide-solution.md")
+        for text in (experience, solution, README):
+            for token in ("方向粗选", "方案精修", "确认开动"):
+                self.assertIn(token, text)
+            self.assertLess(text.index("方向粗选"), text.index("方案精修"))
+            self.assertLess(text.index("方案精修"), text.index("确认开动"))
+
+        for token in (
+            "三个静态视觉粗稿",
+            "同批",
+            "并行",
+            "只精修一个方向",
+            "模拟数据",
+            "不连接真实数据",
+            "明确指定方向",
+            "极端 fixture",
+        ):
+            self.assertIn(token, experience)
+
     def test_design_truth_is_only_created_for_stable_reuse(self) -> None:
         text = reference("maintain-design.md")
         for token in ("优先补现有设计真源", "稳定复用价值", "非 UI 任务不得创建", "代码 tokens"):
