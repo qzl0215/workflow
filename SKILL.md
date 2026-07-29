@@ -1,7 +1,7 @@
 ---
 name: workflow
 description: 复杂目标工作流。表面请求与真实用户结果仍需推断时主动澄清，不要求用户先说“澄清需求”；覆盖方案、计划、实施、验收、复盘和进化。不用于纯问答或一次性小操作。
-version: 2.14.0
+version: 2.15.0
 author: zhonglin
 license: MIT
 ---
@@ -122,7 +122,7 @@ H0/H1 是默认深度；H2/H3 只能由表中真实信号升级，文件多、�
 | harness | bug、测试失败、异常、空结果或连续失败 | `references/fix-failures.md` |
 | harness | 上下文将满、跨会话或切换执行者 | `references/handoff-context.md` |
 | harness | 已验收结果需要 commit、push、merge、deploy、公开发布或其他外部写入 | `references/deliver-release.md` |
-| adapter | 授权交付中的同仓并行成果需要 rebase、冲突消解或串行合入 | `adapters/merge-parallel-work.md` |
+| adapter | 同仓并行成果需要独立 worktree、串行 merge 与安全回收 | `adapters/merge-parallel-work.md` |
 | 方法包 | 方案瓶颈需要大厂方法论时，默认只加载一个主方法包和一个挑战方法包 | `methods/strategic-value.md` · `methods/essence-subtraction.md` · `methods/experiment-attack.md` · `methods/delivery-compounding.md` |
 ## 文件真源与文档预算
 

@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.15.0] - 2026-07-29
+
+### Added
+
+- Added a locked worktree lifecycle for parallel writers: one writable owner per worktree, explicit `workflow:<Task ID>` ownership, guarded cleanup after verified integration, and fail-closed preservation of dirty, active or unabsorbed sites.
+- Added target-first merge integration that keeps the latest target as first parent, preserves candidate commits, serializes each integration attempt, and rebuilds safely when the remote target advances.
+- Added integration coverage for same-file multi-commit conflicts, first-parent topology, candidate identity, mandatory push verification, locked worktree cleanup and dirty-worktree preservation.
+
+### Changed
+
+- Replaced commit replay in the managed parallel-delivery path with one serial merge per requirement branch; repositories that explicitly require linear history defer to their platform squash-merge contract.
+- Required every parallel mutating thread to use an independent worktree while allowing different worktrees to modify the same original file and resolve semantic overlap during serial integration.
+- Made `--push` fail closed without an explicit verification command and retained local branches when completed worktrees are removed.
+
+### Compatibility
+
+- The existing `scripts/safe_merge.py --target ... --verify ... --push` and `--continue` entry points remain available; their integration result now preserves the candidate branch instead of rewriting it.
+- Existing unmarked worktrees are reported as legacy candidates and are never deleted automatically.
+
 ## [2.14.0] - 2026-07-28
 
 ### Added
