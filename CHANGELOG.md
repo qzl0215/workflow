@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.16.0] - 2026-07-29
+
+### Added
+
+- Added one decision-value filter for all user-visible content, prioritizing user outcomes, actual effects, real costs, key risks and necessary actions.
+- Added regression coverage that keeps decision, action, risk and confidence impact as the cross-domain test for whether detail belongs in the main response.
+
+### Changed
+
+- Made technical process and other detail opt-in unless it changes a decision, action, risk assessment or confidence in the conclusion.
+- Compressed the existing handoff contract so the new behavior adds no reference, stage, fixed response template or root context cost.
+
+### Compatibility
+
+- Existing status snapshots and action exits remain available, while failures, authorization boundaries and necessary evidence cannot be hidden by concise reporting.
+
 ## [2.15.0] - 2026-07-29
 
 ### Added

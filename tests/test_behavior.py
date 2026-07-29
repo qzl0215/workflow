@@ -113,6 +113,19 @@ class CanonicalStageContractTest(unittest.TestCase):
 
 
 class UserHandoffContractTest(unittest.TestCase):
+    def test_all_user_visible_content_passes_the_decision_value_filter(self) -> None:
+        for token in (
+            "决策价值过滤器",
+            "所有用户可见内容",
+            "用户结果、实际效果、真实代价、关键风险和必要行动",
+            "决定、行动、风险认知或对结论的信心",
+            "删除或按需提供",
+            "不制造决策",
+            "不虚构业务价值",
+            "失败事实、关键风险、授权边界和必要证据",
+        ):
+            self.assertIn(token, SKILL)
+
     def test_handoff_is_only_when_people_are_needed_and_keeps_two_action_exits(self) -> None:
         self.assertIn("## 用户交接", SKILL)
         for token in (
