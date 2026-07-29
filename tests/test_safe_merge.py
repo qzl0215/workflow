@@ -70,7 +70,21 @@ class SafeMergeIntegrationTest(unittest.TestCase):
             check=False,
         )
 
-    def test_non_conflicting_late_merger_rebases_verifies_and_pushes(self) -> None:
+    def lifecycle(self, clone: Path, *extra: str) -> subprocess.CompletedProcess[str]:
+        return run(
+            sys.executable,
+            "-B",
+            str(SCRIPT),
+            "--target",
+            "main",
+            "--remote",
+            "origin",
+            *extra,
+            cwd=clone,
+            check=False,
+        )
+
+    def test_non_conflicting_late_merger_preserves_candidate_and_target_first_parent(self) -> None:
         first = self.clone("first")
         second = self.clone("second")
         self.branch(first, "feature-first")
@@ -80,20 +94,26 @@ class SafeMergeIntegrationTest(unittest.TestCase):
         run("git", "add", "a.txt", cwd=first)
         run("git", "commit", "-m", "first", cwd=first)
         run("git", "push", "origin", "HEAD:main", cwd=first)
+        target_sha = run("git", "rev-parse", "HEAD", cwd=first).stdout.strip()
 
         (second / "b.txt").write_text("second\n")
         run("git", "add", "b.txt", cwd=second)
         run("git", "commit", "-m", "second", cwd=second)
+        candidate_sha = run("git", "rev-parse", "HEAD", cwd=second).stdout.strip()
         result = self.safe_merge(second, "--push")
 
         self.assertEqual(result.returncode, 0, result.stdout)
-        self.assertIn("rebase", result.stdout)
+        self.assertIn("merge candidate", result.stdout)
         self.assertIn("verification passed", result.stdout)
+        self.assertEqual(run("git", "branch", "--show-current", cwd=second).stdout.strip(), "feature-second")
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=second).stdout.strip(), candidate_sha)
         audit = self.clone("audit-non-conflict")
         self.assertEqual((audit / "a.txt").read_text(), "first\n")
         self.assertEqual((audit / "b.txt").read_text(), "second\n")
+        parents = run("git", "rev-list", "--parents", "-n", "1", "HEAD", cwd=audit).stdout.split()
+        self.assertEqual(parents[1:], [target_sha, candidate_sha])
 
-    def test_conflict_is_preserved_for_ai_resolution_and_continue(self) -> None:
+    def test_multi_commit_conflict_is_resolved_once_without_rewriting_candidate(self) -> None:
         first = self.clone("conflict-first")
         second = self.clone("conflict-second")
         self.branch(first, "feature-conflict-first")
@@ -104,23 +124,125 @@ class SafeMergeIntegrationTest(unittest.TestCase):
         run("git", "commit", "-m", "first intent", cwd=first)
         run("git", "push", "origin", "HEAD:main", cwd=first)
 
-        (second / "shared.txt").write_text("second intent\n")
+        (second / "shared.txt").write_text("second step one\n")
         run("git", "add", "shared.txt", cwd=second)
-        run("git", "commit", "-m", "second intent", cwd=second)
+        run("git", "commit", "-m", "second step one", cwd=second)
+        (second / "shared.txt").write_text("second final intent\n")
+        run("git", "add", "shared.txt", cwd=second)
+        run("git", "commit", "-m", "second final intent", cwd=second)
+        candidate_sha = run("git", "rev-parse", "HEAD", cwd=second).stdout.strip()
         conflict = self.safe_merge(second, "--push")
 
         self.assertEqual(conflict.returncode, 3, conflict.stdout)
         self.assertIn("conflict preserved", conflict.stdout)
-        self.assertTrue((second / ".git" / "rebase-merge").exists() or (second / ".git" / "rebase-apply").exists())
+        self.assertTrue((second / ".git" / "MERGE_HEAD").exists())
+        self.assertTrue(
+            run("git", "branch", "--show-current", cwd=second).stdout.strip().startswith("workflow/integrate/")
+        )
+        self.assertFalse((second / ".git" / "workflow-merge.lock").exists())
         unmerged = run("git", "diff", "--name-only", "--diff-filter=U", cwd=second)
         self.assertIn("shared.txt", unmerged.stdout)
 
-        (second / "shared.txt").write_text("first intent\nsecond intent\n")
+        (second / "shared.txt").write_text("first intent\nsecond final intent\n")
         run("git", "add", "shared.txt", cwd=second)
         continued = self.safe_merge(second, "--continue", "--push")
         self.assertEqual(continued.returncode, 0, continued.stdout)
+        self.assertEqual(
+            run("git", "branch", "--show-current", cwd=second).stdout.strip(),
+            "feature-conflict-second",
+        )
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=second).stdout.strip(), candidate_sha)
         audit = self.clone("audit-conflict")
-        self.assertEqual((audit / "shared.txt").read_text(), "first intent\nsecond intent\n")
+        self.assertEqual(
+            (audit / "shared.txt").read_text(),
+            "first intent\nsecond final intent\n",
+        )
+
+    def test_push_requires_verification_evidence(self) -> None:
+        candidate = self.clone("unverified")
+        self.branch(candidate, "feature-unverified")
+        (candidate / "a.txt").write_text("unverified\n")
+        run("git", "add", "a.txt", cwd=candidate)
+        run("git", "commit", "-m", "unverified", cwd=candidate)
+        result = self.lifecycle(candidate, "--push")
+        self.assertEqual(result.returncode, 2, result.stdout)
+        self.assertIn("--verify is required with --push", result.stdout)
+
+    def test_locked_worktree_is_removed_only_after_clean_integrated_completion(self) -> None:
+        managed = self.root / "managed"
+        created = self.lifecycle(
+            self.seed,
+            "--create-worktree",
+            str(managed),
+            "--branch",
+            "feature-managed",
+            "--task-id",
+            "T-managed",
+        )
+        self.assertEqual(created.returncode, 0, created.stdout)
+        listing = run("git", "worktree", "list", "--porcelain", cwd=self.seed).stdout
+        self.assertIn(str(managed), listing)
+        self.assertIn("locked workflow:T-managed", listing)
+
+        (managed / "a.txt").write_text("managed\n")
+        run("git", "add", "a.txt", cwd=managed)
+        run("git", "commit", "-m", "managed", cwd=managed)
+        run("git", "push", "origin", "HEAD:main", cwd=managed)
+        cleaned = self.lifecycle(
+            self.seed,
+            "--cleanup-worktree",
+            str(managed),
+            "--task-id",
+            "T-managed",
+            "--yes",
+        )
+        self.assertEqual(cleaned.returncode, 0, cleaned.stdout)
+        self.assertFalse(managed.exists())
+        branch = run(
+            "git",
+            "show-ref",
+            "--verify",
+            "refs/heads/feature-managed",
+            cwd=self.seed,
+            check=False,
+        )
+        self.assertEqual(branch.returncode, 0, branch.stdout)
+
+    def test_dirty_worktree_is_preserved_during_cleanup(self) -> None:
+        managed = self.root / "dirty-managed"
+        created = self.lifecycle(
+            self.seed,
+            "--create-worktree",
+            str(managed),
+            "--branch",
+            "feature-dirty-managed",
+            "--task-id",
+            "T-dirty",
+        )
+        self.assertEqual(created.returncode, 0, created.stdout)
+        wrong_owner = self.lifecycle(
+            self.seed,
+            "--cleanup-worktree",
+            str(managed),
+            "--task-id",
+            "T-someone-else",
+            "--yes",
+        )
+        self.assertEqual(wrong_owner.returncode, 2, wrong_owner.stdout)
+        self.assertIn("active ownership cannot be proven", wrong_owner.stdout)
+        self.assertTrue(managed.exists())
+        (managed / "dirty.txt").write_text("do not delete\n")
+        cleaned = self.lifecycle(
+            self.seed,
+            "--cleanup-worktree",
+            str(managed),
+            "--task-id",
+            "T-dirty",
+            "--yes",
+        )
+        self.assertEqual(cleaned.returncode, 2, cleaned.stdout)
+        self.assertIn("worktree has uncommitted changes", cleaned.stdout)
+        self.assertTrue(managed.exists())
 
 
 if __name__ == "__main__":

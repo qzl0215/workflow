@@ -6,7 +6,7 @@
 
 作者：zhonglin · MIT License
 
-当前协议版本：`2.14.0`
+当前协议版本：`2.15.0`
 
 [打开中文可视化介绍](docs/workflow-visual-map.html) · [查看完整工作协议](SKILL.md)
 
@@ -40,11 +40,17 @@
 
 ## 本地已验证 ≠ 已交付
 
-“验收交付”先由必经的验收 owner 证明结果；只有目标包含提交、合并或发布时才加载授权交付 harness，不因此升级整项工作。它从项目部署/发布文档解析真实集成发布契约，把“提交 → 合并 → 发布 → 发布后 smoke”收敛为“定向测试 → 一次源码全量测试 → commit/rebase → 内容等价检查 → 发布同一制品 → 安装 smoke”；相同 command-scoped 内容、命令和环境可复用回执，真实环境边界始终 fresh 烟测。
+“验收交付”先由必经的验收 owner 证明结果；只有目标包含提交、合并或发布时才加载授权交付 harness，不因此升级整项工作。它从项目部署/发布文档解析真实集成发布契约，把“提交 → 合并 → 发布 → 发布后 smoke”收敛为“定向测试 → 一次源码全量测试 → commit/merge → 内容等价检查 → 发布同一制品 → 安装 smoke”；相同 command-scoped 内容、命令和环境可复用回执，真实环境边界始终 fresh 烟测。
 
 项目要求 PR/MR、CI、直接 fast-forward、特定部署命令或 GitHub Release 时，以项目真源为准，workflow 不硬编码平台流程。用户已经明确要求“提交合并发布”且目标可由项目文档唯一确定时，不会在每一步重复索取同一授权；目标不明、未授权或存在破坏性例外时，才停在一个具体决策点。
 
 用户不承担代码审阅。AI 自己检查 diff、范围和测试，只把业务结果、风险与外部授权交给用户决定。PR/MR 仅在分支保护、必需 CI、项目规则或真实 reviewer 要求时使用；tag、Release、部署等节点也必须有独立价值，能由一个平台动作安全完成的步骤会合并，不为 Git 术语增加人工停顿。
+
+## 并行线程各用自己的 worktree
+
+同一 workspace/worktree 同时只允许一个可写 owner；只读线程可以共享，任何并行写线程都使用带 `workflow:<Task ID>` lock reason 的独立 worktree。不同 worktree 可以同时修改同一原始文件，但交付时排队做 target-first merge：最新目标是第一父提交，整个需求分支是第二父提交，冲突集中解决一次且不改写候选提交。项目明确要求线性历史时才遵循平台 squash merge；workflow 不为默认并行链路维护第二套提交重放流程。
+
+workflow 自建 worktree 具有完整生命周期：创建时锁定，阻断或未合入时保持锁定；交付核对后，仅在 matching Task lock、clean、无进行中的 Git 操作、HEAD 已被目标吸收且已有精确或 standing cleanup authorization 时解锁并执行 `git worktree remove`。清理禁止 `--force`，默认保留本地分支；`git worktree prune` 只处理路径已经消失的残留元数据，不会冒充 worktree 回收。
 
 ## 状态变化会播报，需要你接棒才停下
 

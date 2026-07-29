@@ -692,7 +692,7 @@ class PlanningAndExecutionContractTest(unittest.TestCase):
             "不是新的 stage 或 status",
         ):
             self.assertIn(token, text)
-        self.assertNotIn("behind > 0 就 rebase", text)
+        self.assertNotIn("behind > 0 就强制同步", text)
 
     def test_continuous_delivery_authorization_advances_ready_tasks_without_stopping(self) -> None:
         text = reference("execute-tasks.md")
@@ -721,7 +721,7 @@ class VerificationReviewAndEvolutionContractTest(unittest.TestCase):
             "RC 证据回执",
             "command-scoped source tree/hash + verification command + environment class",
             "路径和 commit 元数据",
-            "commit、rebase、复制目录和相同制品",
+            "commit、merge、复制目录和相同制品",
             "impact set",
             "同一输入不得重复运行",
             "只使受影响证据失效",
@@ -900,13 +900,14 @@ class IntegratedReleaseContractTest(unittest.TestCase):
         self.assertIn("按需加载项目发布真源", release_row)
         self.assertIn("条件交付", release_row)
 
-    def test_delivery_records_workspace_disposition_without_automatic_cleanup(self) -> None:
+    def test_delivery_records_guarded_worktree_disposition(self) -> None:
         delivery = reference("deliver-release.md")
         for token in (
             "现场处置",
-            "保留只读",
-            "等待授权清理",
-            "继续同一 Task",
+            "保持锁定",
+            "standing policy",
+            "git worktree remove",
+            "不自动删除",
             "不得绑定新 Task",
         ):
             self.assertIn(token, delivery)
@@ -937,7 +938,7 @@ class IntegratedReleaseContractTest(unittest.TestCase):
     def test_release_graph_keeps_only_steps_with_independent_value(self) -> None:
         delivery = reference("deliver-release.md")
         for token in (
-            "定向测试 → 一次源码全量测试 → commit/rebase → 内容等价检查 → 发布同一制品 → 安装烟测",
+            "定向测试 → 一次源码全量测试 → commit/merge → 内容等价检查 → 发布同一制品 → 安装烟测",
             "真实环境类别",
             "最小发布图",
             "PR/MR 只在",
@@ -1000,10 +1001,17 @@ class SupportingHarnessContractTest(unittest.TestCase):
             "独立 Reviewer 不是默认门",
             "只读独立视角",
             "确认计划后",
-            "文件域隔离",
+            "独立 worktree",
             "P9",
             "Reviewer",
             "solo",
+        ):
+            self.assertIn(token, text)
+        for token in (
+            "一个可写 owner",
+            "只读线程",
+            "独立 worktree",
+            "同一原始文件",
         ):
             self.assertIn(token, text)
 
@@ -1014,7 +1022,7 @@ class SupportingHarnessContractTest(unittest.TestCase):
             "fetch 最新目标",
             "合并队列",
             "后合并者",
-            "rebase",
+            "target-first merge",
             "MERGE_NOTE",
             "语义冲突",
             "不得整文件选边",
@@ -1023,6 +1031,45 @@ class SupportingHarnessContractTest(unittest.TestCase):
             "不授予外部动作权限",
         ):
             self.assertIn(token, text)
+        self.assertNotIn("rebase", text)
+
+    def test_worktree_lifecycle_locks_active_writers_and_cleans_only_recoverable_sites(self) -> None:
+        coordination = reference("coordinate-agents.md")
+        execution = reference("execute-tasks.md")
+        delivery = reference("deliver-release.md")
+        adapter_text = adapter("merge-parallel-work.md")
+        for token in (
+            "git worktree add --lock --reason",
+            "workflow:<Task ID>",
+            "git worktree remove",
+            "禁止 `--force`",
+            "保留本地分支",
+        ):
+            self.assertIn(token, "\n".join((coordination, execution, delivery, adapter_text)))
+        for token in (
+            "脏改动",
+            "未被目标吸收",
+            "Git 操作",
+            "保持锁定",
+        ):
+            self.assertIn(token, delivery)
+
+    def test_managed_parallel_integration_does_not_depend_on_rebase(self) -> None:
+        formal = "\n".join(
+            (
+                SKILL,
+                README,
+                reference("coordinate-agents.md"),
+                reference("execute-tasks.md"),
+                reference("verify-results.md"),
+                reference("deliver-release.md"),
+                adapter("merge-parallel-work.md"),
+                (PACKAGE / "templates" / "progress.md").read_text(),
+            )
+        )
+        self.assertNotIn("rebase", formal)
+        self.assertIn("项目明确要求线性历史", formal)
+        self.assertIn("squash merge", formal)
 
     def test_final_process_occam_gate_removes_cost_without_new_reports(self) -> None:
         verification = reference("verify-results.md")
