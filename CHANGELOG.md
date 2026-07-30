@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.17.0] - 2026-07-30
+
+### Added
+
+- Added a conditional Grill depth for user-requested pressure tests, dependent load-bearing decisions, irreversible choices and repeatedly vague answers.
+- Added a bounded decision-tree frontier that recomputes after each round and closes only when every material branch is decided, testable, deferred or blocked and the user confirms shared understanding.
+
+### Changed
+
+- Kept the recommended requirement contract, zero-question fast path and default single batch of 1–3 high-leverage questions unchanged for ordinary work.
+- Folded decision pressure-testing into the requirement owner instead of restoring a duplicate challenge harness, stage, status, template or dependency.
+- Compressed the requirement protocol so the root plus owner loading path remains below its previous context size.
+
+### Compatibility
+
+- Existing requirement findings reuse the current remaining-branch field; no migration or new persisted mode is required.
+
 ## [2.16.0] - 2026-07-29
 
 ### Added
