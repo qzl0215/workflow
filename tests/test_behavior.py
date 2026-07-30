@@ -274,6 +274,38 @@ class UserHandoffContractTest(unittest.TestCase):
             self.assertIn(token, goal)
         self.assertNotIn("不设置总问题数上限", goal)
 
+    def test_requirement_discovery_conditionally_exhausts_a_bounded_grill_frontier(self) -> None:
+        goal = reference("understand-goal.md")
+        for token in (
+            "Grill 深度",
+            "有界承重决策树",
+            "frontier",
+            "前置决定",
+            "每轮回答后重算",
+            "用户已决定",
+            "可验证假设",
+            "明确延期",
+            "blocker",
+            "frontier 为空",
+            "共享理解",
+        ):
+            self.assertIn(token, goal)
+        for trigger in (
+            "用户明确要求压力测试",
+            "两个以上承重决策存在依赖",
+            "高影响、难逆",
+            "经过一次纠正后仍含糊",
+        ):
+            self.assertIn(trigger, goal)
+        self.assertIn("相互独立且同层", goal)
+        self.assertIn("每批 1–3 个", goal)
+        self.assertIn("一次只问最上游一个", goal)
+        self.assertIn("默认最多一批高价值问题", goal)
+        self.assertIn("Grill 深度", SKILL)
+        self.assertIn("Grill 深度", README)
+        self.assertIn("Grill 深度", FINDINGS_TEMPLATE)
+        self.assertFalse((REFERENCES / "challenge-decisions.md").exists())
+
     def test_requirement_clarification_proactively_finds_the_underlying_goal(self) -> None:
         goal = reference("understand-goal.md")
         metadata = SKILL.split("---", 2)[1]
