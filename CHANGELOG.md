@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.18.0] - 2026-07-31
+
+### Changed
+
+- Made workflow the single generic owner for state-changing work; overlapping standalone skills remain available only as explicit compatibility entries.
+- Added a compact H0/H1 path that reports only start, real blockers and completion while retaining full snapshots for H2/H3 and handoffs.
+- Moved ownership/preflight checks ahead of complete verification when file topology changes, and limited each final source identity to one successful full RC.
+- Kept delivery state in Git, manifests and runtime evidence instead of creating documentation-only closure commits.
+
+### Compatibility
+
+- Existing standalone skill files and bodies are retained during the compatibility period; explicit legacy invocations continue to work.
+
 ## [2.17.0] - 2026-07-30
 
 ### Added

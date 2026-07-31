@@ -71,6 +71,17 @@ def adapter(name: str) -> str:
 
 
 class CanonicalStageContractTest(unittest.TestCase):
+    def test_workflow_is_the_single_generic_owner_for_state_changing_work(self) -> None:
+        for token in (
+            "通用状态变更工作流",
+            "H0/H1",
+            "纯问答和一次性只读操作",
+            "通用能力唯一入口",
+            "不叠加同类 standalone skill",
+            "用户明确点名",
+        ):
+            self.assertIn(token, SKILL)
+
     def test_first_stage_is_requirement_clarification(self) -> None:
         self.assertIn("计划：需求澄清 → 选定方案 → 拆成任务", SKILL)
         self.assertIn("需求澄清 → 选定方案 → 拆成任务 → 执行任务 → 验收交付 → 提炼经验 → 回灌改进", SKILL)
@@ -113,6 +124,16 @@ class CanonicalStageContractTest(unittest.TestCase):
 
 
 class UserHandoffContractTest(unittest.TestCase):
+    def test_h0_h1_use_compact_updates_instead_of_full_stage_snapshots(self) -> None:
+        for token in (
+            "H0/H1",
+            "开始、真实 blocker、完成",
+            "简短播报",
+            "H2/H3",
+            "完整快照",
+        ):
+            self.assertIn(token, SKILL)
+
     def test_all_user_visible_content_passes_the_decision_value_filter(self) -> None:
         for token in (
             "决策价值过滤器",
@@ -148,6 +169,36 @@ class UserHandoffContractTest(unittest.TestCase):
         ):
             self.assertIn(token, SKILL)
 
+
+class OccamExecutionContractTest(unittest.TestCase):
+    def test_file_topology_preflight_precedes_full_verification(self) -> None:
+        execution = reference("execute-tasks.md")
+        for token in (
+            "新建、移动或重命名文件",
+            "文件集合稳定",
+            "ownership/preflight",
+            "完整验证前",
+        ):
+            self.assertIn(token, execution)
+
+    def test_one_final_source_gets_one_successful_full_rc_and_no_closure_commit(self) -> None:
+        verification = reference("verify-results.md")
+        delivery = reference("deliver-release.md")
+        for token in (
+            "开发期只运行定向验证",
+            "一次成功的完整 RC",
+            "不得重复运行相同完整检查",
+        ):
+            self.assertIn(token, verification)
+        for token in (
+            "一次成功的正式 RC",
+            "不创建仅用于关闭状态的文档提交",
+            "Git、manifest 和运行态",
+        ):
+            self.assertIn(token, delivery)
+
+
+class UserHandoffRenderingContractTest(unittest.TestCase):
     def test_snapshot_uses_clickable_reference_titles_results_and_compact_path(self) -> None:
         for token in (
             "一级中文标题",
