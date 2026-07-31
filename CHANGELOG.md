@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.19.0] - 2026-08-01
+
+### Added
+
+- Added immutable safe-merge receipts with phase timing and verified-SHA transport retry; transient push failures no longer rerun an unchanged RC.
+- Added explicit release-doctor handoff requirements and telemetry-aware retrospective evidence routing.
+
+### Changed
+
+- Standardized delivery ordering as focused checks, semantic/security review, exact candidate commit, target-first integration, one clean RC, fast-forward, deploy and online smoke.
+- Removed legacy external submission harnesses from workflow delivery routing; workflow now uses one project-native release harness or its own exact-file and safe-merge path.
+- Compressed successful verification output and limited failure expansion to a bounded tail plus an artifact path.
+
+## [2.18.1] - 2026-08-01
+
+### Changed
+
+- Enforced serial, current-stage-only loading: downstream owners, harnesses, design rules and code context cannot be preloaded merely because they may be useful later.
+- Gated experience shaping on a confirmed requirement and a direction-changing UI decision; annotated, direction-setting references now use the existing fast path.
+- Added the minimal Git freshness fingerprint and heading/symbol-first investigation rule, so dirty working-tree code is included without loading whole plans or large source files.
+
 ## [2.18.0] - 2026-07-31
 
 ### Changed

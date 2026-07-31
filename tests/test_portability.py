@@ -35,6 +35,7 @@ STDLIB_OR_LOCAL = {
     "subprocess",
     "sys",
     "tempfile",
+    "time",
     "typing",
     "unittest",
     "urllib",

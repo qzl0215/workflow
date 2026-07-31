@@ -197,6 +197,34 @@ class OccamExecutionContractTest(unittest.TestCase):
         ):
             self.assertIn(token, delivery)
 
+    def test_delivery_selects_one_native_harness_and_never_routes_company_submit(self) -> None:
+        delivery = reference("deliver-release.md")
+        for token in (
+            "不调用外部提交 skill",
+            "项目原生发布入口",
+            "聚焦验证 → 语义/安全复核 → 精确候选提交 → target-first 集成 → 一次 clean RC",
+            "不可变集成 SHA",
+            "传输失败",
+            "不得重跑 RC",
+            "成功只返回紧凑摘要",
+            "失败才展开有界尾部",
+        ):
+            self.assertIn(token, delivery)
+        blocked_harness = "company" + "-submit"
+        self.assertNotIn(blocked_harness, SKILL)
+        self.assertNotIn(blocked_harness, delivery)
+
+    def test_retrospective_never_estimates_tokens_and_uses_phase_receipts(self) -> None:
+        review = reference("learn-review.md")
+        for token in (
+            "平台 token 遥测",
+            "不得用输出字节换算 token",
+            "phase duration",
+            "tool wait",
+            "user wait",
+        ):
+            self.assertIn(token, review)
+
 
 class UserHandoffRenderingContractTest(unittest.TestCase):
     def test_snapshot_uses_clickable_reference_titles_results_and_compact_path(self) -> None:
@@ -311,6 +339,21 @@ class UserHandoffRenderingContractTest(unittest.TestCase):
             self.assertIn(token, goal)
         for token in ("调研入口已绑定", "同一现场", "不重复创建"):
             self.assertIn(token, execution)
+
+    def test_current_state_research_uses_git_fingerprint_and_minimal_locator_reads(self) -> None:
+        goal = reference("understand-goal.md")
+        for token in (
+            "HEAD SHA + git status --short + git diff --name-only",
+            "未提交变更属于当前事实",
+            "Markdown 标题、代码符号或字段名",
+            "不全文读取计划、规范或巨型源文件",
+        ):
+            self.assertIn(token, goal)
+        for token in (
+            "当前动作外的 reference 不得预读",
+            "UI harness 仅在需求确认后",
+        ):
+            self.assertIn(token, SKILL)
 
     def test_requirement_discovery_uses_one_high_value_exception_batch(self) -> None:
         goal = reference("understand-goal.md")
@@ -1034,7 +1077,7 @@ class IntegratedReleaseContractTest(unittest.TestCase):
     def test_release_graph_keeps_only_steps_with_independent_value(self) -> None:
         delivery = reference("deliver-release.md")
         for token in (
-            "定向测试 → 一次源码全量测试 → commit/merge → 内容等价检查 → 发布同一制品 → 安装烟测",
+            "聚焦验证 → 语义/安全复核 → 精确候选提交 → target-first 集成 → 一次 clean RC",
             "真实环境类别",
             "最小发布图",
             "PR/MR 只在",
@@ -1048,7 +1091,7 @@ class IntegratedReleaseContractTest(unittest.TestCase):
         for token in (
             "本地已验证 ≠ 已交付",
             "项目部署/发布文档",
-            "提交 → 合并 → 发布 → 发布后 smoke",
+            "聚焦验证 → 语义/安全复核 → 精确候选提交",
             "集成发布",
         ):
             self.assertIn(token, README)
@@ -1056,6 +1099,17 @@ class IntegratedReleaseContractTest(unittest.TestCase):
 
 
 class SupportingHarnessContractTest(unittest.TestCase):
+    def test_experience_is_not_loaded_during_requirement_clarification(self) -> None:
+        text = reference("shape-experience.md")
+        route = next(line for line in SKILL.splitlines() if "references/shape-experience.md" in line)
+        for token in (
+            "需求契约已确认",
+            "仅在需求澄清中提到 UI 不加载本 harness",
+            "带批注且足以限定层级/交互的参考图",
+        ):
+            self.assertIn(token, text)
+        self.assertIn("需求已确认", route)
+
     def test_experience_uses_fidelity_ladder(self) -> None:
         text = reference("shape-experience.md")
         self.assertIn("线框图", text)
