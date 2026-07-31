@@ -4,10 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
 import sys
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -117,14 +120,40 @@ class IntegrationLease:
         self.acquired = False
 
 
-def verify(command_text: str) -> int:
-    print(f"safe_merge: running verification: {command_text}")
-    result = subprocess.run(command_text, shell=True, check=False)
+def verification_identity(command_text: str) -> str:
+    return hashlib.sha256(command_text.encode("utf-8")).hexdigest()
+
+
+def verification_log_path(integration_sha: str) -> Path:
+    common_dir = Path(git_output("rev-parse", "--git-common-dir")).resolve()
+    log_dir = common_dir / "codex" / "safe-merge-logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    return log_dir / f"{integration_sha}.log"
+
+
+def verify(command_text: str, integration_sha: str) -> tuple[int, float]:
+    started = time.monotonic()
+    result = subprocess.run(
+        command_text,
+        shell=True,
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    duration = round(time.monotonic() - started, 3)
     if result.returncode:
+        log_path = verification_log_path(integration_sha)
+        log_path.write_text(result.stdout or "", encoding="utf-8")
+        os.chmod(log_path, 0o600)
         print(f"safe_merge: verification failed ({result.returncode}).", file=sys.stderr)
-        return EXIT_VERIFY
-    print("safe_merge: verification passed.")
-    return 0
+        lines = (result.stdout or "").splitlines()
+        for line in lines[-80:]:
+            print(line, file=sys.stderr)
+        print(f"safe_merge: full failure log: {log_path}", file=sys.stderr)
+        return EXIT_VERIFY, duration
+    print(f"safe_merge: verification passed ({duration:.3f}s).")
+    return 0, duration
 
 
 def state_path() -> Path:
@@ -133,6 +162,56 @@ def state_path() -> Path:
 
 def save_state(state: dict[str, Any]) -> None:
     state_path().write_text(json.dumps(state, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+
+
+def write_receipt(state: dict[str, Any], *, status: str, transport_attempts: int) -> Path:
+    common_dir = Path(git_output("rev-parse", "--git-common-dir")).resolve()
+    receipt_dir = common_dir / "codex" / "workflow-merge-receipts"
+    receipt_dir.mkdir(parents=True, exist_ok=True)
+    verified_sha = str(state["verified_integration_sha"])
+    receipt_path = receipt_dir / f"{verified_sha}.json"
+    payload = {
+        "schema_version": 1,
+        "status": status,
+        "finished_at": datetime.now(timezone.utc).isoformat(),
+        "duration_seconds": round(time.time() - float(state["integration_started_epoch"]), 3),
+        "remote": state["remote"],
+        "target": state["target"],
+        "base_target_sha": state["base_target_sha"],
+        "candidate_sha": state["candidate_sha"],
+        "verified_integration_sha": verified_sha,
+        "verification_command_sha256": state["verification_command_sha256"],
+        "verification_duration_seconds": state["verification_duration_seconds"],
+        "transport_attempts": transport_attempts,
+    }
+    temporary = receipt_path.with_name(f".{receipt_path.name}.{os.getpid()}.tmp")
+    temporary.write_text(
+        json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    os.chmod(temporary, 0o600)
+    os.replace(temporary, receipt_path)
+    return receipt_path
+
+
+def verify_integration(args: argparse.Namespace, state: dict[str, Any]) -> int:
+    integration_sha = git_output("rev-parse", "HEAD")
+    identity = verification_identity(args.verify)
+    if (
+        state.get("verified_integration_sha") == integration_sha
+        and state.get("verification_command_sha256") == identity
+    ):
+        print(f"safe_merge: reusing verification for immutable integration {integration_sha[:12]}.")
+        return 0
+    verified, duration = verify(args.verify, integration_sha)
+    if verified:
+        return verified
+    state["verified_integration_sha"] = integration_sha
+    state["verification_command_sha256"] = identity
+    state["verification_duration_seconds"] = duration
+    state["verified_at"] = datetime.now(timezone.utc).isoformat()
+    save_state(state)
+    return 0
 
 
 def load_state() -> dict[str, Any]:
@@ -177,7 +256,8 @@ def start_merge_attempt(args: argparse.Namespace, candidate_branch: str, candida
     base_target_sha = git_output("rev-parse", remote_ref)
     if command("git", "merge-base", "--is-ancestor", candidate_sha, remote_ref).returncode == 0:
         print(f"safe_merge: candidate {candidate_branch} is already contained in {remote_ref}.")
-        return verify(args.verify)
+        verified, _ = verify(args.verify, candidate_sha)
+        return verified
 
     integration_branch = f"workflow/integrate/{candidate_sha[:12]}-{os.getpid()}-{attempt}"
     switched = command("git", "switch", "--create", integration_branch, "--no-track", remote_ref)
@@ -190,6 +270,7 @@ def start_merge_attempt(args: argparse.Namespace, candidate_branch: str, candida
         "original_branch": candidate_branch,
         "remote": args.remote,
         "target": args.target,
+        "integration_started_epoch": time.time(),
     }
     save_state(state)
     print(
@@ -215,34 +296,56 @@ def finalize_integration(
     *,
     preserve_on_retry: bool,
 ) -> int:
-    verified = verify(args.verify)
+    verified = verify_integration(args, state)
     if verified:
         return verified
 
     integration_branch = str(state["integration_branch"])
     if not args.push:
+        receipt = write_receipt(state, status="verified", transport_attempts=0)
         restore_candidate(state, delete_integration=False)
-        print(f"safe_merge: verified integration retained as {integration_branch}; push not requested.")
+        print(
+            f"safe_merge: verified integration retained as {integration_branch}; "
+            f"push not requested; receipt {receipt}."
+        )
         return 0
 
     remote = str(state["remote"])
     target = str(state["target"])
     remote_ref = f"{remote}/{target}"
-    if fetch_target(remote, target):
-        return EXIT_PRECONDITION
-    current_target_sha = git_output("rev-parse", remote_ref)
-    if current_target_sha != str(state["base_target_sha"]):
-        print("safe_merge: target advanced before push; rebuilding from the latest target.")
-        restore_candidate(state, delete_integration=not preserve_on_retry)
-        return RETRY
-    pushed = command("git", "push", remote, f"HEAD:{target}")
-    if pushed.returncode:
-        print("safe_merge: push was overtaken; rebuilding from the latest target.")
-        restore_candidate(state, delete_integration=not preserve_on_retry)
-        return RETRY
-    restore_candidate(state, delete_integration=True)
-    print(f"safe_merge: pushed target-first merge to {remote_ref}.")
-    return 0
+    verified_sha = str(state["verified_integration_sha"])
+    for transport_attempt in range(1, args.max_retries + 1):
+        if fetch_target(remote, target):
+            if transport_attempt < args.max_retries:
+                print("safe_merge: transport check failed; retrying the same verified integration.")
+                continue
+            print("safe_merge: transport unavailable; verified integration retained for --continue.")
+            return EXIT_BUSY
+        current_target_sha = git_output("rev-parse", remote_ref)
+        if current_target_sha == verified_sha:
+            receipt = write_receipt(
+                state, status="pushed", transport_attempts=transport_attempt - 1
+            )
+            restore_candidate(state, delete_integration=True)
+            print(f"safe_merge: remote already contains the verified integration; receipt {receipt}.")
+            return 0
+        if current_target_sha != str(state["base_target_sha"]):
+            print("safe_merge: target advanced before push; rebuilding from the latest target.")
+            restore_candidate(state, delete_integration=not preserve_on_retry)
+            return RETRY
+        pushed = command("git", "push", remote, f"HEAD:{target}")
+        if pushed.returncode == 0:
+            receipt = write_receipt(
+                state, status="pushed", transport_attempts=transport_attempt
+            )
+            restore_candidate(state, delete_integration=True)
+            print(f"safe_merge: pushed target-first merge to {remote_ref}; receipt {receipt}.")
+            return 0
+        if transport_attempt < args.max_retries:
+            print("safe_merge: push failed; retrying the same verified integration.")
+            continue
+        print("safe_merge: push transport failed; verified integration retained for --continue.")
+        return EXIT_BUSY
 
 
 def continue_merge(args: argparse.Namespace) -> int:

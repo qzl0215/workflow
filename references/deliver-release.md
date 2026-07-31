@@ -17,20 +17,22 @@
 
 请求包含交付时，集成发布不是可选收尾，本地已验证只是中间状态。项目发布契约决定是否需要 PR/MR、CI、直接 fast-forward、部署或 release；通用 workflow 不猜平台。
 
-普通发布默认收敛为一个事务：`定向测试 → 一次源码全量测试 → commit/merge → 内容等价检查 → 发布同一制品 → 安装烟测`。每个唯一最终源码内容最多一次全量验证；commit、目录或平台动作本身不产生新源码证据。并行成果默认以最新目标为第一父提交做 target-first merge；只有项目明确要求线性历史时才遵循平台的 squash merge，不为假设约束保留另一套日常路径。
+workflow 不调用外部提交 skill，也不把任何外部提交 harness 作为项目缺省或 fallback。只选择项目原生发布入口；项目没有专用入口时，使用 workflow 的精确文件提交、target-first `safe_merge.py`、项目部署命令和线上 smoke，不能叠加第二套提交审查协议。
+
+普通发布默认收敛为一个事务：`聚焦验证 → 语义/安全复核 → 精确候选提交 → target-first 集成 → 一次 clean RC → fast-forward → 发布同一制品 → 安装烟测`。每个唯一最终源码内容最多一次全量验证；commit、目录或平台动作本身不产生新源码证据。并行成果默认以最新目标为第一父提交做 target-first merge；只有项目明确要求线性历史时才遵循平台的 squash merge，不为假设约束保留另一套日常路径。
 
 ## 核心动作
 
 1. 只读确认目标 remote、branch、环境、候选 digest、工作区和敏感信息；排除无关改动。
-2. 按“项目规则 → 部署/发布文档 → CI/脚本 → 仓库配置”形成唯一 release contract：remote、目标分支、集成方式、版本/tag/release、部署入口、回滚和发布后 smoke；只保留有独立价值的最小发布图。
+2. 按“项目规则 → 部署/发布文档 → CI/脚本 → 仓库配置”形成唯一 release contract 和最小发布图：remote、目标分支、集成方式、版本/tag/release、部署入口、回滚和发布后 smoke；进入审查前先运行项目 release doctor 或等价只读预检，固定 worktree、目标、精确文件、发布入口和 source fingerprint。真源冲突时 fail closed，不边审查边换 harness。
 3. 获得覆盖该目标的授权后 fetch 最新目标。PR/MR 只在分支保护、必需 CI、项目规则或真实 reviewer 要求时采用；否则使用可 fast-forward 的直接集成。禁止 force、整文件选边或绕过保护。
-4. 每个发布事务只接受一次成功的正式 RC；在最终工作树生成回执，commit 或 merge 后只做**内容等价检查**。command-scoped 内容、命令和环境相同就复用；无关目标前进不重跑，冲突消解、相关依赖或源码变化只失效受影响证据，形成新的完整输入才重建 full。
-5. 按 release contract 执行获准的 commit、push、merge、tag/release、deploy，并用内容 hash 证明发布的是同一制品；没有独立价值的节点删除，相邻节点能由一个平台动作安全完成时合并。任一步失败立即停止后续写操作并保留可恢复现场。
+4. 开发期只做聚焦验证；精确 diff 的语义/安全复核通过后形成候选提交，再对 target-first 最终集成内容执行一次成功的正式 RC。RC 生成绑定不可变集成 SHA、验证命令、环境和目标基线的回执；commit 或复制目录后只做**内容等价检查**。command-scoped 内容、命令和环境相同就复用；无关目标前进不重跑，冲突消解、相关依赖或源码变化只失效受影响证据，形成新的完整输入才重建 full。
+5. 按 release contract 执行获准的 commit、push、merge、tag/release、deploy，并用内容 hash 证明发布的是同一制品。传输失败时，目标仍停在已复核基线或已精确等于不可变集成 SHA，且验证命令未变，必须复用回执重试同一 SHA，不得重跑 RC；目标或内容变化才回到集成和验证。没有独立价值的节点删除，相邻节点能由一个平台动作安全完成时合并。任一步失败立即停止后续写操作并保留可恢复现场。
 6. 跨到安装副本、生产入口或其他真实环境类别时 fresh 做最小烟测；发布后核对真实远端与发布状态，包括目标 ref、tag/Release、CI/部署结果和真实入口，只有证据存在才报告对应状态。
 7. 记录现场处置：仍需原范围、存在脏改动、未被目标吸收、进行中的 Git 操作、活跃或不匹配的 lock reason 时保持锁定并报告；已完成现场不得绑定新 Task。
 8. 对 workflow 自建的非主 worktree，只有 matching `workflow:<Task ID>` lock、clean、无进行中的 Git 操作、HEAD 已被 fresh 目标吸收、交付核对完成，并且当前请求或 standing policy 已精确授权清理时，才运行 `git worktree unlock` 与 `git worktree remove`；禁止 `--force`，保留本地分支，再用 `git worktree prune` 清理已经消失路径的元数据。条件不足就保持锁定；旧 worktree 没有可信 owner 标记时只列候选，不自动删除。
 9. Plan 的物理删除只能发生在长期知识已整合、临时证据已删除、未解决项不影响恢复、必要例外证据已有现有证据系统承接，并且当前精确删除授权覆盖目标之后。Git 历史可靠时优先用结构化提交或 PR 回执恢复；两者都不具备就保留原 Plan。未满足时只能移出默认上下文，不能删除。Plan 退休与 worktree 回收是两个独立判断，不互相替代。
-10. 用 Git、manifest 和运行态记录真实交付状态，不创建仅用于关闭状态的文档提交。面向用户固定报告三行：`代码完成｜`、`合并完成｜`、`线上生效｜`。三项都出现；用户汇报不得展示提交哈希、commit ID、digest 或内部快照名，精确技术标识只写审计真源。
+10. 成功只返回紧凑摘要、各 phase duration 和回执位置；失败才展开有界尾部并给完整 artifact 路径，禁止把成功测试列表、完整命令输出或重复工具说明灌入对话。用 Git、manifest 和运行态记录真实交付状态，不创建仅用于关闭状态的文档提交，也不为 Plan 收尾重新部署。面向用户固定报告三行：`代码完成｜`、`合并完成｜`、`线上生效｜`。三项都出现；用户汇报不得展示提交哈希、commit ID、digest 或内部快照名，精确技术标识只写审计真源。
 
 ## 写入真源
 

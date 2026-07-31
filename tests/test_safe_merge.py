@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+import json
 
 
 PACKAGE = Path(__file__).resolve().parents[1]
@@ -112,6 +113,62 @@ class SafeMergeIntegrationTest(unittest.TestCase):
         self.assertEqual((audit / "b.txt").read_text(), "second\n")
         parents = run("git", "rev-list", "--parents", "-n", "1", "HEAD", cwd=audit).stdout.split()
         self.assertEqual(parents[1:], [target_sha, candidate_sha])
+
+    def test_transport_retry_reuses_verified_sha_without_rerunning_verification(self) -> None:
+        candidate = self.clone("transport-retry")
+        self.branch(candidate, "feature-transport-retry")
+        (candidate / "a.txt").write_text("transport retry\n")
+        run("git", "add", "a.txt", cwd=candidate)
+        run("git", "commit", "-m", "transport retry", cwd=candidate)
+
+        reject_marker = self.remote / "first-push-rejected"
+        hook = self.remote / "hooks" / "pre-receive"
+        hook.write_text(
+            "#!/bin/sh\n"
+            f"if [ ! -f '{reject_marker}' ]; then\n"
+            f"  : > '{reject_marker}'\n"
+            "  echo transient transport failure >&2\n"
+            "  exit 1\n"
+            "fi\n"
+            "exit 0\n"
+        )
+        hook.chmod(0o755)
+
+        verify_counter = self.root / "verify-count.txt"
+        verify_command = (
+            f"{sys.executable} -c \"from pathlib import Path; "
+            f"p=Path(r'{verify_counter}'); p.write_text(p.read_text()+'1' if p.exists() else '1'); "
+            "print('VERY_VERBOSE_SUCCESS_OUTPUT')\""
+        )
+        result = run(
+            sys.executable,
+            "-B",
+            str(SCRIPT),
+            "--target",
+            "main",
+            "--remote",
+            "origin",
+            "--verify",
+            verify_command,
+            "--max-retries",
+            "2",
+            "--push",
+            cwd=candidate,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(verify_counter.read_text(), "1")
+        self.assertNotIn("VERY_VERBOSE_SUCCESS_OUTPUT", result.stdout)
+        self.assertIn("retrying the same verified integration", result.stdout)
+        common_dir = Path(run("git", "rev-parse", "--git-common-dir", cwd=candidate).stdout.strip())
+        if not common_dir.is_absolute():
+            common_dir = (candidate / common_dir).resolve()
+        receipts = list((common_dir / "codex" / "workflow-merge-receipts").glob("*.json"))
+        self.assertEqual(len(receipts), 1)
+        receipt = json.loads(receipts[0].read_text())
+        self.assertEqual(receipt["status"], "pushed")
+        self.assertEqual(receipt["transport_attempts"], 2)
 
     def test_multi_commit_conflict_is_resolved_once_without_rewriting_candidate(self) -> None:
         first = self.clone("conflict-first")

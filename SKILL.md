@@ -1,11 +1,10 @@
 ---
 name: workflow
 description: 通用状态变更工作流。表面请求与真实用户结果仍需推断时主动澄清，不要求用户先说“澄清需求”；规划、实现、修复、验证、交付和回灌默认走 H0/H1，只有真实复杂度升级 H2/H3。不用于纯问答和一次性只读操作。
-version: 2.18.0
+version: 2.19.0
 author: zhonglin
 license: MIT
 ---
-
 # workflow
 
 workflow 是 dependency-closed 的通用状态变更工作流，只安装本目录即可。
@@ -26,7 +25,7 @@ workflow 是 dependency-closed 的通用状态变更工作流，只安装本目�
 4. 一次只持久化一个当前动作；出口不满足就回到产生缺口的动作，不把纠错、体验或会诊另记为阶段。
 5. 证据驱动检查点可以快速通过，但硬门不得跳过；执行速度不能替代业务价值、验收证据和授权。
 6. 能补现有真源就不建文档；长期知识只答“何时用、改变什么、怎样找到唯一真源”，答不清就不沉淀，临时证据及时删除。同一决策主题只保留一条当前有效的 decision receipt；最新目标覆盖旧结论，有风险才确认，不留翻转流水。
-7. 未经明确授权，不 commit、push、merge、deploy、delete 或触发其他外部副作用。
+7. 未经明确授权，不触发外部副作用；交付只用原生入口或 `safe_merge.py`，不调用外部提交 skill。
 8. 没有 fresh 证据，不声称完成；回灌提案不等于写入授权，确认后实施。
 
 ## 入口分流（不计入阶段）
@@ -37,7 +36,7 @@ workflow 是 dependency-closed 的通用状态变更工作流，只安装本目�
 
 文件数量、项目重要、常规发布或修改 workflow 自身不能单独触发升级；交付副作用可按需加载授权交付 harness，而不升级整项工作。七动作是证据驱动检查点，不是七场固定仪式；已有输入、判断和证据可快速通过，但不降低验收、不扩大授权或伪造工作。
 
-**通用能力唯一入口**：workflow 激活后，通用规划、执行、调试、验证、Git 收尾和复盘不叠加同类 standalone skill；仅用户明确点名的兼容入口或结果独立的专业能力可叠加。
+**通用能力唯一入口**：workflow 激活后，通用规划、执行、调试、验证、Git 收尾和复盘不叠加同类 standalone skill；仅用户明确点名的兼容入口或结果独立的专业能力可叠加。当前动作外的 reference 不得预读；UI harness 仅在需求确认后、仍会改变方案时加载，有批注定向稿则快通。
 
 ## 状态接口与硬门
 
@@ -75,9 +74,9 @@ workflow 是 dependency-closed 的通用状态变更工作流，只安装本目�
 
 ## 阶段成果路由
 
-项目任务在 `task_plan.md` 维护唯一活动成果路由。只有阶段已通过、成果当前有效且用户可消费时才登记；每个完成阶段最多一个入口。单一业务成果直达文件；选定方案优先指向已选视觉预览，没有视觉方案才指向 PRD/方案文档；多个同等重要成果指向已有目录。阶段过程、历史路径和技术日志不是成果入口。
+项目任务在 `task_plan.md` 维护唯一活动成果路由：已通过且当前有效的每个完成阶段最多一个入口；单一业务成果直达文件，选定方案优先指向已选视觉预览，没有视觉方案指向 PRD/方案文档，多个同等重要成果指向已有目录。
 
-真源只保存项目相对路径和 `document / visual / collection` 类型，不得保存机器绝对路径，不得保存 `file://` 或宿主状态；展示时把真实入口解析为普通 Markdown 链接，不探测宿主。已完成且有效的成果才链接，当前和待开始阶段不链接；上游变化时立即移除受影响的下游活动入口，历史证据留在 findings/progress。跨会话只携带活动表，不从聊天猜路径。
+真源只保存项目相对路径和 `document / visual / collection`，不得保存机器绝对路径，且不得保存 `file://` 或宿主状态；展示时解析为普通 Markdown 链接，不探测宿主。当前和待开始阶段不链接；上游变化移除受影响的下游活动入口，历史证据留在 findings/progress。
 
 ## 需求澄清中的四路未知
 
@@ -105,7 +104,7 @@ H0/H1 是默认深度；H2/H3 只能由表中真实信号升级，文件多、�
 
 ## 按需路由
 
-默认只读当前动作的主 owner；出现明确触发信号才叠加 harness。每个 reference 由根入口路由一次，reference 之间不互相深链。owner 与 harness 不要求数量相等；能力只有同时拥有独立问题、不同退出条件、唯一触发、低共触发率和单独加载收益才独立成文件，平台机械件归 adapter。
+默认只读当前 owner；harness 串行按需加载，未来 reference 不预读。每个 reference 由根入口路由一次，reference 之间不互相深链。owner 与 harness 不要求数量相等；能力只有同时拥有独立问题、不同退出条件、唯一触发、低共触发率和单独加载收益才独立成文件，平台机械件归 adapter。
 
 | 类型 | 触发信号 | 仅读取 |
 |---|---|---|
@@ -116,7 +115,7 @@ H0/H1 是默认深度；H2/H3 只能由表中真实信号升级，文件多、�
 | 主 owner | 准备声明 Task、Plan 或业务结果完成 | `references/verify-results.md` |
 | 主 owner | 交付后判断这次应沉淀什么 | `references/learn-review.md` |
 | 主 owner | 候选经验需要进入长期真源 | `references/evolve-system.md` |
-| harness | UI、视觉、交互、动效或无障碍范围 | `references/shape-experience.md` |
+| harness | 需求已确认，且 UI 的信息架构、视觉方向、交互、动效或无障碍仍会改变方案 | `references/shape-experience.md` |
 | harness | 多个界面需要稳定、唯一设计真源 | `references/maintain-design.md` |
 | harness | 需要独立视角、并行实施或 fresh review | `references/coordinate-agents.md` |
 | harness | bug、测试失败、异常、空结果或连续失败 | `references/fix-failures.md` |
@@ -124,6 +123,7 @@ H0/H1 是默认深度；H2/H3 只能由表中真实信号升级，文件多、�
 | harness | 已验收结果需要 commit、push、merge、deploy、公开发布或其他外部写入 | `references/deliver-release.md` |
 | adapter | 同仓并行成果需要独立 worktree、串行 merge 与安全回收 | `adapters/merge-parallel-work.md` |
 | 方法包 | 方案瓶颈需要大厂方法论时，默认只加载一个主方法包和一个挑战方法包 | `methods/strategic-value.md` · `methods/essence-subtraction.md` · `methods/experiment-attack.md` · `methods/delivery-compounding.md` |
+
 ## 文件真源与文档预算
 
 - 简单任务默认零新增项目文档。
