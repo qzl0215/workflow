@@ -124,13 +124,13 @@ class CanonicalStageContractTest(unittest.TestCase):
 
 
 class UserHandoffContractTest(unittest.TestCase):
-    def test_h0_h1_use_compact_updates_instead_of_full_stage_snapshots(self) -> None:
+    def test_h0_h1_use_compact_updates_except_when_waiting_for_a_user(self) -> None:
         for token in (
             "H0/H1",
             "开始、真实 blocker、完成",
             "简短播报",
             "H2/H3",
-            "完整快照",
+            "除等待用户回复外",
         ):
             self.assertIn(token, SKILL)
 
@@ -151,6 +151,10 @@ class UserHandoffContractTest(unittest.TestCase):
         self.assertIn("## 用户交接", SKILL)
         for token in (
             "只有需要人参与时才交回控制权",
+            "每次等用户回复前",
+            "不受 H0–H3 或状态变化限制",
+            "更新后的完整快照",
+            "不得只提问",
             "建议下一步｜",
             "回复建议｜",
             "下一 Ready",
@@ -160,11 +164,8 @@ class UserHandoffContractTest(unittest.TestCase):
 
     def test_changed_state_snapshot_is_event_driven_non_blocking_and_deduplicated(self) -> None:
         for token in (
-            "状态发生实质变化",
-            "下一条可见消息",
-            "状态未变化",
-            "不重复",
-            "播报后继续工作",
+            "状态变化后下一条消息",
+            "再继续工作",
             "进度｜■■■◆□□□ 4/7 · 执行任务",
         ):
             self.assertIn(token, SKILL)
@@ -1117,6 +1118,27 @@ class SupportingHarnessContractTest(unittest.TestCase):
         self.assertLess(text.index("线框图"), text.index("高保真"))
         for token in ("journey/flow", "空", "加载", "错误", "reduced-motion", "键盘", "焦点"):
             self.assertIn(token, text)
+
+    def test_experience_has_a_user_centered_content_design_gate(self) -> None:
+        text = reference("shape-experience.md")
+        route = next(line for line in SKILL.splitlines() if "references/shape-experience.md" in line)
+        for token in (
+            "内容设计",
+            "用户视角",
+            "最短但不损失理解",
+            "目的、当前状态和下一步",
+            "标题、分区、操作",
+            "五秒扫读",
+            "删除测试",
+            "设计思路",
+            "开发者视角",
+            "图案、图片",
+            "可访问性",
+            "渐进披露",
+            "法律、风险",
+        ):
+            self.assertIn(token, text)
+        self.assertIn("内容设计", route)
 
     def test_visual_work_uses_three_progressive_decision_gates(self) -> None:
         experience = reference("shape-experience.md")

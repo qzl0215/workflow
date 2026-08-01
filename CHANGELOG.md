@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.20.0] - 2026-08-01
+
+### Added
+
+- Added a user-centered content design gate for UI work, including purpose/state/action scanning, copy deletion tests, visual substitution and accessible fallbacks.
+
+### Changed
+
+- Required visible titles, sections, actions and helper text to use the shortest wording that preserves understanding, while retaining complete legal, risk and complex-help meaning through progressive disclosure.
+- Routed content design through the existing experience-shaping owner instead of adding a separate copywriting module or global character limits.
+
+## [2.19.1] - 2026-08-01
+
+### Changed
+
+- Required an updated full progress snapshot at the top of every response that hands control back and waits for the user, including H0/H1 and unchanged state.
+
 ## [2.19.0] - 2026-08-01
 
 ### Added
