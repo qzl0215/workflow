@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.21.0] - 2026-08-18
+
+### Changed
+
+- Made visual hierarchy, layout, state, graphics and interaction the default explanation layer for UI work, instead of repeating those relationships in titles, subtitles or helper copy.
+- Compressed the content-design gate from five rules to three while retaining deletion, five-second scanning, accessibility and risk safeguards.
+
 ## [2.20.0] - 2026-08-01
 
 ### Added

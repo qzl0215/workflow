@@ -1124,20 +1124,21 @@ class SupportingHarnessContractTest(unittest.TestCase):
         route = next(line for line in SKILL.splitlines() if "references/shape-experience.md" in line)
         for token in (
             "内容设计",
-            "用户视角",
-            "最短但不损失理解",
-            "目的、当前状态和下一步",
-            "标题、分区、操作",
+            "先用信息层级、布局、状态、图形和交互让页面一眼可懂",
+            "不再用标题、副标题或说明文案重复解释",
+            "删掉不影响理解、行动或安全就删除",
+            "用户熟悉的最短表达",
             "五秒扫读",
-            "删除测试",
-            "设计思路",
-            "开发者视角",
-            "图案、图片",
-            "可访问性",
+            "页面目的、当前状态和首要操作",
+            "有歧义的图标",
+            "不只依赖颜色或图片",
+            "无障碍文本",
             "渐进披露",
-            "法律、风险",
+            "法律、风险和复杂帮助",
         ):
             self.assertIn(token, text)
+        gate = text.split("### 内容设计硬门", 1)[1].split("## 写入真源", 1)[0]
+        self.assertEqual(len(re.findall(r"(?m)^\d+\. ", gate)), 3)
         self.assertIn("内容设计", route)
 
     def test_visual_work_uses_three_progressive_decision_gates(self) -> None:
