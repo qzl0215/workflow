@@ -472,8 +472,9 @@ class StageResultRoutingContractTest(unittest.TestCase):
     def test_route_selection_and_invalidation_are_business_driven(self) -> None:
         for token in (
             "单一业务成果直达文件",
-            "选定方案优先指向已选视觉预览",
-            "没有视觉方案",
+            "现有页面增强的选定方案优先指向实际页面 owner",
+            "方向探索才优先指向已选独立视觉预览",
+            "没有视觉方案时",
             "多个同等重要成果指向已有目录",
             "移除受影响的下游活动入口",
             "findings/progress",
@@ -511,8 +512,9 @@ class CrossHostHandoffContractTest(unittest.TestCase):
     def test_markdown_links_keep_portable_result_and_reference_targets(self) -> None:
         for token in (
             "项目相对路径",
-            "选定方案优先指向已选视觉预览",
-            "没有视觉方案",
+            "现有页面增强的选定方案优先指向实际页面 owner",
+            "方向探索才优先指向已选独立视觉预览",
+            "没有视觉方案时",
             "一级中文标题",
         ):
             self.assertIn(token, SKILL)
@@ -1147,16 +1149,32 @@ class SupportingHarnessContractTest(unittest.TestCase):
         self.assertEqual(len(re.findall(r"(?m)^\d+\. ", gate)), 3)
         self.assertIn("内容设计", route)
 
-    def test_visual_work_uses_three_progressive_decision_gates(self) -> None:
+    def test_visual_work_defaults_to_real_page_implementation_preview(self) -> None:
         experience = reference("shape-experience.md")
         solution = reference("decide-solution.md")
-        for text in (experience, solution, README):
-            for token in ("方向粗选", "方案精修", "确认开动"):
+        for text in (SKILL, experience, solution, README):
+            for token in ("现有页面增强", "方向探索", "真实页面实装预览"):
                 self.assertIn(token, text)
-            self.assertLess(text.index("方向粗选"), text.index("方案精修"))
-            self.assertLess(text.index("方案精修"), text.index("确认开动"))
 
         for token in (
+            "真实路由",
+            "现有导航、摘要卡、表格密度和筛选位置",
+            "只 mock 缺失数据或状态",
+            "同一补丁",
+            "不得重新设计整套工作台",
+        ):
+            self.assertIn(token, experience)
+
+    def test_standalone_demo_is_only_for_direction_exploration(self) -> None:
+        experience = reference("shape-experience.md")
+        solution = reference("decide-solution.md")
+        for text in (SKILL, experience, solution, README):
+            self.assertIn("只有方向探索才做独立 demo", text)
+
+        for token in (
+            "方向粗选",
+            "方案精修",
+            "确认开动",
             "三个静态视觉粗稿",
             "同批",
             "并行",
@@ -1167,6 +1185,34 @@ class SupportingHarnessContractTest(unittest.TestCase):
             "极端 fixture",
         ):
             self.assertIn(token, experience)
+        self.assertLess(experience.index("方向探索"), experience.index("三个静态视觉粗稿"))
+
+    def test_verification_rejects_ui_scope_drift_and_demo_only_evidence(self) -> None:
+        verification = reference("verify-results.md")
+        for token in (
+            "UI 实装预览证据门",
+            "现有页面增强",
+            "真实路由",
+            "前后截图",
+            "导航、摘要层级、表格密度和筛选位置",
+            "独立 demo 不能作为成品验收证据",
+            "方向探索",
+            "实际实现",
+        ):
+            self.assertIn(token, verification)
+
+    def test_real_page_preview_candidate_flows_through_plan_and_execution(self) -> None:
+        plan = reference("plan-tasks.md")
+        execution = reference("execute-tasks.md")
+        for token in ("真实页面实装预览", "同一补丁", "不另建 demo", "照稿重写"):
+            self.assertIn(token, plan)
+        for token in (
+            "已确认预览候选",
+            "继续同一补丁",
+            "不得根据独立截图重写页面",
+            "非目标结构",
+        ):
+            self.assertIn(token, execution)
 
     def test_design_truth_is_only_created_for_stable_reuse(self) -> None:
         text = reference("maintain-design.md")

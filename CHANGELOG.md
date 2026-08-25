@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.23.0] - 2026-08-25
+
+### Changed
+
+- Made existing-page enhancement the default UI path: visual decisions now use a reversible implementation preview on the real route, owner, components and tokens, and the approved patch continues into implementation instead of being recreated from a demo.
+- Limited standalone visual demos to genuine direction exploration, while preserving the three progressive exploration gates when information architecture, shell or visual direction is actually undecided.
+- Added scope-drift guards for navigation, summary hierarchy, table density, filter placement and other non-target structures, plus reader contracts that carry the approved preview through planning, execution and verification.
+
 ## [2.22.0] - 2026-08-25
 
 ### Changed
