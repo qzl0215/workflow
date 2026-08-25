@@ -162,6 +162,15 @@ class UserHandoffContractTest(unittest.TestCase):
         ):
             self.assertIn(token, SKILL)
 
+    def test_fully_successful_delivery_uses_one_linked_sentence_without_a_handoff_snapshot(self) -> None:
+        for token in (
+            "成功交付例外",
+            "已提交 GitHub，已合并，已发布：",
+            "不再重复完整快照",
+            "没有风险、待决策或必要行动",
+        ):
+            self.assertIn(token, SKILL)
+
     def test_changed_state_snapshot_is_event_driven_non_blocking_and_deduplicated(self) -> None:
         for token in (
             "状态变化后下一条消息",
@@ -508,30 +517,28 @@ class CrossHostHandoffContractTest(unittest.TestCase):
         ):
             self.assertIn(token, SKILL)
 
-    def test_readme_shows_three_state_aware_handoffs_with_two_reply_exits(self) -> None:
+    def test_readme_shows_two_state_aware_handoffs_and_one_compact_completion(self) -> None:
         for heading in ("### 场景一：方向决策", "### 场景二：阻断或授权", "### 场景三：最终完成"):
             self.assertIn(heading, README)
         for token in (
             "结论｜",
             "进度｜■◆□□□□□ 2/7 · 选定方案",
             "进度｜■■■■◆□□ 5/7 · 验收交付",
-            "进度｜■■■■■■◆ 7/7 · 回灌改进",
             "技能｜",
             "成果｜",
-            "状态｜已完成",
             "建议下一步｜",
             "回复建议｜",
             "回复“采用推荐方案”",
             "回复“授权发布”或“保持本地已验证”",
-            "回复“继续下一目标”或直接提出新任务",
+            "已提交 GitHub，已合并，已发布：",
         ):
             self.assertIn(token, README)
         self.assertNotIn("阶段｜8/8", README)
         self.assertNotIn("最佳下一步｜", README)
-        self.assertEqual(README.count("> 建议下一步｜"), 3)
-        self.assertEqual(README.count("> 回复建议｜"), 3)
+        self.assertEqual(README.count("> 建议下一步｜"), 2)
+        self.assertEqual(README.count("> 回复建议｜"), 2)
         linked_lines = [line for line in README.splitlines() if "> 成果｜" in line]
-        self.assertEqual(len(linked_lines), 3)
+        self.assertEqual(len(linked_lines), 2)
         for line in linked_lines:
             self.assertIn("](", line)
             self.assertNotIn("`", line)
@@ -986,20 +993,19 @@ class VerificationReviewAndEvolutionContractTest(unittest.TestCase):
 
 
 class IntegratedReleaseContractTest(unittest.TestCase):
-    def test_final_report_shows_three_business_delivery_states_without_internal_ids(self) -> None:
+    def test_final_report_is_one_linked_business_delivery_sentence_without_internal_ids(self) -> None:
         delivery = reference("deliver-release.md")
         for token in (
-            "代码完成｜",
-            "合并完成｜",
-            "线上生效｜",
-            "三项都出现",
+            "单句",
+            "已提交 GitHub，已合并，已发布：",
+            "线上入口链接",
             "不得展示提交哈希",
             "精确技术标识只写",
         ):
             self.assertIn(token, delivery)
         final_scenario = README.split("### 场景三：最终完成", 1)[1].split("## ", 1)[0]
-        for token in ("代码完成｜", "合并完成｜", "线上生效｜"):
-            self.assertIn(token, final_scenario)
+        self.assertIn("已提交 GitHub，已合并，已发布：", final_scenario)
+        self.assertEqual(len([line for line in final_scenario.splitlines() if line.startswith("> ")]), 1)
         self.assertNotRegex(final_scenario, r"\b[0-9a-f]{7,40}\b")
 
     def test_integrated_release_is_a_required_gate_when_delivery_is_requested(self) -> None:
