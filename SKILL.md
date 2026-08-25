@@ -1,7 +1,7 @@
 ---
 name: workflow
 description: 通用状态变更工作流。表面请求与真实用户结果需推断时澄清，不要求用户先说“澄清需求”；默认 H0/H1，复杂才升级 H2/H3。不用于纯问答和一次性只读操作。
-version: 2.22.0
+version: 2.23.0
 author: zhonglin
 license: MIT
 ---
@@ -36,7 +36,7 @@ workflow 是 dependency-closed 的通用状态变更工作流，只安装本目�
 
 文件数量、项目重要、常规发布或修改 workflow 自身不能单独触发升级；交付副作用可按需加载授权交付 harness，而不升级整项工作。七动作是证据驱动检查点，不是七场固定仪式；已有输入、判断和证据可快速通过，但不降低验收、不扩大授权或伪造工作。
 
-**通用能力唯一入口**：workflow 激活后，通用规划、执行、调试、验证、Git 收尾和复盘不叠加同类 standalone skill；仅用户明确点名的兼容入口或结果独立的专业能力可叠加。当前动作外的 reference 不得预读；UI harness 仅在需求确认后、仍会改变方案时加载，有批注定向稿则快通。
+**通用能力唯一入口**：通用工作不叠加同类 standalone skill；仅用户明确点名或结果独立的专业能力可叠加。当前动作外的 reference 不得预读；UI harness 仅在需求确认后且仍会改变方案时加载，定向批注快通。**现有页面增强**默认做**真实页面实装预览**；**方向探索**例外，只有方向探索才做独立 demo。
 
 ## 状态接口与硬门
 
@@ -58,7 +58,7 @@ workflow 是 dependency-closed 的通用状态变更工作流，只安装本目�
 
 进度｜■■■◆□□□ 4/7 · 执行任务
 技能｜[执行任务](references/execute-tasks.md) · [修复失败](references/fix-failures.md)
-成果｜✓ [需求澄清](resolved/findings.md) · ✓ [视觉方案](resolved/selected-preview.html) · ● 计划 P01–P05 · ○ 交付 · ○ 进化
+成果｜✓ [需求澄清](resolved/findings.md) · ✓ [实装预览](app/target-page.html) · ● 计划 P01–P05 · ○ 交付 · ○ 进化
 ✓ P01 → ● P02 / T03 → ○ P03
 
 `技能`只列实际读取的底层 reference，用一级中文标题和 Markdown 链接。状态用普通文本和普通 Markdown；Plan 只显最短活动路径；不展示 Ready 队列、不探测宿主、不生成 DAG 视觉、不建立第二状态真源。
@@ -74,7 +74,7 @@ workflow 是 dependency-closed 的通用状态变更工作流，只安装本目�
 
 ## 阶段成果路由
 
-项目任务在 `task_plan.md` 维护唯一活动成果路由：已通过且当前有效的每个完成阶段最多一个入口；单一业务成果直达文件，选定方案优先指向已选视觉预览，没有视觉方案指向 PRD/方案文档，多个同等重要成果指向已有目录。
+项目任务在 `task_plan.md` 维护唯一活动成果路由：已通过且当前有效的每个完成阶段最多一个入口；单一业务成果直达文件，现有页面增强的选定方案优先指向实际页面 owner，方向探索才优先指向已选独立视觉预览；没有视觉方案时指向 PRD/方案文档，多个同等重要成果指向已有目录。
 
 真源只保存项目相对路径和 `document / visual / collection`，不得保存机器绝对路径，且不得保存 `file://` 或宿主状态；展示时解析为普通 Markdown 链接，不探测宿主。当前和待开始阶段不链接；上游变化移除受影响的下游活动入口，历史证据留在 findings/progress。
 
