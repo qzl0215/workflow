@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.22.0] - 2026-08-25
+
+### Changed
+
+- Compressed fully successful delivery reports into one linked sentence covering the GitHub commit, merge and publication; incomplete or failed delivery still reports the true gap and required next action.
+
 ## [2.21.0] - 2026-08-18
 
 ### Changed
