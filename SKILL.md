@@ -1,7 +1,7 @@
 ---
 name: workflow
 description: 通用状态变更工作流。表面请求与真实用户结果需推断时澄清，不要求用户先说“澄清需求”；默认 H0/H1，复杂才升级 H2/H3。不用于纯问答和一次性只读操作。
-version: 2.23.0
+version: 2.24.0
 author: zhonglin
 license: MIT
 ---
