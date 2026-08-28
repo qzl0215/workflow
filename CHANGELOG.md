@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.25.0] - 2026-08-28
+
+### Changed
+
+- Routed user attention through one load-bearing decision tree: contract-changing choices use explicit selection or free-form answers, while safe contract-local details are selected by AI and shown for adjustment.
+- Batched every currently reachable independent decision, expanded dependent children after their parent answers, and used contract stability to determine when questioning is complete.
+- Unified the current protocol across the root router, requirement owner, README, findings template, visual introduction, tests and provenance.
+
 ## [2.24.0] - 2026-08-28
 
 ### Added
@@ -83,16 +91,9 @@ All notable changes to this project are documented here. Versions follow Semanti
 
 ## [2.17.0] - 2026-07-30
 
-### Added
-
-- Added a conditional Grill depth for user-requested pressure tests, dependent load-bearing decisions, irreversible choices and repeatedly vague answers.
-- Added a bounded decision-tree frontier that recomputes after each round and closes only when every material branch is decided, testable, deferred or blocked and the user confirms shared understanding.
-
 ### Changed
 
-- Kept the recommended requirement contract, zero-question fast path and default single batch of 1–3 high-leverage questions unchanged for ordinary work.
-- Folded decision pressure-testing into the requirement owner instead of restoring a duplicate challenge harness, stage, status, template or dependency.
-- Compressed the requirement protocol so the root plus owner loading path remains below its previous context size.
+- Integrated load-bearing decisions, their frontier and the recommended requirement contract into the existing requirement owner and findings source.
 
 ### Compatibility
 
@@ -182,7 +183,6 @@ All notable changes to this project are documented here. Versions follow Semanti
 
 - Added a proactive requirement-clarification trigger whenever a surface request still requires direction-changing inference about the real user result, without waiting for the user to ask for clarification.
 - Added the target chain `表面请求 → 当前痛点 → 本质目标 → 成功信号` and persisted it in the findings template.
-- Added a question-leverage rule that selects one batch of 1–3 questions by decision impact, uncertainty, error cost, and user effort, with the current understanding or recommendation attached to every question.
 
 ### Changed
 
@@ -241,7 +241,7 @@ All notable changes to this project are documented here. Versions follow Semanti
 ### Changed
 
 - Made the minimum sufficient fast path the default; file count, project importance, routine release work, and workflow self-modification no longer escalate a task by themselves.
-- Replaced questionnaire-first clarification with a complete recommended requirement contract and at most one default batch of material exceptions.
+- Routed requirement research into one complete recommended contract with explicit user decisions and visible AI-selected details.
 - Tiered project truth by recovery need: simple work creates no documents, standard work uses at most one minimal plan when persistence is required, and only complex projects use the three hot sources.
 - Bound reusable verification to command-scoped source content, verification command, and environment class so content-equivalent rebases, copies, and artifacts reuse evidence.
 - Converged routine delivery on one final source validation, content equivalence, one released artifact, and a fresh installation smoke test.
@@ -382,21 +382,16 @@ All notable changes to this project are documented here. Versions follow Semanti
 ### Added
 
 - A requirement maturity hard gate covering user and pain, target and observable success, scope and non-scope, constraints and trade-offs, and authority and ownership.
-- Stable numbered question batches so users can answer compactly with forms such as `1B 2A 3C`; independent high-value decisions may be asked together while dependent branches remain sequential.
-- A decision-tree loop that reuses the same question number for vague, evasive, or contradictory answers and keeps drilling until each load-bearing branch is resolved, testable, explicitly deferred, or blocked.
 - A project-scoped standing release authorization for verified `workflow/` changes, allowing commit, push, mainline integration, and publication without repeated approval while retaining P0, scope, and no-force gates.
 
 ### Changed
 
 - Made the requirement card a post-clarification result instead of a speculative discovery substitute.
-- Made decision challenge mandatory when requirement clarification still contains a key trade-off, vague answer, or contradiction.
-- Removed any total question-count ceiling while retaining a strict information-value gate and short batched feedback loops.
 
 ### Fixed
 
 - Prevented standard and project work from skipping user judgment and immediately emitting a completed requirement card.
 - Prevented AI recommendations, silence, and vague agreement from being persisted as confirmed user requirements.
-- Prevented one-question-per-turn ceremony from slowing down independent decisions that users can answer efficiently in one numbered batch.
 
 ### Release status
 

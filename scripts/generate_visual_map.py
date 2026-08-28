@@ -76,7 +76,7 @@ STAGE_QUESTIONS = {
 
 UNKNOWN_SUMMARIES = {
     "事实可查": ("缺客观事实", "我去查项目、数据、工具和可信来源。"),
-    "取舍待定": ("缺少你的选择", "我给出推荐和代价，等你做决定。"),
+    "取舍待定": ("缺少承重选择", "我给推荐、选项和答案影响；细节由我代选并写入契约。"),
     "假设待验": ("讨论无法证明", "我设计最小实验，让真假可验证。"),
     "外部待解": ("需要范围外条件", "我写清依赖、解锁条件和安全等待方式。"),
 }
@@ -383,7 +383,7 @@ HTML_TEMPLATE = r'''<!doctype html>
         <h2>这些节点，我一定等你。</h2>
         <ol class="working-list">
           <li><span>01</span><div><h3>纠正目标</h3><p>我的关键理解会改变结果、范围或验收时，请你校正。</p></div></li>
-          <li><span>02</span><div><h3>选择方向</h3><p>路线有真实取舍时，我会给推荐、代价和最短回复。</p></div></li>
+          <li><span>02</span><div><h3>决定承重取舍</h3><p>不同答案会改变需求契约时，我给推荐、选项和答案影响；契约内细节由我代选。</p></div></li>
           <li><span>03</span><div><h3>确认完整计划</h3><p>你确认纳入哪些业务结果；任务编排和执行细节由我收敛。</p></div></li>
           <li><span>04</span><div><h3>授权与验收</h3><p>提交、发布、删除等外部影响，以及最终接收结果，都由你决定。</p></div></li>
         </ol>
@@ -395,7 +395,7 @@ HTML_TEMPLATE = r'''<!doctype html>
     <div class="page-shell">
       <header class="section-head">
         <div><p class="kicker">不确定，不等于追问</p><h2>遇到不确定，我不会一股脑问你。</h2></div>
-        <p class="section-intro">我先判断它是事实、取舍、假设还是外部依赖，再选择调查、请你决定、做实验或明确等待。</p>
+        <p class="section-intro">我先判断它是事实、承重取舍、假设还是外部依赖，再选择调查、集中请你决定、做实验或明确等待；契约内细节由我代选并展示。</p>
       </header>
       <div class="unknown-grid">__UNKNOWN_CARDS__</div>
     </div>

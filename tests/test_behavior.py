@@ -9,6 +9,7 @@ PACKAGE = Path(__file__).resolve().parents[1]
 SKILL = (PACKAGE / "SKILL.md").read_text()
 README = (PACKAGE / "README.md").read_text()
 CHANGELOG = (PACKAGE / "CHANGELOG.md").read_text()
+NOTICE = (PACKAGE / "NOTICE.md").read_text()
 REFERENCES = PACKAGE / "references"
 ADAPTERS = PACKAGE / "adapters"
 METHODS = PACKAGE / "methods"
@@ -140,10 +141,10 @@ class UserHandoffContractTest(unittest.TestCase):
             "所有用户可见内容",
             "用户结果、实际效果、真实代价、关键风险和必要行动",
             "决定、行动、风险认知或对结论的信心",
-            "删除或按需提供",
-            "不制造决策",
-            "不虚构业务价值",
-            "失败事实、关键风险、授权边界和必要证据",
+            "承重决策由用户选择、填写或明确委托",
+            "AI 代选并随契约展示",
+            "业务价值以证据为准",
+            "失败事实、关键风险、授权边界和必要证据保持透明",
         ):
             self.assertIn(token, SKILL)
 
@@ -174,7 +175,7 @@ class UserHandoffContractTest(unittest.TestCase):
     def test_changed_state_snapshot_is_event_driven_non_blocking_and_deduplicated(self) -> None:
         for token in (
             "状态变化后下一条消息",
-            "再继续工作",
+            "再继续",
             "进度｜■■■◆□□□ 4/7 · 执行任务",
         ):
             self.assertIn(token, SKILL)
@@ -257,7 +258,8 @@ class UserHandoffRenderingContractTest(unittest.TestCase):
         solution = reference("decide-solution.md")
         for text in (goal, solution):
             self.assertIn("短反馈回路", text)
-            self.assertIn("会改变目标、范围、验收或方向", text)
+        self.assertIn("不同的需求契约或重大风险承诺", goal)
+        self.assertIn("会改变目标、范围、验收或方向", solution)
         self.assertIn("事实可查", goal)
         self.assertIn("不问用户", goal)
 
@@ -287,8 +289,9 @@ class UserHandoffRenderingContractTest(unittest.TestCase):
             "需求成熟度硬门",
             "推荐需求契约（待确认）",
             "默认需求发现界面",
-            "默认最多一批高价值问题",
-            "只有仍存在会改变目标、范围、验收或授权的未知",
+            "承重决策",
+            "用户选择或填写",
+            "AI 代选细节（可调整）",
             "沉默不等于确认",
             "用户 / 场景 / 现状痛点",
             "目标结果与可观察成功标准",
@@ -297,13 +300,15 @@ class UserHandoffRenderingContractTest(unittest.TestCase):
             "授权边界与责任人",
         ):
             self.assertIn(token, goal)
-        for token in ("需求成熟度硬门", "关键用户判断已有回答"):
+        for token in ("需求成熟度硬门", "承重决策已处置", "AI 代选细节已展示"):
             self.assertIn(token, requirement_row)
         for token in (
             "## 需求成熟度硬门",
             "## 关键追问",
             "答案会改变什么",
-            "用户回答 / 明确延期",
+            "选项 / 填空",
+            "用户回答 / 明确委托",
+            "AI 代选细节（可调整）",
         ):
             self.assertIn(token, FINDINGS_TEMPLATE)
 
@@ -322,7 +327,7 @@ class UserHandoffRenderingContractTest(unittest.TestCase):
             "轻任务",
         ):
             self.assertIn(token, goal)
-        for token in ("调研充分性硬门", "需求契约已获明确确认"):
+        for token in ("调研充分性硬门", "标准/项目契约确认"):
             self.assertIn(token, requirement_row)
         for token in ("## 调研充分性硬门", "停止依据", "需求契约确认"):
             self.assertIn(token, FINDINGS_TEMPLATE)
@@ -365,49 +370,45 @@ class UserHandoffRenderingContractTest(unittest.TestCase):
         ):
             self.assertIn(token, SKILL)
 
-    def test_requirement_discovery_uses_one_high_value_exception_batch(self) -> None:
+    def test_requirement_discovery_routes_attention_by_contract_impact(self) -> None:
         goal = reference("understand-goal.md")
         for token in (
-            "默认最多一批高价值问题",
-            "完整推荐",
-            "关键例外",
-            "目标、范围、验收或授权",
-            "第二批",
-            "实质缺口",
+            "两个合理答案",
+            "不同的需求契约",
+            "重大风险承诺",
+            "用户选择或填写",
+            "局部、可逆",
+            "AI 代选",
+            "项目约定、当前背景和稳定历史偏好",
         ):
             self.assertIn(token, goal)
-        self.assertNotIn("不设置总问题数上限", goal)
+        for token in ("两个合理答案", "需求契约", "AI 代选"):
+            self.assertIn(token, README)
 
-    def test_requirement_discovery_conditionally_exhausts_a_bounded_grill_frontier(self) -> None:
+    def test_requirement_discovery_exhausts_a_layered_grill_frontier(self) -> None:
         goal = reference("understand-goal.md")
         for token in (
             "Grill 深度",
             "有界承重决策树",
-            "frontier",
-            "前置决定",
+            "每条分支当前最上游",
+            "当前 `frontier`",
+            "相互独立的承重问题一次集中展示",
+            "选项或填空",
+            "答案会改变什么",
             "每轮回答后重算",
+            "契约稳定门",
             "用户已决定",
+            "明确委托 AI",
             "可验证假设",
             "明确延期",
             "blocker",
-            "frontier 为空",
-            "共享理解",
+            "剩余项均可由 AI 代选",
+            "题数和轮数由实际决策树自然收敛",
         ):
             self.assertIn(token, goal)
-        for trigger in (
-            "用户明确要求压力测试",
-            "两个以上承重决策存在依赖",
-            "高影响、难逆",
-            "经过一次纠正后仍含糊",
-        ):
-            self.assertIn(trigger, goal)
-        self.assertIn("相互独立且同层", goal)
-        self.assertIn("每批 1–3 个", goal)
-        self.assertIn("一次只问最上游一个", goal)
-        self.assertIn("默认最多一批高价值问题", goal)
-        self.assertIn("Grill 深度", SKILL)
-        self.assertIn("Grill 深度", README)
-        self.assertIn("Grill 深度", FINDINGS_TEMPLATE)
+        for text in (SKILL, README, FINDINGS_TEMPLATE):
+            self.assertIn("Grill 深度", text)
+            self.assertIn("AI 代选细节", text)
         self.assertFalse((REFERENCES / "challenge-decisions.md").exists())
 
     def test_requirement_clarification_proactively_finds_the_underlying_goal(self) -> None:
@@ -427,16 +428,18 @@ class UserHandoffRenderingContractTest(unittest.TestCase):
             self.assertIn(token, SKILL)
         for token in (
             "表面请求 → 当前痛点 → 本质目标 → 成功信号",
-            "1–3 个最高杠杆问题",
-            "问题杠杆",
+            "承重决策",
+            "用户选择或填写",
+            "AI 代选",
             "当前理解或推荐",
-            "为什么做、真正要改变什么、什么结果最重要",
+            "每条分支当前最上游",
         ):
             self.assertIn(token, goal)
         for token in (
             "不等你先说“澄清需求”",
             "表面请求 → 当前痛点 → 本质目标 → 成功信号",
-            "1–3 个最高杠杆问题",
+            "承重决策",
+            "AI 代选细节",
         ):
             self.assertIn(token, README)
         for token in (
@@ -446,9 +449,18 @@ class UserHandoffRenderingContractTest(unittest.TestCase):
             "本质目标",
             "成功信号",
             "当前理解或推荐",
-            "默认只保留 1–3 个最高杠杆问题",
+            "选项 / 填空",
+            "AI 代选细节（可调整）",
         ):
             self.assertIn(token, FINDINGS_TEMPLATE)
+
+    def test_grill_attribution_describes_the_current_protocol(self) -> None:
+        for token in (
+            "current requirement-discovery protocol",
+            "load-bearing decision tree",
+            "contract-stability stop rule",
+        ):
+            self.assertIn(token, NOTICE)
 
     def test_later_stages_continue_until_a_real_handoff_trigger(self) -> None:
         plan = reference("plan-tasks.md")
