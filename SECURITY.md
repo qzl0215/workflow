@@ -1,21 +1,30 @@
-# Security policy
+# 安全策略
 
-## Supported versions
+## 支持范围
 
-Security fixes are prepared for the latest published beta or stable release. Development snapshots are supported on a best-effort basis.
+安全修复以最新正式稳定版本为主；开发快照仅尽力支持。2.x 安装兼容边界见 README 的迁移说明。
 
-## Reporting a vulnerability
+## 私密报告漏洞
 
-Do not open a public issue for credentials, sensitive paths, command injection, unsafe destructive actions, or another privately exploitable finding. Use GitHub's private vulnerability reporting for this repository. If it is unavailable, contact the repository owner through their GitHub profile and request a private channel without including exploit details in the first message.
+凭据泄露、敏感路径、命令注入、不安全破坏性操作或其他可被私下利用的问题，请勿提交公开 issue。优先使用本仓库的 GitHub private vulnerability reporting；若不可用，通过仓库 owner 的 GitHub 主页请求私密渠道，首次联系不要附带可直接利用的细节。
 
-Include the affected version, environment, minimal reproduction, impact, and any safe mitigation. Do not access data or systems beyond what is necessary to demonstrate the issue.
+报告应包含受影响版本、环境、最小复现、影响和安全缓解方式。不要访问超出证明问题所必需的数据或系统。
 
-## Security boundaries
+## 工作协议边界
 
-- workflow does not require secrets and must not store credentials in plans, logs, templates, or examples.
-- commit, push, merge, deploy, delete, public release, and other external writes require explicit authorization.
-- install/update validates a complete candidate in a same-filesystem hidden stage before replacing the single active package. Caught activation failures restore the old install; no discoverable backup, failed, or removed copy is retained after success. The two-rename transaction is not claimed to be crash-atomic across forced process termination or host power loss.
-- remote sync accepts only the official latest non-draft, non-prerelease, immutable GitHub Release, verifies the asset SHA-256 and package version, and runs exactly one candidate gate before replacement. Legacy 2.x packages use the installer's frozen public target set; 3.x+ packages require a regular manifest and install an exact runtime file set with per-file SHA-256. Declared `source_only` entries are an optional checkout allowlist and are never installed.
-- release archives are extracted member by member and reject unsafe, duplicate, case-colliding, encrypted, linked, special, oversized, or ambiguous-root entries before package validation.
-- uninstall permanently removes the active package after explicit `--yes`; users who need rollback must reinstall a specific verified Release.
-- reports about third-party agents, Git providers, or runtimes may need to be filed with those maintainers as well.
+- workflow 不需要秘密信息，也不得把凭据写入计划、`work.md`、任务胶囊、回执、日志、示例或长期经验。
+- 可调查事实由模型调查；承重选择集中交给用户。未经授权，不扩大提交、合并、部署、删除、公开发布、权限修改或其他外部副作用。
+- 子任务执行者只在胶囊授权和隔离现场内写入，不并发改写 `work.md`。执行回执是候选，必须由协调者核对实际产物和新鲜证据后接受。
+- 任一验证、集成、部署或发布后检查失败时，停止后续外部写入，保留可恢复现场，报告已经发生的真实状态和解锁条件。
+
+## 安装与供应链边界
+
+- 一个 skills 父目录只允许一个 `single active package`；目标不唯一、重复安装、符号链接异常或包内身份不一致时失败关闭。
+- 本地 install/update 先在目标 skills 目录同一文件系统的隐藏 stage 中验证完整候选，再用 rename 事务替换。可捕获的激活后失败会恢复旧安装；成功后不保留可发现的 backup、failed 或 removed 副本。强制终止或主机掉电跨越两次 rename 的窗口不宣称崩溃原子性。
+- 远程同步只接受官方最新、非 draft、非 prerelease 的 `immutable GitHub Release`，要求唯一 `workflow.zip`，校验资产 SHA-256、Release tag、包内版本和 runtime manifest 后，只运行一次 manifest 指定的 doctor。
+- 2.x 包使用安装器内冻结的精确公开文件集合。3.x+ 必须包含普通文件 `workflow-package.json`，活动 runtime 必须与 manifest 精确相等，每个文件都通过 SHA-256；`source_only` 只是源码 checkout 的允许集合，永不安装。
+- 归档逐成员读取，拒绝路径穿越、绝对路径、重复或大小写冲突、符号链接、特殊文件、加密成员、歧义根目录和超限内容，不使用宽松的整体解包。
+- 错过 2.26 兼容桥的旧更新器必须拒绝未知 3.x 精简包并保留原安装。恢复路径是取得指定的已验证 3.x 源码或 Release，使用其中的新安装器整体替换并重新 `check`，不是手工覆盖。
+- 卸载只有在显式 `--yes` 后才永久移除活动包；需要回滚时，从指定的已验证 Release 重新安装。
+
+第三方 Agent、Git 托管平台、操作系统调度器或 Python 运行时自身的问题，可能还需要报告给相应维护者。

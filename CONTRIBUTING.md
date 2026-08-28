@@ -1,38 +1,65 @@
-# Contributing
+# 贡献指南
 
-Contributions are welcome when they improve an observable workflow result without adding a second truth source or a new external skill dependency.
+欢迎贡献能改善真实工作结果、同时减少重复真源、固定仪式或无效上下文的改动。
 
-## Before changing the package
+## 改动前
 
-1. Open or link an issue that states the user-visible problem, evidence, and smallest useful outcome.
-2. Identify the existing owner. Prefer improving one reference/template/script over adding a file.
-3. Add a failing test or explain why RED/GREEN does not apply.
-4. Keep `SKILL.md` as a router, references under 250 lines, and the seven-action model limited to one evidence-based 开工检查.
+1. 说明用户可观察的问题、事实证据和最小有用结果。
+2. 找到现有责任者。优先改进一份 reference、模板或脚本；新文件必须有独立读者、触发和停止条件。
+3. 先补一项能失败的行为检查；确实不适用 RED/GREEN 时说明原因。
+4. 从删除测试开始：若去掉一个步骤、文档、测试、智能体或交互后，结果、风险覆盖、恢复能力和证据强度都不下降，就不保留它。
 
-## Required checks
+## 协议约束
+
+- `SKILL.md` 保持最小路由器，只承载主链、不变量、责任边界和按需入口。
+- 用户可见核心主链保持“目标框定 → 结果规划 → 任务执行 → 结果验真”；真实交付与经验复盘保持条件触发。
+- reference 必须让调用者能判断何时进入、何时加深和何时返回，但不强制统一章节、长度或文件拓扑；不要规定固定题数、轮数、Agent 数量或重试次数。
+- `work.md` 只由协调者写。任务胶囊和候选回执默认内联，不能为了单文件而丢掉跨上下文恢复所需的证据入口。
+- 协议的人类可读内容使用中文；文件路径、命令、API、ID 和必要兼容名可保留机器标识，并使用代码格式区分。
+- 修改正式路由时，同步所有写入者、读取者、doctor、manifest、测试、README 和生成视觉图。
+
+## 必需检查
+
+开发时先运行与影响面相称的定向测试。最终候选只运行一次完整发布门：
 
 ```bash
 python3 -B -m unittest discover -s tests -p 'test_*.py' -v
 python3 -B scripts/release_check.py
 ```
 
-The full test suite runs once on the final source candidate. `release_check.py` then owns the doctor and generated visual check; do not repeat those checks as separate release ceremonies. If the root route or state table changes, regenerate the visual map before the gate. If templates change, update every reader/writer test. Never commit credentials, private paths, production reports, generated caches, or organization-specific release implementations.
+`release_check.py` 负责 manifest、运行时 doctor、发布资产和生成视觉图的一致性检查。不要把同一检查拆成重复的发布仪式。视觉源变化时先生成页面：
 
-## Pull requests
+```bash
+python3 -B scripts/generate_visual_map.py
+python3 -B scripts/generate_visual_map.py --check
+```
 
-Describe the user outcome, removed or merged complexity, tests and actual results, compatibility impact, and residual risks. Keep unrelated cleanup separate.
+运行时内容稳定后刷新逐文件身份；正式资产必须从一个完整、不可变的提交构建：
+
+```bash
+python3 -B scripts/release_check.py --write-manifest
+python3 -B scripts/release_check.py --build-runtime /tmp/workflow.zip --git-ref <完整提交SHA>
+```
+
+`--git-ref` 拒绝分支名和标签，避免构建期间目标漂移。刷新 manifest 后需重新执行最终发布门，并从最终集成提交构建资产。
+
+不得提交凭据、私有路径、生产报告、缓存、环境专属信息或组织内部发布实现。
+
+## 合并请求说明
+
+说明用户结果、删除或合并了哪些复杂度、实际验证结果、兼容影响与残余风险。无关清理应与当前变更分开。
 
 ## 持续发布授权
 
-项目 owner `qzl0215` 于 2026-07-24 为公开仓库 `qzl0215/workflow` 的维护授予持续授权：当变更范围仅限本仓库，并且上面的 Required checks 已在最终候选上 fresh 通过时，Agent 可以连续完成 commit、push、合并到主版本和发布，不再重复请求授权。该授权同时覆盖为兼容最新主版本所必需的语义合并与集成后重验。
+项目 owner `qzl0215` 于 2026-07-24 为公开仓库 `qzl0215/workflow` 的维护授予持续授权：当变更仅限本仓库，目标版本、正式发布入口和回滚方式可由项目真源唯一确定，且必需检查在最终候选上 fresh 通过时，Agent 可以连续完成 commit、push、合并到主版本和正式发布，不重复索取相邻步骤的同一授权。
 
-默认发布正式版本并遵循 SemVer：向后兼容的修复或流程收紧递增 patch，新增兼容能力递增 minor，破坏性变更递增 major。只有项目 owner 明确要求时才创建预发布；既有标签和 Release 保留为历史与回滚点，不删除、不改写。
+默认遵循语义化版本：兼容修复递增 patch，新增兼容能力递增 minor，破坏性协议或分发边界变更递增 major。只有项目 owner 明确要求时才创建预发布；既有标签和 Release 不删除、不改写。
 
-持续授权不降低安全和范围边界：
+持续授权不改变以下硬边界：
 
-- 只纳入 workflow 当前目标所需文件，不提交凭据、生产数据、私有环境信息或无关改动；
-- P0 安全、供应链或发布覆盖风险仍然硬阻断；新的业务目标冲突、发布目标变化或权限缺失仍需用户决定；
-- 禁止 force、绕过分支保护、无证据覆盖、删除临时版本或省略发布后核验；
-- 任一 Required check 失败时停止发布，修复并 fresh 重验后才可继续。
+- 只纳入当前结果所需文件，不提交凭据、生产数据、私有环境信息或无关改动；
+- P0 安全、供应链或发布覆盖风险仍然阻断；业务目标冲突、目标环境变化、权限缺失、数据删除和不可逆操作仍需用户决定；
+- 不 force、不绕过分支保护、不覆盖历史、不省略发布后验证；
+- 任一验证、集成、部署或发布后检查失败时，停止后续外部写入，保留可恢复现场并报告真实状态。
 
-超出这些边界时，单纯测试绿色不构成授权。
+超出这些边界时，测试绿色不构成授权。

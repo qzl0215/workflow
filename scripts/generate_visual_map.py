@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the standalone workflow self-introduction from formal sources."""
+"""从 Workflow 3.0 正式真源生成单页完整改造画面。"""
 
 from __future__ import annotations
 
@@ -13,267 +13,156 @@ from pathlib import Path
 
 PACKAGE = Path(__file__).resolve().parents[1]
 SKILL = PACKAGE / "SKILL.md"
-REFERENCES = PACKAGE / "references"
-ADAPTERS = PACKAGE / "adapters"
-METHODS = PACKAGE / "methods"
-TEMPLATES = PACKAGE / "templates"
+README = PACKAGE / "README.md"
 CHANGELOG = PACKAGE / "CHANGELOG.md"
+REFERENCES = PACKAGE / "references"
+WORK_TEMPLATE = PACKAGE / "templates/work.md"
 OUTPUT = PACKAGE / "docs/workflow-visual-map.html"
 REPOSITORY = "https://github.com/qzl0215/workflow"
 
+REFERENCE_SPECS = (
+    ("目标框定", "frame.md", "核心", "把请求收束为结果契约"),
+    ("最小研究", "research.md", "框定反馈", "只查会改变决定的事实"),
+    ("深度质询", "grill.md", "框定反馈", "挑战承重假设与失败代价"),
+    ("体验探索", "experience.md", "框定反馈", "体验会改方向时才展开"),
+    ("结果规划", "plan.md", "核心", "从验收反推责任与依赖"),
+    ("编排协作", "orchestrate.md", "执行支撑", "选择串并联、角色与隔离"),
+    ("执行任务", "execute.md", "核心", "形成产物与候选回执"),
+    ("恢复失败", "recover.md", "执行支撑", "失败后用新证据改路径"),
+    ("结果验真", "prove.md", "核心", "接受覆盖结果的新鲜证据"),
+    ("真实交付", "deliver.md", "条件", "把同一候选写入真实目标"),
+    ("经验复盘", "learn.md", "条件", "只沉淀会改变未来行动的经验"),
+)
+
 AGENT_PROMPT = (
-    "请安装 GitHub 项目 https://github.com/qzl0215/workflow。先把仓库克隆到临时目录，"
-    "再根据你当前 Agent 的配置确认 skills 父目录，不要猜固定路径；运行 "
-    "python3 scripts/install.py install --target \"<skills父目录>\"。如果已经安装，则使用 update。"
-    "最后运行同一脚本的 check，只有验证通过后才能告诉我安装完成。不要安装任何其他 skill，"
-    "也不要覆盖没有备份的旧版本。"
+    "请安装 GitHub 项目 https://github.com/qzl0215/workflow。先克隆到临时目录，"
+    "再根据当前 Agent 配置确认 skills 父目录，不要猜固定路径；运行 "
+    "python3 scripts/install.py install --target \"<skills父目录>\"。若已有安装则使用 update。"
+    "随后运行 enable-auto-update 和 check；只有唯一性与完整性验证通过后才报告完成。"
 )
 
-PRIMARY_OWNER_FILES = (
-    "understand-goal.md",
-    "decide-solution.md",
-    "plan-tasks.md",
-    "execute-tasks.md",
-    "verify-results.md",
-    "learn-review.md",
-    "evolve-system.md",
-)
 
-HARNESS_FILES = (
-    "shape-experience.md",
-    "maintain-design.md",
-    "coordinate-agents.md",
-    "fix-failures.md",
-    "handoff-context.md",
-    "deliver-release.md",
-)
-ADAPTER_FILES = ("merge-parallel-work.md",)
-METHOD_PACK_FILES = (
-    "strategic-value.md",
-    "essence-subtraction.md",
-    "experiment-attack.md",
-    "delivery-compounding.md",
-)
-
-VISUAL_TEMPLATE_NAMES = (
-    "index.md",
-    "findings.md",
-    "task_plan.md",
-    "implementation-plan.md",
-    "progress.md",
-    "task-owner-prompt.md",
-)
-
-STAGE_QUESTIONS = {
-    "需求澄清": "真正想改变什么，怎样算成？",
-    "选定方案": "哪条路最值得走？",
-    "拆成任务": "怎样拆才可做可验？",
-    "执行任务": "现在最该做成什么？",
-    "验收交付": "凭什么完成，交到哪？",
-    "提炼经验": "什么会改变下一次？",
-    "回灌改进": "哪里应该永久变好？",
-}
-
-UNKNOWN_SUMMARIES = {
-    "事实可查": ("缺客观事实", "我去查项目、数据、工具和可信来源。"),
-    "取舍待定": ("缺少承重选择", "我给推荐、选项和答案影响；细节由我代选并写入契约。"),
-    "假设待验": ("讨论无法证明", "我设计最小实验，让真假可验证。"),
-    "外部待解": ("需要范围外条件", "我写清依赖、解锁条件和安全等待方式。"),
-}
-
-
-def clean(value: str) -> str:
-    value = re.sub(r"`([^`]+)`", r"\1", value)
-    value = value.replace("**", "").replace("__", "")
-    value = re.sub(r"\[([^]]+)]\([^)]+\)", r"\1", value)
-    return re.sub(r"\s+", " ", value).strip(" -：:|\n\t")
-
-
-def source_section(text: str, start: str, end: str) -> str:
-    try:
-        return text.split(start, 1)[1].split(end, 1)[0]
-    except IndexError as exc:
-        raise ValueError(f"missing source section: {start}") from exc
-
-
-def table_rows(block: str, columns: int) -> list[list[str]]:
-    rows: list[list[str]] = []
-    for line in block.splitlines():
-        if not line.startswith("|") or re.match(r"^\|\s*:?-", line):
-            continue
-        cells = [clean(cell) for cell in line.strip("|").split("|")]
-        if len(cells) != columns or cells[0] in {"阶段", "类型", "未知类型"}:
-            continue
-        rows.append(cells)
-    return rows
+def read(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
 
 
 def source_digest(paths: list[Path]) -> str:
     digest = hashlib.sha256()
     for path in paths:
-        digest.update(path.relative_to(PACKAGE).as_posix().encode())
+        digest.update(path.relative_to(PACKAGE).as_posix().encode("utf-8"))
         digest.update(b"\0")
         digest.update(path.read_bytes())
         digest.update(b"\0")
     return digest.hexdigest()[:12]
 
 
-def phase_for(index: int) -> tuple[str, str]:
-    if index <= 3:
-        return "计划", "不确定 → 承诺"
-    if index <= 5:
-        return "执行", "承诺 → 证据"
-    return "复盘", "结果 → 能力"
+def title_of(text: str, path: Path) -> str:
+    match = re.search(r"^#\s+(.+?)\s*$", text, re.MULTILINE)
+    if match is None:
+        raise ValueError(f"缺少一级标题：{path.relative_to(PACKAGE)}")
+    return match.group(1).strip()
 
 
-def render_stage_cards(state_rows: list[list[str]]) -> str:
-    cards: list[str] = []
-    for index, row in enumerate(state_rows, 1):
-        name = row[0]
-        phase, _ = phase_for(index)
-        cards.append(
-            f'<article class="stage-card" data-stage="{html.escape(name)}">'
-            f'<header><span>{index:02d}</span><small>{phase}</small></header>'
-            f'<h3>{html.escape(name)}</h3>'
-            f'<p>{html.escape(STAGE_QUESTIONS[name])}</p>'
-            "</article>"
-        )
-    return "".join(cards)
+def validate_sources(skill_text: str, changelog_text: str, version: str) -> list[Path]:
+    expected_refs = {filename for _title, filename, _group, _summary in REFERENCE_SPECS}
+    actual_refs = {path.name for path in REFERENCES.glob("*.md")}
+    if not expected_refs <= actual_refs:
+        missing = sorted(expected_refs - actual_refs)
+        raise ValueError(f"完整改造画面缺少当前 reference：{missing}")
+
+    template_files = {path.name for path in (PACKAGE / "templates").glob("*.md")}
+    if "work.md" not in template_files:
+        raise ValueError("模板缺少 work.md")
+    legacy_state_templates = {
+        "findings.md",
+        "progress.md",
+        "implementation-plan.md",
+        "index.md",
+        "task-owner-prompt.md",
+        "task_plan.md",
+    }
+    duplicates = sorted(template_files & legacy_state_templates)
+    if duplicates:
+        raise ValueError(f"仍存在重复状态模板：{duplicates}")
+
+    required_root_tokens = (
+        "目标框定 → 结果规划 → 任务执行 → 结果验真",
+        "真实交付",
+        "经验复盘",
+        "grill-me",
+        "单一控制面",
+        "进度｜",
+        "技能｜",
+        "成果｜",
+        "路径｜",
+    )
+    missing_tokens = [token for token in required_root_tokens if token not in skill_text]
+    if missing_tokens:
+        raise ValueError("SKILL.md 缺少视觉契约：" + "，".join(missing_tokens))
+
+    paths = [SKILL, README, CHANGELOG, WORK_TEMPLATE]
+    for expected_title, filename, _group, _summary in REFERENCE_SPECS:
+        path = REFERENCES / filename
+        text = read(path)
+        if title_of(text, path) != expected_title:
+            raise ValueError(f"标题不匹配：references/{filename}")
+        if f"references/{filename}" not in skill_text:
+            raise ValueError(f"根路由未链接：references/{filename}")
+        paths.append(path)
+
+    work_text = read(WORK_TEMPLATE)
+    for token in ("协调者", "候选", "已接受", "结果计划与依赖"):
+        if token not in work_text:
+            raise ValueError(f"work.md 缺少控制面语义：{token}")
+
+    if re.search(rf"^## \[{re.escape(version)}\]", changelog_text, re.MULTILINE) is None:
+        raise ValueError(f"CHANGELOG.md 缺少当前版本 {version}")
+    return paths
 
 
-def render_unknown_cards(unknown_rows: list[list[str]]) -> str:
-    cards: list[str] = []
-    for index, (name, _essence, _handling, _return_rule) in enumerate(unknown_rows, 1):
-        essence, handling = UNKNOWN_SUMMARIES[name]
-        cards.append(
-            '<article class="unknown-card">'
-            f'<span>{index:02d}</span><h3>{html.escape(name)}</h3>'
-            f'<p>{html.escape(handling)}</p><small>{html.escape(essence)}</small>'
-            "</article>"
-        )
-    return "".join(cards)
-
-
-def routed_targets(route_rows: list[list[str]]) -> list[tuple[str, str, str]]:
-    targets: list[tuple[str, str, str]] = []
-    for kind, signal, raw_targets in route_rows:
-        for target in re.findall(r"(?:references|adapters|methods)/[A-Za-z0-9_-]+\.md", raw_targets):
-            targets.append((kind, signal, target))
-    return targets
-
-
-def render_reference_index(route_rows: list[list[str]]) -> str:
+def render_reference_index() -> str:
     items: list[str] = []
-    roots = {"references": REFERENCES, "adapters": ADAPTERS, "methods": METHODS}
-    for kind, signal, target in routed_targets(route_rows):
-        directory, filename = target.split("/", 1)
-        filename = Path(target).name
-        ref_text = (roots[directory] / filename).read_text(encoding="utf-8")
-        title = re.search(r"^#\s+(.+)$", ref_text, re.MULTILINE)
-        if title is None:
-            raise ValueError(f"missing reference title: {filename}")
+    for index, (title, filename, group, summary) in enumerate(REFERENCE_SPECS, 1):
         items.append(
-            "<li>"
-            f'<span>{html.escape(clean(title.group(1)))}</span>'
-            f'<small>{html.escape(kind)} · {html.escape(signal)}</small>'
-            f"<code>{html.escape(target)}</code>"
-            "</li>"
+            '<li class="ref-item">'
+            f'<span class="ref-num">{index:02d}</span>'
+            '<div>'
+            f'<b>{html.escape(title)}</b>'
+            f'<p>{html.escape(summary)}</p>'
+            f'<code>references/{html.escape(filename)}</code>'
+            '</div>'
+            f'<small>{html.escape(group)}</small>'
+            '</li>'
         )
     return "".join(items)
 
 
-def render_document_index() -> str:
-    return "".join(f"<code>{html.escape(filename)}</code>" for filename in VISUAL_TEMPLATE_NAMES)
-
-
 def build() -> tuple[str, str]:
-    skill_text = SKILL.read_text(encoding="utf-8")
-    changelog_text = CHANGELOG.read_text(encoding="utf-8")
-    version = re.search(
-        r"^version:\s*(?P<full>(?P<major>\d+)\.(?P<minor>\d+)\.\d+"
-        r"(?:-(?P<channel>[A-Za-z]+)(?:\.\d+)?)?)$",
+    skill_text = read(SKILL)
+    changelog_text = read(CHANGELOG)
+    version_match = re.search(
+        r"^version:\s*(\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?)\s*$",
         skill_text,
         re.MULTILINE,
     )
-    if version is None:
-        raise ValueError("SKILL.md does not contain a supported semantic version")
-
-    current_version = version.group("full")
-    version_label = f"V{version.group('major')}.{version.group('minor')}"
-    if version.group("channel"):
-        version_label += f" {version.group('channel').upper()}"
-
-    current_release = re.search(
-        rf"^## \[{re.escape(current_version)}\].*?(?=^## \[|\Z)",
-        changelog_text,
-        re.MULTILINE | re.DOTALL,
-    )
-    if current_release is None:
-        raise ValueError("current changelog does not support the visual self-introduction")
-
-    state_rows = table_rows(
-        source_section(skill_text, "## 状态接口与硬门", "## 用户交接"),
-        5,
-    )
-    unknown_rows = table_rows(
-        source_section(skill_text, "## 需求澄清中的四路未知", "## harness 深度"),
-        4,
-    )
-    route_rows = table_rows(
-        source_section(skill_text, "## 按需路由", "## 文件真源"),
-        3,
-    )
-    if len(state_rows) != 7 or len(unknown_rows) != 4 or len(route_rows) != 15:
-        raise ValueError(
-            "unexpected contract shape: "
-            f"states={len(state_rows)}, unknowns={len(unknown_rows)}, routes={len(route_rows)}"
-        )
-    if tuple(STAGE_QUESTIONS) != tuple(row[0] for row in state_rows):
-        raise ValueError("stage question registry does not match canonical stage order")
-    if tuple(UNKNOWN_SUMMARIES) != tuple(row[0] for row in unknown_rows):
-        raise ValueError("unknown summary registry does not match canonical route order")
-
-    routed_files = {target for _kind, _signal, target in routed_targets(route_rows)}
-    expected_routes = {
-        *(f"references/{name}" for name in PRIMARY_OWNER_FILES),
-        *(f"references/{name}" for name in HARNESS_FILES),
-        *(f"adapters/{name}" for name in ADAPTER_FILES),
-        *(f"methods/{name}" for name in METHOD_PACK_FILES),
-    }
-    if expected_routes != routed_files:
-        raise ValueError("capability registry does not match routed modules")
-    missing_templates = [
-        filename for filename in VISUAL_TEMPLATE_NAMES if not (TEMPLATES / filename).is_file()
-    ]
-    if missing_templates:
-        raise ValueError(f"missing visual templates: {', '.join(missing_templates)}")
-
-    digest_paths = [
-        SKILL,
-        CHANGELOG,
-        *sorted(REFERENCES.glob("*.md")),
-        *sorted(ADAPTERS.glob("*.md")),
-        *sorted(METHODS.glob("*.md")),
-    ]
-    digest_paths.extend(TEMPLATES / name for name in VISUAL_TEMPLATE_NAMES)
+    if version_match is None:
+        raise ValueError("SKILL.md 缺少可识别版本")
+    version = version_match.group(1)
+    digest_paths = validate_sources(skill_text, changelog_text, version)
     digest = source_digest(digest_paths)
 
     replacements = {
+        "__VERSION__": html.escape(version),
         "__DIGEST__": digest,
-        "__VERSION__": html.escape(current_version),
-        "__VERSION_LABEL__": html.escape(version_label),
+        "__REFERENCE_INDEX__": render_reference_index(),
         "__REPOSITORY__": html.escape(REPOSITORY, quote=True),
         "__AGENT_PROMPT__": html.escape(AGENT_PROMPT),
-        "__STAGE_CARDS__": render_stage_cards(state_rows),
-        "__UNKNOWN_CARDS__": render_unknown_cards(unknown_rows),
-        "__REFERENCE_INDEX__": render_reference_index(route_rows),
-        "__DOCUMENT_INDEX__": render_document_index(),
     }
     rendered = HTML_TEMPLATE
     for marker, value in replacements.items():
         rendered = rendered.replace(marker, value)
     if re.search(r"__[A-Z][A-Z0-9_]+__", rendered):
-        raise ValueError("unresolved visual template marker")
+        raise ValueError("生成页仍有未替换标记")
     return rendered, digest
 
 
@@ -282,195 +171,245 @@ HTML_TEMPLATE = r'''<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="workflow 的当前自述：一眼看懂它如何把复杂目标推进到已验证结果。">
-<meta name="color-scheme" content="dark">
-<title>我是 workflow｜复杂工作，推进到真的完成</title>
+<meta name="description" content="Workflow 3.0 完整改造画面：四大核心环节、条件反馈、多 Agent 编排、单一控制面、交付与复盘边界。">
+<meta name="color-scheme" content="dark light">
+<title>Workflow 3.0｜完整改造画面</title>
 <style>
-:root{--ink:#0b0c09;--ink-2:#13140f;--paper:#f1eee4;--signal:#ffd43b;--signal-2:#ffe88f;--muted:#aaa99f;--line:#35362e;--paper-line:#b9b4a8;--gutter:clamp(20px,4vw,96px);font-family:"Avenir Next","SF Pro Display","SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;color:var(--paper);background:var(--ink)}
-*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:76px}html,body{margin:0;min-width:320px;background:var(--ink)}body{overflow-x:hidden}button,a{font:inherit;color:inherit}a{text-decoration:none}button{cursor:pointer}code,.mono{font-family:"SFMono-Regular",Consolas,monospace}:focus-visible{outline:3px solid var(--signal);outline-offset:3px}
-.skip{position:fixed;z-index:100;left:16px;top:12px;transform:translateY(-180%);padding:11px 15px;background:var(--signal);color:var(--ink);font-weight:850}.skip:focus{transform:none}
-.page-shell{width:calc(100% - (2 * var(--gutter)));margin-inline:auto}.topbar{position:sticky;z-index:50;top:0;height:72px;border-bottom:1px solid rgb(241 238 228 / 12%);background:rgb(11 12 9 / 90%);backdrop-filter:blur(16px)}.topbar .page-shell{height:100%;display:flex;align-items:center;justify-content:space-between;gap:28px}.brand{min-height:44px;display:flex;align-items:center;gap:11px;font-weight:950;letter-spacing:-.04em}.brand span{color:var(--signal);font:800 9px "SFMono-Regular",Consolas,monospace;letter-spacing:.08em}.page-nav{display:flex;align-items:center;gap:clamp(14px,2vw,34px)}.page-nav a{min-height:44px;display:inline-flex;align-items:center;color:var(--muted);font-size:12px;font-weight:800}.page-nav a:hover{color:var(--signal)}
-.hero{position:relative;isolation:isolate;min-height:calc(100svh - 72px);display:flex;align-items:center;padding-block:clamp(70px,8vh,140px);overflow:hidden}.hero::before{content:"";position:absolute;z-index:-2;inset:0;background:linear-gradient(90deg,transparent 49.95%,rgb(241 238 228 / 5%) 50%,transparent 50.05%)}.hero::after{content:"";position:absolute;z-index:-1;width:min(58vw,1100px);aspect-ratio:1;right:-12vw;top:-20vw;border-radius:50%;background:radial-gradient(circle,rgb(255 212 59 / 14%),transparent 67%);filter:blur(10px)}.hero-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.45fr);gap:clamp(48px,7vw,150px);align-items:end}.eyebrow{margin:0 0 24px;color:var(--signal);font:800 11px "SFMono-Regular",Consolas,monospace;letter-spacing:.16em;text-transform:uppercase}.hero h1{margin:0;max-width:14ch;font-size:clamp(58px,6.2vw,132px);font-weight:760;line-height:.9;letter-spacing:-.075em;text-wrap:balance}.hero h1 span{display:block;color:var(--signal)}.hero-lede{max-width:840px;margin:36px 0 0;color:#cfccc1;font-size:clamp(18px,1.45vw,28px);line-height:1.55}.hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}.button{min-height:48px;padding:0 19px;border:1px solid var(--signal);display:inline-flex;align-items:center;justify-content:center;font-weight:900}.button-primary{background:var(--signal);color:var(--ink)}.button-secondary{background:transparent}.button:hover{border-color:var(--paper);background:var(--paper);color:var(--ink)}.identity-card{border-top:2px solid var(--signal);padding-top:24px}.identity-card p{margin:0;color:var(--muted);font-size:15px;line-height:1.72}.identity-card strong{display:block;margin-bottom:12px;color:var(--paper);font-size:21px}.identity-facts{display:grid;gap:0;margin-top:30px;border-bottom:1px solid var(--line)}.identity-facts span{padding:14px 0;border-top:1px solid var(--line);color:#d9d5ca;font-size:12px;font-weight:800}.identity-facts b{color:var(--signal);font:800 10px "SFMono-Regular",Consolas,monospace}
-.proof-strip{border-block:1px solid var(--line);background:var(--ink-2)}.proof-strip .page-shell{display:grid;grid-template-columns:repeat(3,1fr)}.proof-strip p{margin:0;padding:22px 24px;border-right:1px solid var(--line);font-size:13px;font-weight:800}.proof-strip p:first-child{padding-left:0}.proof-strip p:last-child{border-right:0}.proof-strip span{color:var(--signal);font:800 10px "SFMono-Regular",Consolas,monospace}
-.section{padding-block:clamp(82px,9vw,180px)}.section-head{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(280px,.55fr);gap:clamp(40px,7vw,140px);align-items:end}.kicker{margin:0 0 18px;color:#6a5a00;font:800 10px "SFMono-Regular",Consolas,monospace;letter-spacing:.16em;text-transform:uppercase}.section h2{margin:0;max-width:16ch;font-size:clamp(44px,4.8vw,96px);font-weight:760;line-height:.94;letter-spacing:-.065em;text-wrap:balance}.section-intro{margin:0;color:#5d5a53;font-size:clamp(16px,1.2vw,22px);line-height:1.7}.path-section{background:var(--paper);color:var(--ink)}.phase-legend{display:grid;grid-template-columns:3fr 2fr 2fr;margin-top:clamp(38px,5vw,80px);border-block:2px solid var(--ink)}.phase-legend div{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 20px;border-right:1px solid var(--ink)}.phase-legend div:first-child{padding-left:0}.phase-legend div:last-child{border-right:0}.phase-legend b{font-size:16px}.phase-legend span{color:#67645c;font:750 10px "SFMono-Regular",Consolas,monospace}.stage-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));margin-top:24px;border-block:1px solid var(--ink)}.stage-card{min-width:0;min-height:230px;padding:20px;border-right:1px solid var(--ink)}.stage-card:first-child{padding-left:0}.stage-card:last-child{border-right:0}.stage-card header{display:flex;align-items:center;justify-content:space-between;gap:12px}.stage-card header span{color:#6f6c64;font:800 10px "SFMono-Regular",Consolas,monospace}.stage-card header small{padding:4px 7px;border:1px solid #9e9a90;font-size:9px;font-weight:850}.stage-card h3{margin:54px 0 12px;font-size:clamp(20px,1.45vw,30px);letter-spacing:-.045em}.stage-card p{margin:0;color:#5f5c55;font-size:13px;line-height:1.55}.stage-card:hover{background:var(--signal)}.stage-card:hover header span,.stage-card:hover p{color:var(--ink)}.path-note{display:flex;justify-content:space-between;gap:30px;margin:22px 0 0;color:#5c5952;font-size:13px}.path-note b{color:var(--ink)}
-.working-section{background:var(--ink);color:var(--paper)}.working-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}.working-panel{padding:clamp(30px,4vw,78px);background:var(--ink)}.working-panel.is-signal{background:var(--signal);color:var(--ink)}.working-panel .kicker{color:var(--signal)}.working-panel.is-signal .kicker{color:#5d5000}.working-panel h2{max-width:11ch;font-size:clamp(40px,4vw,82px)}.working-list{margin:clamp(36px,4vw,68px) 0 0;padding:0;list-style:none}.working-list li{display:grid;grid-template-columns:44px 1fr;gap:18px;padding:22px 0;border-top:1px solid var(--line)}.is-signal .working-list li{border-color:rgb(11 12 9 / 35%)}.working-list span{font:800 10px "SFMono-Regular",Consolas,monospace}.working-list h3{margin:0 0 8px;font-size:18px}.working-list p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}.is-signal .working-list p{color:#51480b}
-.unknown-section{background:var(--paper);color:var(--ink)}.unknown-grid{display:grid;grid-template-columns:repeat(4,1fr);margin-top:clamp(42px,5vw,86px);border-block:2px solid var(--ink)}.unknown-card{min-height:280px;padding:22px 24px;border-right:1px solid var(--ink)}.unknown-card:first-child{padding-left:0}.unknown-card:last-child{border-right:0}.unknown-card span{color:#706d65;font:800 10px "SFMono-Regular",Consolas,monospace}.unknown-card h3{margin:52px 0 16px;font-size:clamp(24px,1.8vw,34px);letter-spacing:-.045em}.unknown-card p{margin:0;font-weight:850;line-height:1.55}.unknown-card small{display:block;margin-top:16px;color:#66635c;line-height:1.55}.unknown-card:hover{background:var(--signal)}
-.truth-section{background:var(--ink-2)}.truth-grid{display:grid;grid-template-columns:.72fr 1.28fr;gap:clamp(50px,8vw,160px);align-items:start}.truth-copy h2{max-width:10ch}.truth-copy p{max-width:570px;color:var(--muted);font-size:16px;line-height:1.75}.truth-cards{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}.truth-card{min-height:190px;padding:26px 26px 30px 0;border-bottom:1px solid var(--line)}.truth-card:nth-child(odd){border-right:1px solid var(--line)}.truth-card:nth-child(even){padding-left:26px}.truth-card span{color:var(--signal);font:800 10px "SFMono-Regular",Consolas,monospace}.truth-card h3{margin:34px 0 10px;font-size:22px}.truth-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
-.install-section{background:var(--signal);color:var(--ink)}.install-head{display:grid;grid-template-columns:1fr .55fr;gap:clamp(40px,7vw,140px);align-items:end}.install-head .kicker{color:#5d5000}.install-head p{margin:0;color:#51480b;font-size:16px;line-height:1.7}.install-grid{display:grid;grid-template-columns:1.15fr .85fr;margin-top:clamp(38px,5vw,76px);border-block:2px solid var(--ink)}.install-panel{padding:26px 28px 30px}.install-panel:first-child{padding-left:0;border-right:1px solid var(--ink)}.install-panel h3{margin:0 0 18px;font-size:20px}.install-panel pre{margin:0;padding:20px;overflow:auto;background:var(--ink);color:var(--paper);white-space:pre-wrap;font:11px/1.7 "SFMono-Regular",Consolas,monospace}.copy-row{display:flex;align-items:center;gap:14px;margin-top:14px}.copy-button{min-height:48px;padding:0 18px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);font-weight:900}.copy-button:hover{background:var(--paper);color:var(--ink)}.copy-status{font-size:11px;font-weight:850}.terminal-steps{margin:0;padding:0;list-style:none}.terminal-steps li{padding:13px 0;border-top:1px solid rgb(11 12 9 / 32%)}.terminal-steps li:first-child{border-top:0}.terminal-steps code{font-size:11px}.maintenance{margin-top:20px;border-top:1px solid rgb(11 12 9 / 40%)}.maintenance summary{min-height:52px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-weight:900;list-style:none}.maintenance summary::-webkit-details-marker{display:none}.maintenance summary::after{content:"＋";font-size:21px}.maintenance[open] summary::after{content:"－"}.maintenance-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:36px;padding:18px 0 8px}.maintenance h4{margin:0 0 14px}.reference-index{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin:0;padding:0;list-style:none}.reference-index li{min-width:0;padding-top:10px;border-top:1px solid rgb(11 12 9 / 30%)}.reference-index span,.reference-index small,.reference-index code{display:block}.reference-index span{font-size:11px;font-weight:850}.reference-index small{margin-top:4px;color:#63590e;font-size:9px;line-height:1.4}.reference-index code{margin-top:4px;overflow-wrap:anywhere;font-size:8px}.document-index{display:flex;flex-wrap:wrap;gap:7px}.document-index code{padding:7px 9px;border:1px solid var(--ink);font-size:9px}.footer{display:flex;justify-content:space-between;gap:24px;padding-block:24px;font-size:10px}.footer a{min-height:44px;display:inline-flex;align-items:center;font-weight:900}
-@media(min-width:1800px){:root{--gutter:clamp(96px,4vw,168px)}.topbar{height:84px}.hero{min-height:calc(100svh - 84px)}.hero-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,.3fr)}.hero h1{font-size:clamp(108px,5.2vw,168px)}.hero-lede{max-width:1100px}.stage-card{min-height:300px;padding:30px}.stage-card h3{margin-top:86px}.unknown-card{min-height:340px;padding:30px}.unknown-card h3{margin-top:78px}}
-@media(max-width:1380px){.stage-grid{grid-template-columns:repeat(4,1fr)}.stage-card{border-bottom:1px solid var(--ink)}.stage-card:nth-child(4n){border-right:0}.stage-card:nth-child(5){padding-left:0}.unknown-grid{grid-template-columns:1fr 1fr}.unknown-card:nth-child(2){border-right:0}.unknown-card:nth-child(-n+2){border-bottom:1px solid var(--ink)}}
-@media(max-width:940px){.hero-grid,.section-head,.truth-grid,.install-head{grid-template-columns:1fr}.hero-grid{align-items:start}.hero h1{max-width:13ch}.identity-card{max-width:620px}.stage-grid{grid-template-columns:1fr 1fr}.stage-card:nth-child(even){border-right:0}.stage-card:nth-child(odd){padding-left:0;border-right:1px solid var(--ink)}.phase-legend{grid-template-columns:1fr}.phase-legend div{padding-inline:0;border-right:0;border-bottom:1px solid var(--ink)}.phase-legend div:last-child{border-bottom:0}.working-grid{grid-template-columns:1fr}.truth-copy h2{max-width:14ch}.install-grid{grid-template-columns:1fr}.install-panel{padding-inline:0}.install-panel:first-child{border-right:0;border-bottom:1px solid var(--ink)}.maintenance-grid{grid-template-columns:1fr}}
-@media(max-width:640px){:root{--gutter:18px}.topbar{height:62px}.page-nav a:not(:last-child){display:none}.hero{min-height:auto;padding-block:72px}.hero::before{display:none}.hero h1{font-size:clamp(48px,15vw,74px)}.hero-lede{margin-top:26px;font-size:17px}.hero-actions{display:grid}.button{width:100%}.proof-strip .page-shell{grid-template-columns:1fr}.proof-strip p{padding:16px 0;border-right:0;border-bottom:1px solid var(--line)}.proof-strip p:last-child{border-bottom:0}.section{padding-block:76px}.section h2{font-size:clamp(39px,12vw,58px)}.stage-grid,.unknown-grid,.truth-cards{grid-template-columns:1fr}.stage-card,.stage-card:nth-child(n),.unknown-card,.unknown-card:nth-child(n){min-height:0;padding:20px 0;border-right:0;border-bottom:1px solid var(--ink)}.stage-card h3,.unknown-card h3{margin:28px 0 10px}.path-note{display:block}.path-note span{display:block;margin-top:9px}.working-panel{padding:34px 24px}.working-list li{grid-template-columns:34px 1fr}.truth-card,.truth-card:nth-child(n){min-height:0;padding:22px 0;border-right:0}.install-panel pre{font-size:9px}.reference-index{grid-template-columns:1fr}.footer{display:block}.footer span{display:block;margin-top:6px}}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
-@media print{.topbar,.hero-actions,.copy-row{display:none}.hero{min-height:auto}.section{padding-block:50px}.page-shell{width:100%}.hero,.working-section,.truth-section{color:#111;background:#fff}.identity-card,.working-panel,.truth-card{border-color:#aaa}.working-grid{display:block}.working-panel{color:#111;background:#fff}.working-panel p,.truth-section p{color:#333}.install-section{background:#fff}}
+:root{
+  --bg:#071114;--panel:#0d1b1f;--panel-2:#11252a;--paper:#ecf2ed;--muted:#9eb0ad;
+  --line:#294046;--mint:#65f0c1;--cyan:#62d8ff;--orange:#ff9a62;--yellow:#f4dc70;
+  --gutter:clamp(18px,5vw,92px);font-family:"Avenir Next","SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;
+  color:var(--paper);background:var(--bg)
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:76px}body{margin:0;min-width:320px;background:var(--bg);color:var(--paper)}
+a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:"SFMono-Regular",Consolas,monospace}:focus-visible{outline:3px solid var(--mint);outline-offset:3px}
+.shell{width:min(1480px,calc(100% - 2 * var(--gutter)));margin:auto}.topbar{position:sticky;top:0;z-index:20;border-bottom:1px solid rgb(101 240 193 / 20%);background:rgb(7 17 20 / 88%);backdrop-filter:blur(18px)}
+.topbar .shell{height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{font-weight:900;letter-spacing:-.04em}.brand span{margin-left:9px;color:var(--mint);font:800 10px "SFMono-Regular",monospace;letter-spacing:.1em}
+.nav{display:flex;gap:clamp(12px,2vw,30px)}.nav a{min-height:44px;display:flex;align-items:center;color:var(--muted);font-size:12px;font-weight:750}.nav a:hover{color:var(--mint)}
+.hero{position:relative;overflow:hidden;padding:clamp(76px,11vw,170px) 0 clamp(70px,9vw,140px)}.hero:after{content:"";position:absolute;width:720px;height:720px;right:-260px;top:-360px;border-radius:50%;background:radial-gradient(circle,rgb(98 216 255 / 18%),transparent 68%);pointer-events:none}
+.eyebrow,.kicker{margin:0 0 18px;color:var(--mint);font:800 11px "SFMono-Regular",monospace;letter-spacing:.15em;text-transform:uppercase}.hero h1{max-width:13ch;margin:0;font-size:clamp(55px,8vw,132px);line-height:.91;letter-spacing:-.075em}.hero h1 span{display:block;color:var(--mint)}
+.hero-grid{display:grid;grid-template-columns:1.4fr .6fr;gap:clamp(42px,8vw,130px);align-items:end}.lede{max-width:820px;margin:32px 0 0;color:#c0cdca;font-size:clamp(18px,1.5vw,26px);line-height:1.65}.hero-note{border-top:2px solid var(--mint);padding-top:22px}.hero-note p{margin:0 0 26px;color:var(--muted);line-height:1.65}.hero-facts{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}.hero-facts div{padding:18px;background:var(--panel)}.hero-facts b{display:block;color:var(--mint);font-size:25px}.hero-facts span{font-size:11px;color:var(--muted)}
+.section{padding:clamp(72px,9vw,140px) 0;border-top:1px solid var(--line)}.section-head{display:grid;grid-template-columns:1fr .72fr;gap:60px;align-items:end;margin-bottom:clamp(42px,6vw,78px)}.section h2{max-width:15ch;margin:0;font-size:clamp(38px,5vw,78px);line-height:.98;letter-spacing:-.06em}.intro{margin:0;color:var(--muted);font-size:16px;line-height:1.75}
+.core-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.core-card{position:relative;min-height:260px;padding:25px;border:1px solid var(--line);background:linear-gradient(145deg,var(--panel),#091619)}.core-card:not(:last-child):after{content:"→";position:absolute;right:-16px;top:49%;z-index:2;width:20px;text-align:center;color:var(--mint);font-weight:900}.core-card .num{color:var(--mint);font:800 10px "SFMono-Regular",monospace}.core-card h3{margin:70px 0 12px;font-size:clamp(25px,2.2vw,36px);letter-spacing:-.045em}.core-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.65}.core-card code{display:block;margin-top:18px;color:var(--cyan);font-size:10px}
+.conditional-flow{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:stretch;margin-top:18px}.conditional-card{padding:22px;border:1px dashed var(--line);background:var(--panel)}.conditional-card b{display:block;margin-bottom:8px;color:var(--orange)}.conditional-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}.flow-arrow{display:grid;place-items:center;color:var(--yellow);font-weight:900}
+.frame-layout{display:grid;grid-template-columns:.68fr 1.32fr;gap:clamp(30px,6vw,92px)}.frame-hub{display:flex;min-height:370px;align-items:center;justify-content:center;border:1px solid var(--mint);background:radial-gradient(circle,rgb(101 240 193 / 12%),transparent 65%)}.hub-inner{text-align:center}.hub-inner span{display:block;color:var(--muted);font:750 10px "SFMono-Regular",monospace}.hub-inner b{display:block;margin:10px 0;color:var(--mint);font-size:40px;letter-spacing:-.05em}.feedback-list{display:grid;gap:10px}.feedback-card{display:grid;grid-template-columns:110px 1fr;gap:22px;padding:22px;border:1px solid var(--line);background:var(--panel)}.feedback-card:first-child{border-color:var(--cyan)}.feedback-card code{color:var(--cyan);font-size:12px}.feedback-card h3{margin:0 0 7px;font-size:18px}.feedback-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.62}.feedback-rule{margin:14px 0 0;padding:18px 20px;border-left:3px solid var(--yellow);background:rgb(244 220 112 / 7%);color:#ced6d3;line-height:1.7}
+.plan-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:1px;background:var(--line);border:1px solid var(--line)}.plan-panel{padding:clamp(28px,4vw,60px);background:var(--panel)}.plan-panel h3{margin:0 0 24px;font-size:28px;letter-spacing:-.04em}.dag{display:grid;gap:10px}.dag-node{padding:15px;border:1px solid var(--line);background:var(--bg);font-size:13px}.dag-node.root,.dag-node.merge{border-color:var(--mint);color:var(--mint);font-weight:850}.dag-parallel{display:grid;grid-template-columns:1fr 1fr;gap:10px}.dag-arrow{text-align:center;color:var(--mint)}.depth-list{margin:0;padding:0;list-style:none}.depth-list li{padding:18px 0;border-top:1px solid var(--line)}.depth-list li:first-child{border-top:0}.depth-list b{display:block;margin-bottom:6px}.depth-list span{color:var(--muted);font-size:13px;line-height:1.6}
+.agent-pipe{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:12px;align-items:center;margin-top:18px}.pipe-node{min-height:132px;padding:20px;border:1px solid var(--line);background:var(--panel)}.pipe-node b{display:block;margin-bottom:9px;color:var(--cyan)}.pipe-node p{margin:0;color:var(--muted);font-size:12px;line-height:1.6}.pipe-arrow{color:var(--mint);font-weight:900}
+.truth-section{background:#e8eee9;color:#0a1719}.truth-section .kicker{color:#08785d}.truth-section .intro{color:#526461}.truth-grid{display:grid;grid-template-columns:.72fr 1.28fr;gap:clamp(32px,7vw,110px)}.work-card{padding:clamp(28px,4vw,54px);background:#0c1b1e;color:var(--paper);box-shadow:18px 18px 0 #b7c9c3}.work-card header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:18px}.work-card header b{font-size:24px}.work-card header span{color:var(--mint);font:750 10px "SFMono-Regular",monospace}.work-lines{display:grid;gap:12px;margin-top:22px}.work-line{height:11px;border-radius:8px;background:#21363a}.work-line:nth-child(2){width:84%}.work-line:nth-child(3){width:68%}.work-line.accepted{width:91%;background:var(--mint)}
+.control-rules{display:grid;gap:1px;background:#afbfba;border:1px solid #afbfba}.control-rule{display:grid;grid-template-columns:72px 1fr;gap:18px;padding:22px;background:#e8eee9}.control-rule span{color:#08785d;font:900 10px "SFMono-Regular",monospace}.control-rule b{display:block;margin-bottom:6px}.control-rule p{margin:0;color:#53615f;font-size:13px;line-height:1.6}
+.boundary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.boundary-card{min-height:230px;padding:24px;border:1px solid var(--line);background:var(--panel)}.boundary-card b{display:block;margin-bottom:30px;color:var(--mint);font-size:23px}.boundary-card p{margin:0 0 12px;color:var(--muted);font-size:13px;line-height:1.65}.boundary-card.is-conditional b{color:var(--orange)}.boundary-note{margin-top:14px;padding:20px;border:1px solid var(--yellow);color:#e8dfaf;line-height:1.7}
+.status-shell{max-width:900px;margin:auto;border:1px solid var(--line);background:#050b0d;box-shadow:0 30px 90px rgb(0 0 0 / 25%)}.status-top{height:36px;display:flex;align-items:center;gap:7px;padding:0 14px;border-bottom:1px solid var(--line)}.status-top i{width:8px;height:8px;border-radius:50%;background:var(--line)}.status-body{padding:clamp(24px,4vw,44px);font:clamp(12px,1.4vw,17px)/2 "SFMono-Regular",Consolas,monospace}.status-body p{margin:0}.status-body b{display:inline-block;width:4em;color:var(--mint)}.status-body .done{color:#f3f6f4}.status-body .current{color:var(--yellow)}.status-explain{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:1px;background:var(--line)}.status-explain div{padding:18px;background:var(--panel);font-size:12px;line-height:1.55;color:var(--muted)}.status-explain b{display:block;color:var(--paper);margin-bottom:5px}
+.ref-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0;padding:0;list-style:none}.ref-item{display:grid;grid-template-columns:34px 1fr auto;gap:14px;align-items:start;padding:18px;border:1px solid var(--line);background:var(--panel)}.ref-num{color:var(--mint);font:800 10px "SFMono-Regular",monospace}.ref-item b{display:block}.ref-item p{margin:5px 0;color:var(--muted);font-size:12px}.ref-item code{color:var(--cyan);font-size:9px}.ref-item small{padding:4px 7px;border:1px solid var(--line);color:var(--muted);font-size:9px}
+.migration{background:var(--orange);color:#1b100a}.migration .kicker{color:#6e2a08}.migration .intro{color:#69361f}.migration-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.migration-card{padding:clamp(28px,4vw,52px);border:2px solid #1b100a;background:rgb(255 255 255 / 16%)}.migration-card h3{margin:0 0 18px;font-size:31px;letter-spacing:-.04em}.migration-card p{line-height:1.7}.migration-card code{background:#1b100a;color:#fff;padding:3px 6px}.migration-note{margin:20px 0 0;font-weight:800;line-height:1.65}
+.install{background:var(--mint);color:#071114}.install-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:clamp(30px,7vw,100px);align-items:start}.install h2{max-width:10ch}.install pre{margin:0;padding:24px;overflow:auto;background:#071114;color:var(--paper);white-space:pre-wrap;font:11px/1.7 "SFMono-Regular",monospace}.copy-row{display:flex;align-items:center;gap:14px;margin-top:12px}.copy{min-height:46px;padding:0 18px;border:0;background:#071114;color:#fff;font-weight:850;cursor:pointer}.copy-status{font-size:12px;font-weight:800}.install-commands{margin-top:18px;padding-top:18px;border-top:1px solid rgb(7 17 20 / 35%);font:11px/1.8 "SFMono-Regular",monospace}.footer{padding:24px 0;border-top:1px solid rgb(7 17 20 / 35%);font-size:10px;display:flex;justify-content:space-between;gap:20px}.footer a{font-weight:900}
+@media(max-width:1050px){.hero-grid,.section-head,.frame-layout,.truth-grid,.install-grid{grid-template-columns:1fr}.core-flow{grid-template-columns:1fr 1fr}.core-card:nth-child(2):after{display:none}.plan-grid{grid-template-columns:1fr}.agent-pipe{grid-template-columns:1fr}.pipe-arrow{transform:rotate(90deg);text-align:center}.boundary-grid{grid-template-columns:1fr}.nav a:nth-child(-n+2){display:none}}
+@media(max-width:680px){:root{--gutter:18px}.topbar .shell{height:60px}.hero{padding-top:70px}.hero h1{font-size:clamp(48px,15vw,76px)}.hero-facts,.core-flow,.conditional-flow,.dag-parallel,.status-explain,.ref-grid,.migration-grid{grid-template-columns:1fr}.core-card{min-height:0}.core-card h3{margin-top:34px}.core-card:after{display:none}.conditional-flow .flow-arrow{transform:rotate(90deg)}.feedback-card{grid-template-columns:1fr}.work-card{box-shadow:9px 9px 0 #b7c9c3}.ref-item{grid-template-columns:28px 1fr}.ref-item small{display:none}.footer{display:block}.footer span{display:block;margin-top:6px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
 <body data-source-digest="__DIGEST__">
-<!-- GENERATED FILE — DO NOT EDIT. Source: SKILL.md + CHANGELOG.md + references/*.md + selected templates. -->
-<a class="skip" href="#intro">跳到正文</a>
+<!-- 生成文件，请勿手改。真源：SKILL.md、README.md、CHANGELOG.md、十一份 references 与 templates/work.md。 -->
 <header class="topbar">
-  <div class="page-shell">
-    <a class="brand" href="#intro">workflow <span>__VERSION_LABEL__</span></a>
-    <nav class="page-nav" aria-label="页面导航">
-      <a href="#path">主链</a>
-      <a href="#working">协作方式</a>
-      <a href="#unknowns">处理未知</a>
-      <a href="#install">安装</a>
+  <div class="shell">
+    <a class="brand" href="#top">workflow <span>V__VERSION__</span></a>
+    <nav class="nav" aria-label="页面导航">
+      <a href="#architecture">主链</a><a href="#frame">框定反馈</a><a href="#agents">多 Agent</a><a href="#migration">迁移</a>
     </nav>
   </div>
 </header>
-<main>
-  <section class="hero" id="intro" data-user-layer>
-    <div class="page-shell hero-grid">
+<main id="top">
+  <section class="hero">
+    <div class="shell hero-grid">
       <div>
-        <p class="eyebrow">复杂工作的 AI 总导演</p>
-        <h1><span>我是 workflow。</span>复杂工作，交给我推进到真的完成。</h1>
-        <p class="hero-lede">你给我目标。我先查事实和已有真源，再和你确认关键取舍；之后我会拆计划、连续执行、用新证据验收，并只在需要你决定或授权时停下。</p>
-        <div class="hero-actions">
-          <a class="button button-primary" href="#path">一眼看懂我</a>
-          <a class="button button-secondary" href="#install">安装我</a>
-        </div>
+        <p class="eyebrow">Workflow 3.0 · 完整改造画面</p>
+        <h1>少规定过程，<span>严守结果。</span></h1>
+        <p class="lede">四大核心环节守住结果闭环，条件反馈保留深度，任务胶囊承载多 Agent 协作。模型可以自由选择怎么做，但不能跳过承重决定、授权和新鲜证据。</p>
       </div>
-      <aside class="identity-card">
-        <p><strong>我是单包协议。</strong>只安装这个目录，我就能独立运行；不默认依赖别的技能，也不会为了显得完整给项目堆文档。</p>
-        <div class="identity-facts">
-          <span><b>01</b> 一条业务主链</span>
-          <span><b>07</b> 七个证据检查点</span>
-          <span><b>18</b> 十八项按需模块</span>
-          <span><b>__VERSION__</b> 当前协议版本</span>
+      <aside class="hero-note">
+        <p>这不是把旧流程换一组名字，而是把固定仪式改成渐进路由：最小动作足够就停，真实风险出现才加深，缺口只回到它的原因。</p>
+        <div class="hero-facts">
+          <div><b>4</b><span>核心结果环节</span></div><div><b>2</b><span>条件结果环节</span></div>
+          <div><b>11</b><span>渐进 reference</span></div><div><b>1</b><span>持久控制面</span></div>
         </div>
       </aside>
     </div>
   </section>
-  <div class="proof-strip" aria-label="三个工作原则">
-    <div class="page-shell">
-      <p><span>轻任务</span><br>答案明确，就直接做完并验证。</p>
-      <p><span>复杂任务</span><br>只走必要动作，不走形式流程。</p>
-      <p><span>完成判断</span><br>没有新证据，我不会说已经完成。</p>
-    </div>
-  </div>
 
-  <section class="section path-section" id="path" data-user-layer>
-    <div class="page-shell">
+  <section class="section" id="architecture">
+    <div class="shell">
       <header class="section-head">
-        <div><p class="kicker">计划 · 执行 · 复盘</p><h2>我只有一条主链。</h2></div>
-        <p class="section-intro">七个动作各自只回答一个业务问题。证据已经存在就快速通过；发现缺口，就回到真正产生缺口的位置。</p>
+        <div><p class="kicker">唯一用户主链</p><h2>从目标，到有证据的结果。</h2></div>
+        <p class="intro">阶段是进展投影，不是固定仪式。已有可信输入可以快速通过；发现缺口，就回到最早能修正它的位置。</p>
       </header>
-      <div class="phase-legend" aria-label="三段流程">
-        <div><b>计划</b><span>不确定 → 承诺</span></div>
-        <div><b>执行</b><span>承诺 → 证据</span></div>
-        <div><b>复盘</b><span>结果 → 能力</span></div>
+      <div class="core-flow">
+        <article class="core-card"><span class="num">01 · FRAME</span><h3>目标框定</h3><p>定义用户状态、验收、范围、约束、授权与承重未知。</p><code>references/frame.md</code></article>
+        <article class="core-card"><span class="num">02 · PLAN</span><h3>结果规划</h3><p>从验收反推责任、依赖、任务边界与证据路径。</p><code>references/plan.md</code></article>
+        <article class="core-card"><span class="num">03 · EXECUTE</span><h3>任务执行</h3><p>实施当前就绪责任，返回真实产物、候选证据和偏差。</p><code>references/execute.md</code></article>
+        <article class="core-card"><span class="num">04 · PROVE</span><h3>结果验真</h3><p>读取实际产物，用新鲜证据证明任务、计划和用户结果。</p><code>references/prove.md</code></article>
       </div>
-      <div class="stage-grid">__STAGE_CARDS__</div>
-      <p class="path-note"><b>这不是七场固定仪式。</b><span>简单事整体走短路；价值、完整计划、验收和授权四道门不会降级。</span></p>
+      <div class="conditional-flow">
+        <article class="conditional-card"><b>条件：真实交付</b><p>只有提交、合并、部署、发布或外部写入才进入；验真不自动授权交付。</p></article>
+        <div class="flow-arrow">→</div>
+        <article class="conditional-card"><b>条件：经验复盘</b><p>只有事实能改变未来行动才进入；没有复用价值就是 no-op。</p></article>
+      </div>
     </div>
   </section>
 
-  <section class="section working-section" id="working" data-user-layer>
-    <div class="page-shell working-grid">
-      <article class="working-panel">
-        <p class="kicker">默认连续推进</p>
-        <h2>大多数时候，我会自己往前走。</h2>
-        <ol class="working-list">
-          <li><span>01</span><div><h3>先查，再问</h3><p>项目、工具、数据和已有规则能回答的事实，我自己查，不把调查工作转给你。</p></div></li>
-          <li><span>02</span><div><h3>按任务深度工作</h3><p>局部小事轻量处理；遇到重要体验、并行价值或高风险，再按需加深。</p></div></li>
-          <li><span>03</span><div><h3>状态变化就播报</h3><p>我会给你最新进度、实际成果和下一步，但普通进度不会打断连续执行。</p></div></li>
-          <li><span>04</span><div><h3>只保留最小真源</h3><p>能补现有文件就不新建；文档没有独立读者和决策用途，就不留下。</p></div></li>
-        </ol>
-      </article>
-      <article class="working-panel is-signal">
-        <p class="kicker">需要你接棒时才停</p>
-        <h2>这些节点，我一定等你。</h2>
-        <ol class="working-list">
-          <li><span>01</span><div><h3>纠正目标</h3><p>我的关键理解会改变结果、范围或验收时，请你校正。</p></div></li>
-          <li><span>02</span><div><h3>决定承重取舍</h3><p>不同答案会改变需求契约时，我给推荐、选项和答案影响；契约内细节由我代选。</p></div></li>
-          <li><span>03</span><div><h3>确认完整计划</h3><p>你确认纳入哪些业务结果；任务编排和执行细节由我收敛。</p></div></li>
-          <li><span>04</span><div><h3>授权与验收</h3><p>提交、发布、删除等外部影响，以及最终接收结果，都由你决定。</p></div></li>
-        </ol>
-      </article>
-    </div>
-  </section>
-
-  <section class="section unknown-section" id="unknowns" data-user-layer>
-    <div class="page-shell">
+  <section class="section" id="frame">
+    <div class="shell">
       <header class="section-head">
-        <div><p class="kicker">不确定，不等于追问</p><h2>遇到不确定，我不会一股脑问你。</h2></div>
-        <p class="section-intro">我先判断它是事实、承重取舍、假设还是外部依赖，再选择调查、集中请你决定、做实验或明确等待；契约内细节由我代选并展示。</p>
+        <div><p class="kicker">Frame 内的条件反馈</p><h2>先查事实，再决定是否加深。</h2></div>
+        <p class="intro">研究、质询、体验不是默认并行的三道工序。它们只为一个结果契约提供候选输入，并且只在结论真的改变时互相回流。</p>
       </header>
-      <div class="unknown-grid">__UNKNOWN_CARDS__</div>
-    </div>
-  </section>
-
-  <section class="section truth-section" data-user-layer>
-    <div class="page-shell truth-grid">
-      <div class="truth-copy">
-        <p class="eyebrow">真实运行底线</p>
-        <h2>快，但不靠猜。</h2>
-        <p>我追求的是更高结果、更低关键风险和更少未来重复成本。执行快不是省掉重要判断的理由。</p>
-      </div>
-      <div class="truth-cards">
-        <article class="truth-card"><span>01</span><h3>一次只有一个当前动作</h3><p>纠错、体验、协作只是按需增强，不再制造第二套状态。</p></article>
-        <article class="truth-card"><span>02</span><h3>证据可以让我快进</h3><p>已有可信输入就快速通过，但关键门槛不会被跳过。</p></article>
-        <article class="truth-card"><span>03</span><h3>没有新证据，不说完成</h3><p>代码写完不等于业务完成，本地通过也不等于已经交付。</p></article>
-        <article class="truth-card"><span>04</span><h3>外部影响必须有授权</h3><p>未经明确允许，我不会提交、发布、合并、删除或扩大影响。</p></article>
+      <div class="frame-layout">
+        <div class="frame-hub"><div class="hub-inner"><span>统一合成责任</span><b>结果契约</b><span>结果 · 验收 · 边界 · 授权</span></div></div>
+        <div>
+          <div class="feedback-list">
+            <article class="feedback-card"><code>research</code><div><h3>事实不足才做最小研究</h3><p>只查会改变当前决定的事实；达到停止条件就结束，不追求资料穷尽。</p></div></article>
+            <article class="feedback-card"><code>grill-me</code><div><h3>承重决定仍不稳才深度质询</h3><p>用反例、失败场景、隐藏代价和可逆替代方向挑战假设，直到边际信息不再改变推荐。</p></div></article>
+            <article class="feedback-card"><code>experience</code><div><h3>体验会改变方向才探索</h3><p>用户旅程、信息结构或交互方向决定成败时展开；局部美化不重开目标。</p></div></article>
+          </div>
+          <p class="feedback-rule"><b>并行例外：</b>事实线彼此独立、能隔离且明显缩短关键路径时，可以并行取得候选输入；目标责任者统一合成。新结论只重开受影响部分，不全量循环。</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="section install-section" id="install">
-    <div class="page-shell">
-      <header class="install-head">
-        <div><p class="kicker">开始使用</p><h2>把我交给你的 Agent。</h2></div>
-        <p>最省事的方式，是复制下面整段指令。Agent 会自己识别 skills 目录、安装并验证，不需要你先猜路径。</p>
+  <section class="section" id="agents">
+    <div class="shell">
+      <header class="section-head">
+        <div><p class="kicker">Plan → Orchestrate → Execute</p><h2>按结果拆任务，按净收益做并行。</h2></div>
+        <p class="intro">并行不是多开几个 Agent。只有边界清楚、现场可隔离、无需频繁等待且汇合成本低于节省时间时，才值得并行。</p>
       </header>
-      <div class="install-grid">
-        <article class="install-panel">
-          <h3>复制安装指令</h3>
-          <pre><code id="agent-prompt">__AGENT_PROMPT__</code></pre>
-          <div class="copy-row"><button class="copy-button" type="button" data-copy-target="agent-prompt">复制给 Agent</button><span class="copy-status" aria-live="polite"></span></div>
+      <div class="plan-grid">
+        <article class="plan-panel">
+          <h3>串并联不是固定模板</h3>
+          <div class="dag">
+            <div class="dag-node root">P01 · 可独立验收的结果</div><div class="dag-arrow">↓</div>
+            <div class="dag-node">T01 · 先建立公共边界（串行）</div><div class="dag-arrow">↓</div>
+            <div class="dag-parallel"><div class="dag-node">T02 · 独立实现 A</div><div class="dag-node">T03 · 独立实现 B</div></div><div class="dag-arrow">↓</div>
+            <div class="dag-node merge">汇合 · 语义消解 · 整体验真</div>
+          </div>
         </article>
-        <article class="install-panel">
-          <h3>或在终端安装</h3>
-          <ol class="terminal-steps">
-            <li><code>git clone --depth 1 https://github.com/qzl0215/workflow.git</code></li>
-            <li><code>cd workflow</code></li>
-            <li><code>python3 scripts/install.py install</code></li>
-            <li><code>python3 scripts/install.py check --target "&lt;skills父目录&gt;"</code></li>
-          </ol>
-          <details class="maintenance">
-            <summary>维护者：查看正式能力与文件索引</summary>
-            <div class="maintenance-grid">
-              <div><h4>18 项按需模块</h4><ul class="reference-index">__REFERENCE_INDEX__</ul></div>
-              <div><h4>工作文档模板</h4><div class="document-index">__DOCUMENT_INDEX__</div></div>
-            </div>
-          </details>
+        <article class="plan-panel">
+          <h3>每个子任务独立定深度</h3>
+          <ul class="depth-list">
+            <li><b>局部、已知、易回退</b><span>直接实施，做能区分成败的定向验证。</span></li>
+            <li><b>跨模块或共享接口</b><span>先确认消费者与边界，再增加相邻集成证据。</span></li>
+            <li><b>并发、迁移、安全或生产风险</b><span>先建可失败实验、回退点和更强观测，再实施。</span></li>
+            <li><b>目标或体验仍未定</b><span>精确返回上游，不在执行中用个人偏好补齐。</span></li>
+          </ul>
         </article>
       </div>
-      <footer class="footer">
-        <span>作者 zhonglin · 页面由正式来源生成，不手改。</span>
-        <span><a href="__REPOSITORY__">GitHub</a> · <code>source sha256 __DIGEST__</code></span>
-      </footer>
+      <div class="agent-pipe">
+        <article class="pipe-node"><b>协调者发任务胶囊</b><p>只给结果、输入、验收、边界、授权、依赖、契约身份和返回条件。</p></article><div class="pipe-arrow">→</div>
+        <article class="pipe-node"><b>执行者返候选回执</b><p>报告实际产物、验证、失败、偏差、未覆盖项与执行时身份，不写控制面。</p></article><div class="pipe-arrow">→</div>
+        <article class="pipe-node"><b>协调者接受或拒绝</b><p>核对契约、真实产物、证据身份与语义冲突后，才进入整体结果。</p></article>
+      </div>
     </div>
+  </section>
+
+  <section class="section truth-section">
+    <div class="shell">
+      <header class="section-head">
+        <div><p class="kicker">单一持久控制面</p><h2>一个 work.md，不是一个巨型日志。</h2></div>
+        <p class="intro">删除五份文件对当前状态的重复描述，保留恢复真正需要的信息。简单任务连 work.md 都不创建。</p>
+      </header>
+      <div class="truth-grid">
+        <div class="work-card">
+          <header><b>work.md</b><span>协调者唯一可写</span></header>
+          <div class="work-lines"><div class="work-line accepted"></div><div class="work-line"></div><div class="work-line"></div><div class="work-line"></div></div>
+        </div>
+        <div class="control-rules">
+          <article class="control-rule"><span>01</span><div><b>只存当前投影</b><p>结果契约、计划依赖、状态、已接受证据、阻断和当前就绪责任。</p></div></article>
+          <article class="control-rule"><span>02</span><div><b>胶囊和回执默认内联</b><p>只有跨上下文恢复或昂贵、不可复现证据需要时才物化。</p></div></article>
+          <article class="control-rule"><span>03</span><div><b>候选不能冒充接受</b><p>子 Agent 不并发改写控制面；协调者验收后才写入已接受区。</p></div></article>
+          <article class="control-rule"><span>04</span><div><b>恢复不读流水账</b><p>被替代和拒绝的候选留在上下文，默认不进入长期注意力。</p></div></article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <header class="section-head">
+        <div><p class="kicker">Prove / Deliver / Learn</p><h2>证明、交付、学习，三件事分别成立。</h2></div>
+        <p class="intro">交付成功不反向证明业务结果；验真成功不自动授权交付；复盘也不能在真实交付状态未知时定稿。</p>
+      </header>
+      <div class="boundary-grid">
+        <article class="boundary-card"><b>Prove · 必经</b><p>证明当前产物和用户状态满足结果契约。</p><p>相同输入、环境和验证语义上的有效证据可以复用；跨真实环境边界必须 fresh。</p></article>
+        <article class="boundary-card is-conditional"><b>Deliver · 条件</b><p>把同一候选写入真实目标，并在真实消费入口冒烟。</p><p>任一步失败就停止后续外部写入，保留可恢复现场。</p></article>
+        <article class="boundary-card is-conditional"><b>Learn · 条件</b><p>只接受有未来触发场景、证据和唯一真源的经验。</p><p>没有会改变未来行动的价值就是 no-op。</p></article>
+      </div>
+      <p class="boundary-note"><b>默认顺序：</b>有交付时先 `prove → deliver`，有复用价值信号才进入 `learn`；无交付时也在 `prove` 后先过同一复盘门。等待平台时可并行收集与交付结果无关的候选观察，但最终接受发生在交付事实之后。</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <header class="section-head">
+        <div><p class="kicker">用户阶段画面</p><h2>四行就够，状态不变不重复。</h2></div>
+        <p class="intro">只在开始、环节实质变化、真实阻断和交回控制权时更新；内部队列不占用用户注意力。</p>
+      </header>
+      <div class="status-shell">
+        <div class="status-top"><i></i><i></i><i></i></div>
+        <div class="status-body">
+          <p><b>进度｜</b><span class="current">■■◆□ · 任务执行</span></p>
+          <p><b>技能｜</b><span>任务编排 · 任务执行</span></p>
+          <p><b>成果｜</b><span class="done">✓ 结果契约 · ✓ 计划 P01–P04 · </span><span class="current">● P02 / T03</span><span> · ○ 结果验真</span></p>
+          <p><b>路径｜</b><span>P01 → </span><span class="current">● P02 / T03</span><span> → P04</span></p>
+        </div>
+      </div>
+      <div class="status-explain"><div><b>进度</b>当前实际进入的用户环节</div><div><b>技能</b>本轮真正读取的参考</div><div><b>成果</b>已接受结果与下一验证点</div><div><b>路径</b>多任务时的最短活动路径</div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <header class="section-head">
+        <div><p class="kicker">十一份渐进路由器</p><h2>每份都从最小动作开始。</h2></div>
+        <p class="intro">四大环节不复制四棵同形目录树。每份 reference 自己说明停止条件、加深信号与缺口回流，模型只读当前决定所需内容。</p>
+      </header>
+      <ul class="ref-grid">__REFERENCE_INDEX__</ul>
+    </div>
+  </section>
+
+  <section class="section migration" id="migration">
+    <div class="shell">
+      <header class="section-head">
+        <div><p class="kicker">2.x → 3.x</p><h2>2.26 是精简运行时的桥。</h2></div>
+        <p class="intro">3.x Release 不再把测试和维护文档安装进模型运行时。更新器必须先理解 manifest，不能靠猜文件集合迁移。</p>
+      </header>
+      <div class="migration-grid">
+        <article class="migration-card"><h3>已有 2.26.x</h3><p>可以直接运行 <code>sync</code>。2.26 会核对 manifest、逐文件 SHA-256 和 runtime doctor，在同文件系统暂存验证后事务替换。</p></article>
+        <article class="migration-card"><h3>2.25.x 或更早</h3><p>旧更新器应失败关闭并保留原安装。请取得已验证的 3.x tag 或正式 Release，用其中的新安装器执行 <code>update</code>，再运行 <code>check</code>。</p></article>
+      </div>
+      <p class="migration-note">不要手工删除旧版再覆盖 ZIP。失败关闭是兼容边界的一部分，不是需要绕过的错误。</p>
+    </div>
+  </section>
+
+  <section class="section install">
+    <div class="shell install-grid">
+      <div><p class="kicker">开始使用</p><h2>把目标交给 workflow。</h2><p class="intro">安装后直接描述真实目标；简单任务走快路，只有承重未知、风险、恢复或真实交付需要时才加深。</p></div>
+      <div>
+        <pre><code id="agent-prompt">__AGENT_PROMPT__</code></pre>
+        <div class="copy-row"><button class="copy" type="button" data-copy-target="agent-prompt">复制给 Agent</button><span class="copy-status" aria-live="polite"></span></div>
+        <div class="install-commands">git clone --depth 1 https://github.com/qzl0215/workflow.git<br>cd workflow<br>python3 scripts/install.py install --target "&lt;skills父目录&gt;"<br>python3 scripts/install.py check --target "&lt;skills父目录&gt;"</div>
+      </div>
+    </div>
+    <footer class="shell footer"><span>作者 zhonglin · 页面由正式真源生成，不手改。</span><span><a href="__REPOSITORY__">GitHub</a> · source sha256 <code>__DIGEST__</code></span></footer>
   </section>
 </main>
 <script>
-const copyButton=document.querySelector('[data-copy-target]');
-copyButton.addEventListener('click',async()=>{
-  const target=document.getElementById(copyButton.dataset.copyTarget);
-  try{await navigator.clipboard.writeText(target.textContent.trim())}
-  catch(_){
-    const area=document.createElement('textarea');
-    area.value=target.textContent.trim();
-    area.setAttribute('readonly','');
-    area.style.position='fixed';
-    area.style.opacity='0';
-    document.body.appendChild(area);
-    area.select();
-    document.execCommand('copy');
-    area.remove();
+const button=document.querySelector('[data-copy-target]');
+button.addEventListener('click',async()=>{
+  const value=document.getElementById(button.dataset.copyTarget).textContent.trim();
+  try{await navigator.clipboard.writeText(value)}catch(_){
+    const area=document.createElement('textarea');area.value=value;area.setAttribute('readonly','');
+    area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();
+    document.execCommand('copy');area.remove();
   }
-  document.querySelector('.copy-status').textContent='已复制';
-  copyButton.textContent='已复制';
+  button.textContent='已复制';document.querySelector('.copy-status').textContent='可以粘贴给当前 Agent';
 });
 </script>
 </body>
@@ -480,22 +419,24 @@ copyButton.addEventListener('click',async()=>{
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="fail if the generated document is stale")
+    parser.add_argument("--check", action="store_true", help="检查生成页面是否与正式真源一致")
     args = parser.parse_args()
     try:
-        generated, _ = build()
-    except ValueError as exc:
-        print(f"visual map source error: {exc}", file=sys.stderr)
+        generated, _digest = build()
+    except (OSError, ValueError) as exc:
+        print(f"视觉图真源错误：{exc}", file=sys.stderr)
         return 2
+
     if args.check:
-        if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != generated:
-            print(f"stale visual map: {OUTPUT}", file=sys.stderr)
+        if not OUTPUT.is_file() or read(OUTPUT) != generated:
+            print(f"视觉图已过期：{OUTPUT}", file=sys.stderr)
             return 1
         print("workflow_visual_map: OK")
         return 0
+
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(generated, encoding="utf-8")
-    print(f"generated {OUTPUT}")
+    print(f"已生成 {OUTPUT}")
     return 0
 
 
