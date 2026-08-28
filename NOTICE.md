@@ -11,7 +11,7 @@ The planning and verification contracts were adapted and substantially rewritten
 
 Their MIT permission notices are preserved through this repository's MIT License and this attribution.
 
-The requirement-discovery update in `2.2.0-beta.4` was conceptually informed by public `grill-me` decision-tree interviewing patterns. Its Chinese protocol, hard gates, numbered batch interaction, tests, and integration with workflow were independently rewritten for this project.
+The current requirement-discovery protocol was conceptually informed by public `grill-me` decision-tree interviewing patterns. Its load-bearing decision tree, contract-stability stop rule, Chinese interaction, tests, and workflow integration were independently rewritten for this project.
 
 The four method packs added in `2.8.0` were conceptually informed by the project's PUA/P10 methodology catalog and widely known company operating principles. The routing, grouping, Chinese prompts, stop rules, tests, and workflow integration were independently rewritten; company personas, slogans, internal operating details, and PUA voice are not included.
 
