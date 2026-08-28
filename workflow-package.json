@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "name": "workflow",
+  "version": "3.0.0",
+  "entrypoint": "SKILL.md",
+  "runtime": {
+    "files": {
+      "LICENSE": "sha256:6f56797263fb6d17252bfd325544640f0c173926558345975fed3973b1c7fc45",
+      "NOTICE.md": "sha256:6de937c69cbda7c0e3b7814d3040b74be8a182ae9303ccd8eec7bd3ae581d42a",
+      "SKILL.md": "sha256:0da305b35c5de9a2be2633d267dfd20f8b980938f9356a4999b54f5660ae9eff",
+      "references/deliver.md": "sha256:c34b94ce93ad505e5f3c7820a9853f5e2a1e2ad181cca4dab122d6d42ff4f709",
+      "references/execute.md": "sha256:b3877d89c8d085fcc9758dca2570e7fe05095b6e036349d5ddc1f88d611d22f6",
+      "references/experience.md": "sha256:eb4082e5bddc360ef32627f7f6c55d2046e188f3591fe8fda93f408f684529d5",
+      "references/frame.md": "sha256:9c9353c85e2041a1a6cb03616afb3c0008eb94add07239563019b57efcef02f3",
+      "references/grill.md": "sha256:f73a6fd4f74ccda1cf661245d39c4837815d0f369314c9e166687a72f0133daf",
+      "references/learn.md": "sha256:7680ad9b29d455e58468e202e9fcd88062fdfa9a97c205f1f0c98ee5efc8cfe9",
+      "references/orchestrate.md": "sha256:ea12f5cc341f0706bfd48081edfce8a4a9c021171bb02af55252840efcd8da3b",
+      "references/plan.md": "sha256:a9ca23aa6e2f87ccc38cb937ca9905e053d711897ef56622a4fb74092783fe18",
+      "references/prove.md": "sha256:09bd90abbaf39402ece30bb29f31aace937c0c1a70873a4ae777fb93255835b5",
+      "references/recover.md": "sha256:a02e46679896717dbb0e64e7b3368437a3edcf36a164b315f347a313a2c9f3e0",
+      "references/research.md": "sha256:2a1830d2a49d94a65afc6f5b67af603622b4f833c7b997ced208170f75b30702",
+      "scripts/install.py": "sha256:d320e3358c70bcf5b6d89dd3e04e426b66b22e27828e89a66323d94cb4fd7eaf",
+      "scripts/work_context.py": "sha256:4e8774def03d06a27b11389d55a9340246c9b7cc1e12faf7fde5307c8daaf6aa",
+      "scripts/workflow_doctor.py": "sha256:ad9d01601978f017901d3c8b33cb34b778faf53e1a15f7cfbf9caed35c589702",
+      "templates/work.md": "sha256:2b0a5c319f1ad5021045cb7693bcf47a471818656ab664c84b4323a3e077b3a9"
+    }
+  },
+  "source_only": [
+    ".gitignore",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "README.md",
+    "SECURITY.md",
+    "docs/workflow-visual-map.html",
+    "scripts/generate_visual_map.py",
+    "scripts/release_check.py",
+    "scripts/safe_merge.py",
+    "tests/test_portability.py",
+    "tests/test_protocol_v3.py",
+    "tests/test_release_v3.py",
+    "tests/test_safe_merge.py",
+    "tests/test_work_context.py"
+  ]
+}

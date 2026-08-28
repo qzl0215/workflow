@@ -27,6 +27,7 @@ STDLIB_OR_LOCAL = {
     "html",
     "http",
     "importlib",
+    "install",
     "json",
     "os",
     "pathlib",
@@ -97,35 +98,38 @@ class PortabilityContractTest(unittest.TestCase):
                 )
                 self.assertEqual(result.returncode, 0, result.stdout)
 
-    def test_context_capsule_works_without_git_browser_memory_or_subagents(self) -> None:
+    def test_work_context_works_without_git_browser_memory_or_subagents(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             task = Path(temp) / "project/plans/demo"
             task.mkdir(parents=True)
-            (task / "task_plan.md").write_text(
-                """# Demo
-### Current Snapshot
-- 当前阶段：Act
-## Plan
-#### P01｜Result
-- DONE: yes
-#### P01-T01｜Task
-- DONE: yes
+            (task / "work.md").write_text(
+                """# 工作真源
+
+## 当前状态
+- 状态：active
+- 当前动作：任务执行
+
+## 目标契约
+- 目标：完成可验证的结果
+
+## 结果计划
+### P01｜结果
+#### P01-T01｜任务
+- 任务状态：active
+- 验收：返回有界上下文
 """
             )
-            (task / "progress.md").write_text("# Progress\n## Handoff checkpoint\n- 下一步：验收交付\n")
             result = subprocess.run(
                 [
                     sys.executable,
                     "-B",
-                    str(PACKAGE / "scripts/build_context_capsule.py"),
+                    str(PACKAGE / "scripts/work_context.py"),
                     "--task-dir",
                     str(task),
                     "--plan",
                     "P01",
                     "--task",
                     "P01-T01",
-                    "--stage",
-                    "Act Plan",
                     "--format",
                     "json",
                 ],
@@ -136,9 +140,9 @@ class PortabilityContractTest(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stdout)
             payload = json.loads(result.stdout)
-            self.assertFalse(payload["fail_closed"])
-            self.assertEqual(payload["stage"], "执行任务")
-            self.assertNotIn("Act Plan", result.stdout)
+            self.assertEqual(payload["source"], "work.md")
+            self.assertEqual(payload["status"], "active")
+            self.assertEqual(payload["action_hint"], "任务执行")
 
     def test_package_has_no_symlinks_or_shell_runtime(self) -> None:
         self.assertEqual([path for path in PACKAGE.rglob("*") if path.is_symlink()], [])
@@ -317,9 +321,9 @@ class PortabilityContractTest(unittest.TestCase):
                 check=False,
             )
             self.assertEqual(installed.returncode, 0, installed.stdout)
-            readme = target / "workflow/README.md"
-            readme.write_text(
-                readme.read_text(encoding="utf-8") + "\n<!-- local drift -->\n",
+            frame = target / "workflow/references/frame.md"
+            frame.write_text(
+                frame.read_text(encoding="utf-8") + "\n<!-- local drift -->\n",
                 encoding="utf-8",
             )
             manifest = self.local_latest_release(root)
@@ -342,7 +346,7 @@ class PortabilityContractTest(unittest.TestCase):
             )
 
             self.assertEqual(synced.returncode, 0, synced.stdout)
-            self.assertEqual(readme.read_bytes(), (PACKAGE / "README.md").read_bytes())
+            self.assertEqual(frame.read_bytes(), (PACKAGE / "references/frame.md").read_bytes())
             self.assertEqual(sorted(path.name for path in target.iterdir()), ["workflow"])
 
     def test_installer_sync_rejects_untrusted_release_metadata_without_replacement(self) -> None:
@@ -391,7 +395,9 @@ class PortabilityContractTest(unittest.TestCase):
 
     def test_bridge_keeps_legacy_payload_and_rejects_unsafe_runtime_manifests(self) -> None:
         installer = load_installer_module()
-        self.assertEqual(installer.payload_targets(PACKAGE), frozenset(installer.PUBLIC_TARGETS))
+        manifest = json.loads((PACKAGE / "workflow-package.json").read_text(encoding="utf-8"))
+        expected_runtime = frozenset(manifest["runtime"]["files"]) | {"workflow-package.json"}
+        self.assertEqual(installer.payload_targets(PACKAGE), expected_runtime)
         legacy_paths = "\n".join(sorted(installer.PUBLIC_TARGETS)).encode()
         self.assertEqual(len(installer.PUBLIC_TARGETS), 45)
         self.assertEqual(
@@ -527,7 +533,8 @@ class PortabilityContractTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             target = root / "Agent Skills"
-            source_script = PACKAGE / "scripts/install.py"
+            legacy_source = self.synthetic_legacy_bridge(root)
+            source_script = legacy_source / "scripts/install.py"
             installed = subprocess.run(
                 [sys.executable, "-B", str(source_script), "install", "--target", str(target)],
                 text=True,
@@ -536,6 +543,7 @@ class PortabilityContractTest(unittest.TestCase):
                 check=False,
             )
             self.assertEqual(installed.returncode, 0, installed.stdout)
+            self.assertIn("version: 2.26.0", (target / "workflow/SKILL.md").read_text())
             before = {
                 path.relative_to(target / "workflow").as_posix(): path.read_bytes()
                 for path in (target / "workflow").rglob("*")
@@ -1061,6 +1069,30 @@ class PortabilityContractTest(unittest.TestCase):
                 return line.split(":", 1)[1].strip()
         self.fail("package version missing")
 
+    def synthetic_legacy_bridge(self, root: Path) -> Path:
+        """Build the frozen 2.26 projection around the real bridge installer."""
+
+        installer = load_installer_module()
+        source = root / "legacy-2.26"
+        for relative in sorted(installer.PUBLIC_TARGETS):
+            path = source / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if relative == "SKILL.md":
+                path.write_text(
+                    "---\nname: workflow\nversion: 2.26.0\n---\n# legacy bridge\n",
+                    encoding="utf-8",
+                )
+            elif relative == "scripts/install.py":
+                shutil.copy2(PACKAGE / relative, path)
+            elif relative == "scripts/release_check.py":
+                path.write_text(
+                    "if __name__ == '__main__':\n    print('legacy_release_check: OK')\n",
+                    encoding="utf-8",
+                )
+            else:
+                path.write_text(f"# legacy fixture: {relative}\n", encoding="utf-8")
+        return source
+
     def local_latest_release(
         self,
         root: Path,
@@ -1070,11 +1102,15 @@ class PortabilityContractTest(unittest.TestCase):
         tag: str | None = None,
     ) -> Path:
         asset = root / "workflow.zip"
+        package_manifest = json.loads(
+            (PACKAGE / "workflow-package.json").read_text(encoding="utf-8")
+        )
+        runtime_paths = sorted(
+            {*package_manifest["runtime"]["files"], "workflow-package.json"}
+        )
         with zipfile.ZipFile(asset, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-            for path in sorted(PACKAGE.rglob("*")):
-                if not path.is_file() or ".git" in path.parts or "__pycache__" in path.parts:
-                    continue
-                archive.write(path, path.relative_to(PACKAGE).as_posix())
+            for relative in runtime_paths:
+                archive.write(PACKAGE / relative, relative)
         actual_digest = hashlib.sha256(asset.read_bytes()).hexdigest()
         manifest = root / "latest.json"
         manifest.write_text(

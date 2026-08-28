@@ -1,367 +1,331 @@
 #!/usr/bin/env python3
-"""Fail-closed structural checks for the public workflow package."""
+"""对 Workflow 3.x 源码树或精简运行时做失败关闭检查。"""
 
 from __future__ import annotations
 
+import os
 import re
+import stat
 import sys
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
+
+import install
 
 
-OWNER_REFERENCES = (
-    "understand-goal.md",
-    "decide-solution.md",
-    "plan-tasks.md",
-    "execute-tasks.md",
-    "verify-results.md",
-    "learn-review.md",
-    "evolve-system.md",
+REQUIRED_REFERENCES = (
+    "frame.md",
+    "research.md",
+    "experience.md",
+    "grill.md",
+    "plan.md",
+    "orchestrate.md",
+    "execute.md",
+    "recover.md",
+    "prove.md",
+    "deliver.md",
+    "learn.md",
 )
-HARNESS_REFERENCES = (
-    "shape-experience.md",
-    "maintain-design.md",
-    "coordinate-agents.md",
-    "fix-failures.md",
-    "handoff-context.md",
-    "deliver-release.md",
+REQUIRED_TEMPLATES = ("work.md",)
+REQUIRED_RUNTIME_SCRIPTS = (
+    "install.py",
+    "work_context.py",
+    "workflow_doctor.py",
 )
-REQUIRED_REFERENCES = OWNER_REFERENCES + HARNESS_REFERENCES
-REQUIRED_ADAPTERS = ("merge-parallel-work.md",)
+EXPECTED_RUNTIME_FILES = frozenset(
+    {
+        "SKILL.md",
+        "LICENSE",
+        "NOTICE.md",
+        *(f"references/{name}" for name in REQUIRED_REFERENCES),
+        *(f"templates/{name}" for name in REQUIRED_TEMPLATES),
+        *(f"scripts/{name}" for name in REQUIRED_RUNTIME_SCRIPTS),
+    }
+)
 
-REQUIRED_TEMPLATES = (
-    "index.md",
-    "findings.md",
-    "task_plan.md",
-    "implementation-plan.md",
-    "progress.md",
-    "task-owner-prompt.md",
-)
-REQUIRED_METHOD_PACKS = (
-    "strategic-value.md",
-    "essence-subtraction.md",
-    "experiment-attack.md",
-    "delivery-compounding.md",
-)
-LEGACY_REFERENCES = (
-    "project-discovery.md",
-    "context-discovery.md",
-    "clarify-prioritize.md",
-    "solution-design.md",
-    "experience-design.md",
-    "design-system.md",
-    "write-plan.md",
-    "act-plan.md",
-    "delegation.md",
-    "debugging-recovery.md",
-    "verification.md",
-    "finish-release.md",
-    "context-handoff.md",
-    "evolution-loop.md",
-    "context-reset-handoff.md",
-    "delegation-orchestration.md",
-    "failure-recovery.md",
-    "finish-git-release.md",
-    "owner-execution.md",
-    "parallel-merge-governance.md",
-    "partner-clarify.md",
-    "priority-discovery.md",
-    "skill-routing.md",
-    "strategic-review.md",
-)
-FORBIDDEN_FOUNDATION_NAMES = (
-    "project_foundation.py",
-    "foundation-catalog.md",
-    "foundation-manifest.md",
-    "foundation-profile.md",
-)
-LEGACY_SCRIPTS = ("acceptance_test.py", "test_context_capsule.py", "safe-push.sh")
-ROOT_TOKENS = (
-    "dependency-closed",
-    "需求澄清 → 选定方案 → 拆成任务 → 执行任务 → 验收交付 → 提炼经验 → 回灌改进",
-    "事实可查",
-    "取舍待定",
-    "假设待验",
-    "外部待解",
-    "H0",
-    "H3",
-    "未经明确授权",
-    "不声称完成",
-    "无 subagent",
-    "无 memory",
-    "无 Git",
-)
-PROTOCOL_OWNERS = {
-    "## 状态接口与硬门": "SKILL.md",
-    "## 需求澄清中的四路未知": "SKILL.md",
-    "## harness 深度": "SKILL.md",
-    "## 角色、权限与降级": "SKILL.md",
-    "# 需求澄清\n": "references/understand-goal.md",
-    "# 选定方案\n": "references/decide-solution.md",
-    "# 拆成任务\n": "references/plan-tasks.md",
-    "# 执行任务\n": "references/execute-tasks.md",
-    "# 验收结果\n": "references/verify-results.md",
-    "# 提炼经验\n": "references/learn-review.md",
-    "# 回灌改进\n": "references/evolve-system.md",
-    "# 体验塑形\n": "references/shape-experience.md",
-    "# 维护设计真源\n": "references/maintain-design.md",
-    "# 协调 Agent\n": "references/coordinate-agents.md",
-    "# 修复失败\n": "references/fix-failures.md",
-    "# 有界上下文交接\n": "references/handoff-context.md",
-    "# 授权交付\n": "references/deliver-release.md",
-    "# Git/worktree 并行合并适配器\n": "adapters/merge-parallel-work.md",
-}
-PUBLIC_TARGETS = {
-    ".gitignore",
-    "SKILL.md",
-    "README.md",
-    "LICENSE",
-    "NOTICE.md",
-    "SECURITY.md",
-    "CONTRIBUTING.md",
-    "CHANGELOG.md",
-    *(f"references/{name}" for name in REQUIRED_REFERENCES),
-    *(f"adapters/{name}" for name in REQUIRED_ADAPTERS),
-    *(f"methods/{name}" for name in REQUIRED_METHOD_PACKS),
-    *(f"templates/{name}" for name in REQUIRED_TEMPLATES),
-    "scripts/workflow_doctor.py",
-    "scripts/build_context_capsule.py",
-    "scripts/safe_merge.py",
-    "scripts/generate_visual_map.py",
-    "scripts/release_check.py",
-    "scripts/install.py",
-    "tests/test_structure.py",
-    "tests/test_behavior.py",
-    "tests/test_context.py",
-    "tests/test_portability.py",
-    "tests/test_safe_merge.py",
-    "tests/test_docs.py",
-    "docs/workflow-visual-map.html",
-}
-MAX_PACKAGE_FILES = 45
-SOFT_PACKAGE_BYTES = 400_000
+MAX_ENTRYPOINT_LINES = 150
+MAX_ENTRYPOINT_CHARS = 10_000
 MAX_REFERENCE_LINES = 1_200
+MAX_REFERENCE_FILE_LINES = 250
+MAX_SOURCE_BYTES = 8 * 1024 * 1024
+MAX_TEXT_FILE_BYTES = 2 * 1024 * 1024
 CONFLICT_MARKERS = ("<<<<<<<", "=======", ">>>>>>>")
-REFERENCE_LINK = re.compile(r"references/([A-Za-z0-9_-]+\.md)")
-ADAPTER_LINK = re.compile(r"adapters/([A-Za-z0-9_-]+\.md)")
+MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\((?P<target>[^)]+)\)")
+HTML_LINK = re.compile(r"(?:href|src)\s*=\s*['\"](?P<target>[^'\"]+)['\"]", re.I)
 SECRET_ASSIGNMENT = re.compile(
-    r"(?i)(?:api[_-]?key|secret|password|access[_-]?token)\s*[:=]\s*['\"]?[^\s'\"]{8,}"
-)
-EXTERNAL_SKILL_CALL = re.compile(
-    r"(?:\$[A-Za-z][A-Za-z0-9_-]*|(?:call|invoke|调用|启用)\s+[`$]?[A-Za-z][A-Za-z0-9_-]*(?:`|\s+skill|\s+技能))",
-    re.IGNORECASE,
+    r"(?i)(?:api[_-]?key|client[_-]?secret|password|access[_-]?token)"
+    r"\s*[:=]\s*['\"]?(?!<|\{|\[|\$)[^\s'\"]{8,}"
 )
 MACHINE_PATH = re.compile(
-    r"(?:/(?:Users|home|opt)/[A-Za-z0-9._-]+|[A-Za-z]:\\Users\\[^\\\s`]+|\.(?:codex|claude)/skills/)"
+    r"(?:/(?:Users|home)/[^\s`]+|[A-Za-z]:\\Users\\[^\\\s`]+)"
 )
-LEGACY_STAGE_NAMES = (
-    "看清目标",
-    "Intake",
-    "Clarify",
-    "Readiness",
-    "Solution",
-    "Strategic Planning",
-    "Experience",
-    "Write",
-    "Write Plan",
-    "Act",
-    "Act Plan",
-    "Debug",
-    "Verify",
-    "Finish",
-)
-LEGACY_STAGE_WORD = re.compile(
-    r"(?<![A-Za-z0-9_])(?:"
-    + "|".join(re.escape(value) for value in sorted(LEGACY_STAGE_NAMES, key=len, reverse=True))
-    + r")(?![A-Za-z0-9_])"
-)
-IGNORED_PACKAGE_PARTS = frozenset({".git"})
+TEXT_NAMES = frozenset({"SKILL.md", "LICENSE"})
+TEXT_SUFFIXES = frozenset({".md", ".html", ".json", ".py"})
+IGNORED_CONTROL_NAMES = frozenset({".git"})
+GENERATED_NAMES = frozenset({".DS_Store", "Thumbs.db", "desktop.ini", ".pytest_cache", "__pycache__"})
 
 
-def read(path: Path) -> str:
-    return path.read_text(encoding="utf-8", errors="replace")
+def read_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
 
 
-def discover_package_files(package: Path) -> list[Path]:
-    """Return public working-tree files while excluding VCS metadata."""
-    return sorted(
-        path
-        for path in package.rglob("*")
-        if path.is_file()
-        and not IGNORED_PACKAGE_PARTS.intersection(path.relative_to(package).parts)
-    )
+def relative(path: Path, package: Path) -> str:
+    return path.relative_to(package).as_posix()
 
 
-def error(errors: list[str], path: Path, message: str) -> None:
-    errors.append(f"{path}: {message}")
+def all_entries(package: Path) -> list[Path]:
+    """列出控制目录之外的条目，不跟随符号链接。"""
+
+    found: list[Path] = []
+
+    def visit(directory: Path) -> None:
+        try:
+            entries = sorted(os.scandir(directory), key=lambda entry: entry.name)
+        except OSError:
+            return
+        for entry in entries:
+            if entry.name in IGNORED_CONTROL_NAMES and directory == package:
+                continue
+            path = Path(entry.path)
+            found.append(path)
+            try:
+                mode = entry.stat(follow_symlinks=False).st_mode
+            except OSError:
+                continue
+            if stat.S_ISDIR(mode) and not entry.is_symlink():
+                visit(path)
+
+    visit(package)
+    return found
 
 
-def main() -> int:
-    package = Path(sys.argv[1] if len(sys.argv) > 1 else Path(__file__).resolve().parents[1]).resolve()
-    skill = package / "SKILL.md"
-    refs = package / "references"
-    adapters = package / "adapters"
-    methods = package / "methods"
-    templates = package / "templates"
+def local_link_target(raw: str) -> str | None:
+    value = raw.strip()
+    if value.startswith("<") and ">" in value:
+        value = value[1 : value.index(">")]
+    elif " " in value:
+        value = value.split(" ", 1)[0]
+    parsed = urlsplit(value)
+    if parsed.scheme or parsed.netloc or not parsed.path:
+        return None
+    return unquote(parsed.path)
+
+
+def link_errors(package: Path, text_files: list[Path]) -> list[str]:
+    errors: list[str] = []
+    root = package.resolve()
+    for path in text_files:
+        if path.suffix.lower() not in {".md", ".html"} and path.name != "SKILL.md":
+            continue
+        try:
+            text = read_text(path)
+        except (OSError, UnicodeError):
+            continue
+        patterns = [MARKDOWN_LINK]
+        if path.suffix.lower() == ".html":
+            patterns.append(HTML_LINK)
+        for pattern in patterns:
+            for match in pattern.finditer(text):
+                target = local_link_target(match.group("target"))
+                if target is None:
+                    continue
+                candidate = (path.parent / target).resolve()
+                try:
+                    candidate.relative_to(root)
+                except ValueError:
+                    errors.append(f"{relative(path, package)}: 本地链接越出包边界：{target}")
+                    continue
+                if not candidate.exists():
+                    errors.append(f"{relative(path, package)}: 本地链接不存在：{target}")
+    return errors
+
+
+def inspect_package(package: Path) -> tuple[list[str], list[str]]:
+    package = package.resolve()
     errors: list[str] = []
     warnings: list[str] = []
 
-    skill_files = sorted(package.rglob("SKILL.md"))
-    if skill_files != [skill]:
-        rendered = ", ".join(str(path.relative_to(package)) for path in skill_files) or "none"
-        error(errors, package, f"expected exactly one root SKILL.md; found {rendered}")
-    if not skill.exists():
-        report(errors, warnings)
-        return 1
+    if not package.is_dir():
+        return [f"{package}: 包目录不存在"], warnings
 
-    skill_text = read(skill)
-    markdown = [skill]
+    entries = all_entries(package)
+    for path in entries:
+        rel = relative(path, package)
+        name_parts = set(path.relative_to(package).parts)
+        try:
+            mode = path.lstat().st_mode
+        except OSError as exc:
+            errors.append(f"{rel}: 无法检查文件类型：{exc}")
+            continue
+        if path.name in GENERATED_NAMES or name_parts.intersection(GENERATED_NAMES):
+            errors.append(f"{rel}: 生成缓存或系统杂项不得进入包")
+        if stat.S_ISLNK(mode):
+            errors.append(f"{rel}: 符号链接不得进入可移植包")
+        elif not (stat.S_ISREG(mode) or stat.S_ISDIR(mode)):
+            errors.append(f"{rel}: 只允许普通文件和目录")
 
-    package_files = discover_package_files(package)
-    relative_files = {path.relative_to(package).as_posix() for path in package_files}
-    if len(package_files) > MAX_PACKAGE_FILES:
-        error(errors, package, f"package has {len(package_files)} files; budget is {MAX_PACKAGE_FILES}")
-    package_bytes = sum(path.stat().st_size for path in package_files)
-    if package_bytes > SOFT_PACKAGE_BYTES:
-        warnings.append(
-            f"{package}: package is {package_bytes} bytes; soft observation is {SOFT_PACKAGE_BYTES}; "
-            "runtime loading-path budgets remain authoritative"
+    try:
+        targets, source_only = install.payload_spec(package)
+    except (OSError, UnicodeError, ValueError) as exc:
+        errors.append(str(exc))
+        return sorted(set(errors)), warnings
+
+    runtime_files = targets - {install.RUNTIME_MANIFEST_NAME}
+    if runtime_files != EXPECTED_RUNTIME_FILES:
+        missing = sorted(EXPECTED_RUNTIME_FILES - runtime_files)
+        extras = sorted(runtime_files - EXPECTED_RUNTIME_FILES)
+        if missing:
+            errors.append("runtime manifest 缺少 3.0 文件：" + ", ".join(missing))
+        if extras:
+            errors.append("runtime manifest 声明了非 3.0 文件：" + ", ".join(extras))
+
+    actual_files = install.package_files(package)
+    present_source = source_only & actual_files
+    if present_source and present_source != source_only:
+        errors.append(
+            "源码树的 source_only 不完整；缺少："
+            + ", ".join(sorted(source_only - present_source))
         )
-    for extra in sorted(relative_files - PUBLIC_TARGETS):
-        error(errors, package / extra, "file is not owned by the public target manifest")
-    for link in package.rglob("*"):
-        if IGNORED_PACKAGE_PARTS.intersection(link.relative_to(package).parts):
+    full_source = bool(source_only) and present_source == source_only
+    errors.extend(
+        install.runtime_tree_errors(
+            package,
+            targets,
+            allowed_optional=source_only if full_source else frozenset(),
+            allow_checkout_metadata=True,
+        )
+    )
+
+    skill_files = sorted(
+        path
+        for path in package.rglob("SKILL.md")
+        if ".git" not in path.relative_to(package).parts
+    )
+    expected_skill = package / "SKILL.md"
+    if skill_files != [expected_skill]:
+        rendered = ", ".join(relative(path, package) for path in skill_files) or "无"
+        errors.append(f"必须且只能有根 SKILL.md；当前：{rendered}")
+
+    reference_dir = package / "references"
+    actual_references = {
+        path.name for path in reference_dir.glob("*.md") if path.is_file() and not path.is_symlink()
+    }
+    if actual_references != set(REQUIRED_REFERENCES):
+        missing = sorted(set(REQUIRED_REFERENCES) - actual_references)
+        extras = sorted(actual_references - set(REQUIRED_REFERENCES))
+        if missing:
+            errors.append("缺少 3.0 reference：" + ", ".join(missing))
+        if extras:
+            errors.append("存在未归属 reference：" + ", ".join(extras))
+
+    template_dir = package / "templates"
+    actual_templates = {
+        path.name for path in template_dir.glob("*.md") if path.is_file() and not path.is_symlink()
+    }
+    if actual_templates != set(REQUIRED_TEMPLATES):
+        missing = sorted(set(REQUIRED_TEMPLATES) - actual_templates)
+        extras = sorted(actual_templates - set(REQUIRED_TEMPLATES))
+        if missing:
+            errors.append("缺少 3.0 模板：" + ", ".join(missing))
+        if extras:
+            errors.append("存在重复状态模板：" + ", ".join(extras))
+
+    declared = targets | (source_only if full_source else frozenset())
+    text_files: list[Path] = []
+    source_bytes = 0
+    for rel in sorted(declared):
+        path = package / rel
+        if not path.is_file() or path.is_symlink():
             continue
-        if link.is_symlink():
-            error(errors, link, "symlinks must not ship in the portable package")
+        size = path.stat().st_size
+        source_bytes += size
+        if size > MAX_TEXT_FILE_BYTES:
+            errors.append(f"{rel}: 单文件超过安全上限 {MAX_TEXT_FILE_BYTES} bytes")
+        if path.name not in TEXT_NAMES and path.suffix.lower() not in TEXT_SUFFIXES:
+            continue
+        try:
+            text = read_text(path)
+        except UnicodeError:
+            errors.append(f"{rel}: 文本文件不是有效 UTF-8")
+            continue
+        except OSError as exc:
+            errors.append(f"{rel}: 无法读取文本：{exc}")
+            continue
+        text_files.append(path)
+        if "\x00" in text:
+            errors.append(f"{rel}: 文本文件包含 NUL 字节")
+        human_readable = path.suffix.lower() in {".md", ".html"} or path.name in TEXT_NAMES
+        if human_readable:
+            for marker in CONFLICT_MARKERS:
+                if marker in text:
+                    errors.append(f"{rel}: 残留冲突标记 {marker}")
+            if SECRET_ASSIGNMENT.search(text):
+                errors.append(f"{rel}: 疑似包含凭据赋值")
+            if MACHINE_PATH.search(text):
+                errors.append(f"{rel}: 包含机器专属绝对路径")
 
-    if not skill_text.startswith("---\n") or "name: workflow" not in skill_text.split("---", 2)[1]:
-        error(errors, skill, "missing workflow frontmatter")
-    if len(skill_text.splitlines()) > 150:
-        error(errors, skill, "entrypoint exceeds 150 lines")
-    if len(skill_text) > 10000:
-        error(errors, skill, "entrypoint exceeds 10,000 characters")
-    for token in ROOT_TOKENS:
-        if token not in skill_text:
-            error(errors, skill, f"missing root contract `{token}`")
+    if full_source and source_bytes > MAX_SOURCE_BYTES:
+        warnings.append(f"完整源码共 {source_bytes} bytes，超过观察线 {MAX_SOURCE_BYTES}")
 
-    actual_refs = sorted(refs.glob("*.md")) if refs.exists() else []
-    actual_names = {path.name for path in actual_refs}
-    expected_names = set(REQUIRED_REFERENCES)
-    for name in sorted(expected_names - actual_names):
-        error(errors, refs / name, "missing required reference")
-    for name in sorted(actual_names - expected_names):
-        error(errors, refs / name, "orphan or unowned reference")
+    skill = package / "SKILL.md"
+    if skill.is_file():
+        try:
+            skill_text = read_text(skill)
+        except (OSError, UnicodeError):
+            skill_text = ""
+        if len(skill_text.splitlines()) > MAX_ENTRYPOINT_LINES:
+            errors.append(f"SKILL.md: 超过 {MAX_ENTRYPOINT_LINES} 行")
+        if len(skill_text) > MAX_ENTRYPOINT_CHARS:
+            errors.append(f"SKILL.md: 超过 {MAX_ENTRYPOINT_CHARS} 字符")
+        metadata = install.skill_metadata(skill)
+        if metadata.get("name") != "workflow":
+            errors.append("SKILL.md: frontmatter name 必须是 workflow")
+        for name in REQUIRED_REFERENCES:
+            if f"references/{name}" not in skill_text:
+                errors.append(f"SKILL.md: 未路由 references/{name}")
+
+    reference_lines = 0
     for name in REQUIRED_REFERENCES:
-        if skill_text.count(f"`references/{name}`") != 1:
-            error(errors, skill, f"must route exactly once to references/{name}")
-    markdown.extend(actual_refs)
-    reference_lines = sum(len(read(path).splitlines()) for path in actual_refs)
-    if reference_lines > MAX_REFERENCE_LINES:
-        error(errors, refs, f"references total {reference_lines} lines; budget is {MAX_REFERENCE_LINES}")
-
-    actual_adapters = sorted(adapters.glob("*.md")) if adapters.exists() else []
-    actual_adapter_names = {path.name for path in actual_adapters}
-    expected_adapter_names = set(REQUIRED_ADAPTERS)
-    for name in sorted(expected_adapter_names - actual_adapter_names):
-        error(errors, adapters / name, "missing required adapter")
-    for name in sorted(actual_adapter_names - expected_adapter_names):
-        error(errors, adapters / name, "orphan or unowned adapter")
-    for name in REQUIRED_ADAPTERS:
-        if skill_text.count(f"`adapters/{name}`") != 1:
-            error(errors, skill, f"must route exactly once to adapters/{name}")
-    markdown.extend(actual_adapters)
-
-    actual_method_packs = sorted(methods.glob("*.md")) if methods.exists() else []
-    actual_method_names = {path.name for path in actual_method_packs}
-    expected_method_names = set(REQUIRED_METHOD_PACKS)
-    for name in sorted(expected_method_names - actual_method_names):
-        error(errors, methods / name, "missing required method pack")
-    for name in sorted(actual_method_names - expected_method_names):
-        error(errors, methods / name, "orphan or unowned method pack")
-    for name in REQUIRED_METHOD_PACKS:
-        if skill_text.count(f"`methods/{name}`") != 1:
-            error(errors, skill, f"must route exactly once to methods/{name}")
-    markdown.extend(actual_method_packs)
-
-    actual_templates = {path.name for path in templates.glob("*.md")} if templates.exists() else set()
-    expected_templates = set(REQUIRED_TEMPLATES)
-    for name in sorted(expected_templates - actual_templates):
-        if not (templates / name).is_file():
-            error(errors, templates / name, "missing runtime truth-source template")
-    for name in sorted(actual_templates - expected_templates):
-        error(errors, templates / name, "orphan or duplicate template")
-    status_registry = "pending / in_progress / completed / blocked"
-    for path in sorted(templates.glob("*.md")):
-        if path.name != "task_plan.md" and status_registry in read(path):
-            error(errors, path, "duplicates the Plan/Task status registry owned by task_plan.md")
-    for name in LEGACY_REFERENCES:
-        if (refs / name).exists():
-            error(errors, refs / name, "legacy reference remains")
-    for name in LEGACY_SCRIPTS:
-        if (package / "scripts" / name).exists():
-            error(errors, package / "scripts" / name, "legacy or duplicate tool owner remains")
-
-    for path in markdown:
-        text = read(path)
-        if len(text.splitlines()) > 250:
-            error(errors, path, "reference exceeds 250 lines")
-        for marker in CONFLICT_MARKERS:
-            if marker in text:
-                error(errors, path, f"conflict marker remains: {marker}")
-        if SECRET_ASSIGNMENT.search(text):
-            error(errors, path, "sensitive-looking credential assignment")
-        if MACHINE_PATH.search(text):
-            error(errors, path, "machine-specific absolute or skills path remains")
-        if EXTERNAL_SKILL_CALL.search(text) or re.search(r"(?:^|[/.])skills/[A-Za-z0-9_-]+", text):
-            error(errors, path, "external skill invocation remains")
-        for target in set(REFERENCE_LINK.findall(text)):
-            if not (refs / target).is_file():
-                error(errors, path, f"broken reference link: references/{target}")
-            elif path.parent == refs:
-                error(errors, path, f"reference-to-reference deep link is not allowed: references/{target}")
-        for target in set(ADAPTER_LINK.findall(text)):
-            if not (adapters / target).is_file():
-                error(errors, path, f"broken adapter link: adapters/{target}")
-            elif path.parent in {refs, adapters, methods}:
-                error(errors, path, f"deep adapter link is not allowed: adapters/{target}")
-
-    protocol_files = [skill, *actual_refs, *actual_adapters, *actual_method_packs, *sorted(templates.glob("*.md"))]
-    for path in protocol_files:
-        matches = sorted({match.group(0) for match in LEGACY_STAGE_WORD.finditer(read(path))})
-        if matches:
-            error(errors, path, "legacy stage words escaped read-boundary compatibility: " + ", ".join(matches))
-    for heading, owner in PROTOCOL_OWNERS.items():
-        hits = [path.relative_to(package).as_posix() for path in protocol_files if heading in read(path)]
-        if hits != [owner]:
-            error(errors, package / owner, f"protocol `{heading}` owner mismatch; found {hits or 'none'}")
-
-    for forbidden in FORBIDDEN_FOUNDATION_NAMES:
-        if any(
-            path.name == forbidden
-            and not IGNORED_PACKAGE_PARTS.intersection(path.relative_to(package).parts)
-            for path in package.rglob("*")
-        ):
-            error(errors, package, f"overbuilt Foundation artifact remains: {forbidden}")
-
-    for cache in list(package.rglob("__pycache__")) + list(package.rglob("*.pyc")):
-        if IGNORED_PACKAGE_PARTS.intersection(cache.relative_to(package).parts):
+        path = reference_dir / name
+        if not path.is_file():
             continue
-        error(errors, cache, "compiled cache must not ship")
-    report(errors, warnings)
-    return 1 if errors else 0
+        try:
+            lines = len(read_text(path).splitlines())
+        except (OSError, UnicodeError):
+            continue
+        reference_lines += lines
+        if lines > MAX_REFERENCE_FILE_LINES:
+            errors.append(f"references/{name}: 超过 {MAX_REFERENCE_FILE_LINES} 行")
+    if reference_lines > MAX_REFERENCE_LINES:
+        errors.append(f"references: 总计 {reference_lines} 行，超过 {MAX_REFERENCE_LINES} 行")
+
+    errors.extend(link_errors(package, text_files))
+    return sorted(set(errors)), sorted(set(warnings))
 
 
 def report(errors: list[str], warnings: list[str]) -> None:
     if errors:
-        print("ERRORS:")
+        print("WORKFLOW DOCTOR ERRORS:")
         for item in errors:
             print(f"- {item}")
     if warnings:
-        print("WARNINGS:")
+        print("WORKFLOW DOCTOR WARNINGS:")
         for item in warnings:
             print(f"- {item}")
     if not errors:
-        print("workflow_doctor: OK" + (" with warnings" if warnings else ""))
+        suffix = "（有警告）" if warnings else ""
+        print(f"workflow_doctor: OK{suffix}")
+
+
+def main(argv: list[str] | None = None) -> int:
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if len(arguments) > 1:
+        print("usage: workflow_doctor.py [PACKAGE]", file=sys.stderr)
+        return 2
+    package = Path(arguments[0]) if arguments else Path(__file__).resolve().parents[1]
+    errors, warnings = inspect_package(package)
+    report(errors, warnings)
+    return 1 if errors else 0
 
 
 if __name__ == "__main__":
