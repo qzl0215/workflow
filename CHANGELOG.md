@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.24.0] - 2026-08-28
+
+### Added
+
+- Added four high-level design uplift principles to experience shaping: find the right opportunity, make it useful before making it beautiful, address root causes instead of stacking safe patches, and explore broadly before focusing on one direction.
+- Kept the capability inside the existing experience owner without importing a second design workflow, project-specific mechanics or extra artifacts.
+
 ## [2.23.0] - 2026-08-25
 
 ### Changed
