@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow Semantic Versioning while the public contract stabilizes.
 
+## [2.26.0] - 2026-08-28
+
+### Added
+
+- Added the compatibility bridge for future slim runtime packages: an exact `workflow-package.json` file set, per-file SHA-256 verification, and one manifest-selected runtime doctor.
+- Added bounded member-by-member Release extraction that rejects traversal, duplicate or case-colliding paths, links, special files, encrypted members, ambiguous roots, and oversized payloads.
+
+### Changed
+
+- Staged candidates once on the destination filesystem and activated them with a rename transaction that restores the previous installation after caught post-swap failures.
+- Kept the exact 2.25 public payload unchanged so every existing updater can acquire this bridge before the 3.0 package becomes slim.
+
 ## [2.25.0] - 2026-08-28
 
 ### Changed

@@ -6,7 +6,7 @@
 
 作者：zhonglin · MIT License
 
-当前协议版本：`2.25.0`
+当前协议版本：`2.26.0`
 
 [打开中文可视化介绍](docs/workflow-visual-map.html) · [查看完整工作协议](SKILL.md)
 
@@ -231,7 +231,9 @@ python3 scripts/install.py enable-auto-update --target "/path/to/agent/skills"
 python3 scripts/install.py sync --target "/path/to/agent/skills"
 ```
 
-同步只接受最新正式 Release 中唯一的 `workflow.zip`，并核对 GitHub 返回的 SHA-256、Release tag、包内版本、doctor 和 release check。所有检查先在临时目录完成；失败不会修改当前 workflow。成功后整体替换 `<skills父目录>/workflow`，不保留 backup、failed 或 removed 副本，也不支持本地一键回滚。
+同步只接受最新正式 Release 中唯一的 `workflow.zip`，并核对 GitHub 返回的 SHA-256、Release tag 和包内版本。2.x 包继续按安装器内冻结的固定公开文件清单检查；3.x+ 必须带普通 `workflow-package.json`，并按 manifest 中逐文件 SHA-256 和唯一 runtime doctor 检查。`source_only` 只是允许源码 checkout 出现、但永不安装的可选开发文件清单；活动 runtime 仍必须与 manifest 精确相等。归档会逐项拒绝路径穿越、重复/大小写冲突路径、符号链接、特殊文件和超限内容，不使用宽松的整体解包。
+
+候选先在目标 skills 目录同一文件系统的隐藏 stage 中完整验证一次，再用 rename 事务激活。更新期间只保留不可被宿主发现的临时回滚副本；若激活后的完整性检查或可捕获的文件系统操作失败，会恢复旧安装并清理事务目录。成功后不保留 backup、failed 或 removed 副本，也不提供本地一键回滚；进程被强制终止或主机掉电跨过两次 rename 的极窄窗口不承诺 crash-atomic，遇到异常现场应从指定的已验证 Release 重新安装。
 
 停用自动同步后永久卸载：
 
