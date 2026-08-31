@@ -93,7 +93,7 @@ class WorkflowV3MainlineTest(unittest.TestCase):
         skill = read(PACKAGE / "SKILL.md")
         version = re.search(r"(?m)^version:\s*(\S+)\s*$", skill)
         self.assertIsNotNone(version)
-        self.assertEqual(version.group(1), "3.5.0")
+        self.assertEqual(version.group(1), "3.6.0")
 
         positions = [skill.index(outcome) for outcome in (*CORE_OUTCOMES, *CONDITIONAL_OUTCOMES)]
         self.assertEqual(positions, sorted(positions))
@@ -775,6 +775,73 @@ class DeliveryLearningAndTruthTest(unittest.TestCase):
 
 
 class UserCommunicationAndLanguageTest(unittest.TestCase):
+    def test_workflow_keeps_ownership_until_a_real_user_decision_is_required(self) -> None:
+        skill = read(PACKAGE / "SKILL.md")
+        plan = reference("plan.md")
+        execution = reference("execute.md")
+        recovery = reference("recover.md")
+        proof = reference("prove.md")
+        delivery = reference("deliver.md")
+        combined = "\n".join((skill, plan, execution, recovery, proof, delivery))
+
+        for token in ("下一动作", "责任者", "继续推进", "用户决策"):
+            self.assertIn(token, combined)
+        assert_any(
+            self,
+            combined,
+            (
+                "仍有安全、已授权且可执行的下一动作",
+                "仍有安全、契约内且可执行的下一动作",
+                "存在安全、已授权且可执行的下一动作",
+            ),
+            "持续推进条件",
+        )
+        assert_any(
+            self,
+            combined,
+            ("不能把计划完成", "不把计划完成", "不得把计划完成"),
+            "中间产物不是停点",
+        )
+        assert_any(
+            self,
+            combined,
+            (
+                "可由模型继续解决的事项不转问用户",
+                "模型能继续解决的事项不交回用户",
+                "能自行推进的事项不交回用户",
+            ),
+            "模型继续持有控制权",
+        )
+
+    def test_every_real_handoff_is_a_compact_decision_package(self) -> None:
+        skill = read(PACKAGE / "SKILL.md")
+        frame = reference("frame.md")
+        recovery = reference("recover.md")
+        delivery = reference("deliver.md")
+        learning = reference("learn.md")
+        combined = "\n".join((skill, frame, recovery, delivery, learning))
+
+        for token in ("待决策", "推荐", "取舍", "影响", "最短回复"):
+            self.assertIn(token, combined)
+        assert_any(
+            self,
+            skill,
+            ("下一步责任者", "下一动作责任者", "下一步由谁负责"),
+            "关键出口标明下一责任",
+        )
+        assert_any(
+            self,
+            combined,
+            ("明确委托", "委托模型", "委托 AI"),
+            "允许用户委托决定",
+        )
+        assert_any(
+            self,
+            combined,
+            ("合并到一次决策边界", "合并为一次决策边界", "集中到一次决策边界"),
+            "合并用户决策",
+        )
+
     def test_user_snapshot_appears_at_key_exits_without_repeating_unchanged_state(self) -> None:
         skill = read(PACKAGE / "SKILL.md")
         for label in ("结论", "进度", "技能", "成果", "路径"):
