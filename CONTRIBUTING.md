@@ -24,11 +24,11 @@
 开发时先运行与影响面相称的定向测试。最终候选只运行一次完整发布门：
 
 ```bash
-python3 -B -m unittest discover -s tests -p 'test_*.py' -v
+python3 -B -m unittest discover -s tests -p 'test_*.py'
 python3 -B scripts/release_check.py
 ```
 
-`release_check.py` 负责 manifest、运行时 doctor、发布资产和生成视觉图的一致性检查。不要把同一检查拆成重复的发布仪式。视觉源变化时先生成页面：
+完整测试使用默认简洁输出，成功时保留范围与总结果，失败时测试框架会展开具体错误。`release_check.py` 负责 manifest、运行时 doctor、发布资产和生成视觉图的一致性检查。不要把同一检查拆成重复的发布仪式。视觉源变化时先生成页面：
 
 ```bash
 python3 -B scripts/generate_visual_map.py

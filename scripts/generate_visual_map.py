@@ -31,7 +31,7 @@ REFERENCE_SPECS = (
     ("恢复失败", "recover.md", "执行支撑", "失败后用新证据改路径"),
     ("结果验真", "prove.md", "核心", "接受覆盖结果的新鲜证据"),
     ("真实交付", "deliver.md", "条件", "把同一候选写入真实目标"),
-    ("经验复盘", "learn.md", "条件", "压缩带来治理检查与可行动经验"),
+    ("经验复盘", "learn.md", "条件", "完成后识别优化并形成待确认方案"),
 )
 
 AGENT_PROMPT = (
@@ -255,9 +255,9 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
       <div class="conditional-flow">
         <article class="conditional-card"><b>条件：真实交付</b><p>只有提交、合并、部署、发布或外部写入才进入；验真不自动授权交付。</p></article>
         <div class="flow-arrow">→</div>
-        <article class="conditional-card"><b>条件：经验复盘</b><p>事实能改变未来行动时进入；上下文压缩带来工作规则、信息组织和业务动作的治理检查，检查后仍可 no-op。</p></article>
+        <article class="conditional-card"><b>条件：经验复盘</b><p>完成陈述后先做最小优化识别；有可行动发现时展示诊断与待确认方案，上下文压缩会追加治理检查。</p></article>
       </div>
-      <p class="boundary-note"><b>就绪链：</b>意见与设想先整理为候选目标；目标与验收清楚后形成契约就绪，推荐方案经用户确认或委托后形成方案就绪。用户说“开动”后，一次确认在实施、验真和真实交付之间持续有效。</p>
+      <p class="boundary-note"><b>就绪链：</b>意见与设想先整理为候选目标；目标与验收清楚后形成契约就绪，推荐方案经用户确认或委托后形成方案就绪。浏览器视觉方案先展示局部保真的视觉演示。用户说“开动”后，一次确认在实施、验真和真实交付之间持续有效。</p>
     </div>
   </section>
 
@@ -345,9 +345,9 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
       <div class="boundary-grid">
         <article class="boundary-card"><b>Prove · 必经</b><p>证明当前产物和用户状态满足结果契约。</p><p>相同输入、环境和验证语义上的有效证据可以复用；跨真实环境边界必须 fresh。</p></article>
         <article class="boundary-card is-conditional"><b>Deliver · 条件</b><p>把同一候选写入真实目标，并在真实消费入口冒烟。</p><p>任一步失败就停止后续外部写入，保留可恢复现场。</p></article>
-        <article class="boundary-card is-conditional"><b>Learn · 条件</b><p>只接受有未来触发场景、证据和唯一真源的经验。</p><p>上下文压缩带来工作规则、项目入口、冗余、真源、导航与动作价值检查；无可行动发现就是 no-op。</p></article>
+        <article class="boundary-card is-conditional"><b>Learn · 条件</b><p>完成陈述后识别优化，只接受有未来触发场景、证据和唯一真源的经验。</p><p>有可行动发现就展示诊断与待确认方案；上下文压缩追加治理检查，无发现就是 no-op。</p></article>
       </div>
-      <p class="boundary-note"><b>默认顺序：</b>有交付时先 `prove → deliver`，有复用价值信号才进入 `learn`；上下文压缩始终构成该信号。无交付时也在 `prove` 后先过同一复盘门。等待平台时可并行收集与交付结果无关的候选观察，但最终接受发生在交付事实之后。</p>
+      <p class="boundary-note"><b>默认顺序：</b>有交付时先 `prove → deliver → 完成陈述 → 优化识别`；有可行动发现才展开 `learn`，并把方案交给用户确认。无交付时也在 `prove` 与完成陈述后做同一识别。等待平台时可并行收集与交付结果无关的候选观察，但最终接受发生在交付事实之后。</p>
     </div>
   </section>
 

@@ -92,7 +92,7 @@ class WorkflowV3MainlineTest(unittest.TestCase):
         skill = read(PACKAGE / "SKILL.md")
         version = re.search(r"(?m)^version:\s*(\S+)\s*$", skill)
         self.assertIsNotNone(version)
-        self.assertEqual(version.group(1), "3.2.0")
+        self.assertEqual(version.group(1), "3.3.0")
 
         positions = [skill.index(outcome) for outcome in (*CORE_OUTCOMES, *CONDITIONAL_OUTCOMES)]
         self.assertEqual(positions, sorted(positions))
@@ -275,6 +275,17 @@ class ReadinessAndConfirmationTest(unittest.TestCase):
             self.assertIn(token, learning)
         assert_any(self, learning, ("合并", "退役"), "重复或无消费价值动作的去向")
 
+    def test_browser_visual_solution_shows_a_local_fidelity_demo_before_confirmation(self) -> None:
+        experience = reference("experience.md")
+        plan = reference("plan.md")
+        combined = experience + "\n" + plan
+
+        for token in ("浏览器", "确认前", "真实源码", "局部", "保护面"):
+            self.assertIn(token, combined)
+        self.assertIn("视觉演示", combined)
+        assert_any(self, combined, ("其他元素", "其余元素", "原页面其他"), "非目标元素保真")
+        assert_any(self, combined, ("截图", "可访问预览", "预览入口"), "用户可见演示")
+
 
 class DepthAndCoordinationTest(unittest.TestCase):
     def test_grill_preserves_depth_but_stops_on_contract_stability(self) -> None:
@@ -372,6 +383,38 @@ class DepthAndCoordinationTest(unittest.TestCase):
 
 
 class DeliveryLearningAndTruthTest(unittest.TestCase):
+    def test_completion_is_reported_before_automatic_improvement_identification(self) -> None:
+        skill = read(PACKAGE / "SKILL.md")
+        delivery = reference("deliver.md")
+        learning = reference("learn.md")
+        combined = skill + "\n" + delivery + "\n" + learning
+
+        for token in ("面向用户", "完成", "优化识别"):
+            self.assertIn(token, combined)
+        assert_any(
+            self,
+            combined,
+            ("先向用户陈述", "先陈述", "完成陈述后", "先报告完成"),
+            "完成结果先于优化识别",
+        )
+        for token in ("问题诊断", "推荐方案", "验收", "用户确认"):
+            self.assertIn(token, learning)
+        assert_any(self, learning, ("新的目标", "新目标"), "优化执行重新形成目标")
+        assert_any(self, learning, ("no-op", "没有追加优化", "无需追加优化"), "允许空优化结果")
+
+    def test_accepted_evidence_is_compact_on_success_and_expands_on_failure(self) -> None:
+        proof = reference("prove.md")
+        contributing = read(PACKAGE / "CONTRIBUTING.md")
+        readme = read(PACKAGE / "README.md")
+
+        for token in ("成功", "范围", "结论", "失败"):
+            self.assertIn(token, proof)
+        assert_any(self, proof, ("日志入口", "证据入口", "日志定位"), "长证据保留入口")
+        assert_any(self, proof, ("展开", "具体错误", "定位问题"), "失败证据展开")
+        compact_command = r"(?m)^python3 -B -m unittest discover -s tests -p 'test_\*\.py'\s*$"
+        self.assertRegex(contributing, compact_command)
+        self.assertRegex(readme, compact_command)
+
     def test_context_compaction_adds_governance_and_result_value_review(self) -> None:
         skill = read(PACKAGE / "SKILL.md")
         learning = reference("learn.md")

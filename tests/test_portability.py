@@ -896,6 +896,7 @@ class PortabilityContractTest(unittest.TestCase):
             with (
                 mock.patch.object(installer, "verify_activated_install", return_value=0),
                 mock.patch.object(installer.shutil, "rmtree", side_effect=fail_partial_backup_cleanup),
+                mock.patch.object(sys, "stderr"),
             ):
                 result = installer.activate_stage(
                     parent,
@@ -924,7 +925,10 @@ class PortabilityContractTest(unittest.TestCase):
             stage = Path(tempfile.mkdtemp(prefix=".workflow-stage-", dir=parent))
             (stage / "SKILL.md").write_text("new\n", encoding="utf-8")
 
-            with mock.patch.object(Path, "rename", side_effect=OSError("simulated rename failure")):
+            with (
+                mock.patch.object(Path, "rename", side_effect=OSError("simulated rename failure")),
+                mock.patch.object(sys, "stderr"),
+            ):
                 result = installer.activate_stage(
                     parent,
                     stage,
