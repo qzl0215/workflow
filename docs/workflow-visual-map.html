@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Workflow 3.0 完整改造画面：四大核心环节、条件反馈、多 Agent 编排、单一控制面、交付与复盘边界。">
+<meta name="description" content="Workflow 3.5 完整改造画面：需求与方案确认、四大核心环节、项目初始化、交付与双层复盘边界。">
 <meta name="color-scheme" content="dark light">
 <title>Workflow 3.0｜完整改造画面</title>
 <style>
@@ -39,11 +39,11 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
-<body data-source-digest="d0dbf6a8d369">
-<!-- 生成文件，请勿手改。真源：SKILL.md、README.md、CHANGELOG.md、十一份 references 与 templates/work.md。 -->
+<body data-source-digest="eeba8a0850bb">
+<!-- 生成文件，请勿手改。真源：SKILL.md、README.md、CHANGELOG.md、十二份 references 与 templates/work.md。 -->
 <header class="topbar">
   <div class="shell">
-    <a class="brand" href="#top">workflow <span>V3.4.0</span></a>
+    <a class="brand" href="#top">workflow <span>V3.5.0</span></a>
     <nav class="nav" aria-label="页面导航">
       <a href="#architecture">主链</a><a href="#frame">框定反馈</a><a href="#agents">多 Agent</a><a href="#migration">迁移</a>
     </nav>
@@ -61,7 +61,7 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
         <p>这不是把旧流程换一组名字，而是把固定仪式改成渐进路由：最小动作足够就停，真实风险出现才加深，缺口只回到它的原因。</p>
         <div class="hero-facts">
           <div><b>4</b><span>核心结果环节</span></div><div><b>2</b><span>条件结果环节</span></div>
-          <div><b>11</b><span>渐进 reference</span></div><div><b>1</b><span>持久控制面</span></div>
+          <div><b>12</b><span>渐进 reference</span></div><div><b>3</b><span>确认凭证类型</span></div>
         </div>
       </aside>
     </div>
@@ -74,17 +74,17 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
         <p class="intro">阶段是进展投影，不是固定仪式。已有可信输入可以快速通过；发现缺口，就回到最早能修正它的位置。</p>
       </header>
       <div class="core-flow">
-        <article class="core-card"><span class="num">01 · FRAME</span><h3>目标框定</h3><p>默认用目标与验收形成契约就绪；其他边界确实影响方案时才补充。</p><code>references/frame.md</code></article>
-        <article class="core-card"><span class="num">02 · PLAN</span><h3>结果规划</h3><p>展示目标、推荐方案、验收和交付路径，经确认或委托形成方案就绪。</p><code>references/plan.md</code></article>
+        <article class="core-card"><span class="num">01 · FRAME</span><h3>目标框定</h3><p>需求澄清覆盖目标、验收和关键取舍；用户确认后才形成契约就绪。</p><code>references/frame.md</code></article>
+        <article class="core-card"><span class="num">02 · PLAN</span><h3>结果规划</h3><p>局部 Demo 与完整方案同屏确认；用户看过后说“开动”才形成方案就绪。</p><code>references/plan.md</code></article>
         <article class="core-card"><span class="num">03 · EXECUTE</span><h3>任务执行</h3><p>实施当前就绪责任，返回真实产物、候选证据和偏差。</p><code>references/execute.md</code></article>
         <article class="core-card"><span class="num">04 · PROVE</span><h3>结果验真</h3><p>读取实际产物，用新鲜证据证明任务、计划和用户结果。</p><code>references/prove.md</code></article>
       </div>
       <div class="conditional-flow">
         <article class="conditional-card"><b>条件：真实交付</b><p>只有提交、合并、部署、发布或外部写入才进入；验真不自动授权交付。</p></article>
         <div class="flow-arrow">→</div>
-        <article class="conditional-card"><b>条件：经验复盘</b><p>完成陈述后先做最小优化识别；有可行动发现时展示诊断与待确认方案，上下文压缩会追加治理检查。</p></article>
+        <article class="conditional-card"><b>条件：经验复盘</b><p>完成陈述后分别检查项目级与 workflow 级更新；双 no-op 直接结束，候选分别确认回灌。</p></article>
       </div>
-      <p class="boundary-note"><b>就绪链：</b>意见与设想先整理为候选目标；目标与验收清楚后形成契约就绪，推荐方案经用户确认或委托后形成方案就绪。浏览器视觉方案先展示局部保真的视觉演示。用户说“开动”后，一次确认在实施、验真和真实交付之间持续有效。</p>
+      <p class="boundary-note"><b>三道确认门：</b>需求澄清 → 需求确认；局部 Demo + 完整文字方案 → 方案确认；完成陈述 → 项目级 / workflow 级回灌确认。简单任务只在 &gt;90% 把握且无承重决策时合并前两门，仍需用户回复。</p>
     </div>
   </section>
 
@@ -111,8 +111,8 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
   <section class="section" id="agents">
     <div class="shell">
       <header class="section-head">
-        <div><p class="kicker">Plan → Confirm → Execute</p><h2>先让方案可判断，再按结果拆任务。</h2></div>
-        <p class="intro">用户先看到目标、推荐方案、验收和交付路径；确认后，内部任务再按真实依赖和净收益安排串并联。</p>
+        <div><p class="kicker">Demo + Plan → Confirm → Execute</p><h2>先看局部 Demo，再确认完整方案。</h2></div>
+        <p class="intro">线框、流程、状态、API、数据或命令演示按任务适配，与完整文字方案在同一次确认中出现；确认前只读调查，演示留在项目外隔离区。</p>
       </header>
       <div class="plan-grid">
         <article class="plan-panel">
@@ -154,7 +154,7 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
           <div class="work-lines"><div class="work-line accepted"></div><div class="work-line"></div><div class="work-line"></div><div class="work-line"></div></div>
         </div>
         <div class="control-rules">
-          <article class="control-rule"><span>01</span><div><b>只存当前投影</b><p>结果契约、计划依赖、状态、已接受证据、阻断和当前就绪责任。</p></div></article>
+          <article class="control-rule"><span>01</span><div><b>只存当前投影</b><p>结果契约、确认凭证、计划依赖、状态、已接受证据、阻断和当前就绪责任。</p></div></article>
           <article class="control-rule"><span>02</span><div><b>胶囊和回执默认内联</b><p>只有跨上下文恢复或昂贵、不可复现证据需要时才物化。</p></div></article>
           <article class="control-rule"><span>03</span><div><b>候选不能冒充接受</b><p>子 Agent 不并发改写控制面；协调者验收后才写入已接受区。</p></div></article>
           <article class="control-rule"><span>04</span><div><b>恢复不读流水账</b><p>被替代和拒绝的候选留在上下文，默认不进入长期注意力。</p></div></article>
@@ -172,7 +172,7 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
       <div class="boundary-grid">
         <article class="boundary-card"><b>Prove · 必经</b><p>证明当前产物和用户状态满足结果契约。</p><p>相同输入、环境和验证语义上的有效证据可以复用；跨真实环境边界必须 fresh。</p></article>
         <article class="boundary-card is-conditional"><b>Deliver · 条件</b><p>把同一候选写入真实目标，并在真实消费入口冒烟。</p><p>任一步失败就停止后续外部写入，保留可恢复现场。</p></article>
-        <article class="boundary-card is-conditional"><b>Learn · 条件</b><p>完成陈述后识别优化，只接受有未来触发场景、证据和唯一真源的经验。</p><p>有可行动发现就展示诊断与待确认方案；上下文压缩追加治理检查，无发现就是 no-op。</p></article>
+        <article class="boundary-card is-conditional"><b>Learn · 条件</b><p>完成陈述后分别识别项目级更新与 workflow 级更新；每项候选给出证据、影响、最小改动、责任者、验收与不处理代价。</p><p>双 no-op 不要求回复；回灌只建立独立新目标，重新走确认门。</p></article>
       </div>
       <p class="boundary-note"><b>默认顺序：</b>有交付时先 `prove → deliver → 完成陈述 → 优化识别`；有可行动发现才展开 `learn`，并把方案交给用户确认。无交付时也在 `prove` 与完成陈述后做同一识别。等待平台时可并行收集与交付结果无关的候选观察，但最终接受发生在交付事实之后。</p>
     </div>
@@ -188,7 +188,7 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
         <div class="status-top"><i></i><i></i><i></i></div>
         <div class="status-body">
           <p><b>结论｜</b><span class="done">新版工作流已安全启用，后续任务会按新规则执行</span></p>
-          <p><b>进度｜</b><span class="current">■■■■｜■— · 核心结果完成 · 已完成真实更新 · 本次无需复盘</span></p>
+          <p><b>进度｜</b><span class="current">■■■■｜■■ · 核心结果完成 · 已完成真实更新 · 项目级 / workflow 级均 no-op</span></p>
           <p><b>技能｜</b><span>任务执行 · 结果验真 · 真实交付</span></p>
           <p><b>成果｜</b><span class="done">✓ 旧版已安全替换 · ✓ 新版已确认可正常使用 · ✓ 没有产生重复安装</span></p>
           <p><b>路径｜</b><span>确认更新目标 → 安全替换旧版 → 验证实际可用</span></p>
@@ -202,10 +202,10 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
   <section class="section">
     <div class="shell">
       <header class="section-head">
-        <div><p class="kicker">十一份渐进路由器</p><h2>每份都从最小动作开始。</h2></div>
+        <div><p class="kicker">十二份渐进路由器</p><h2>每份都从最小动作开始。</h2></div>
         <p class="intro">四大环节不复制四棵同形目录树。每份 reference 自己说明停止条件、加深信号与缺口回流，模型只读当前决定所需内容。</p>
       </header>
-      <ul class="ref-grid"><li class="ref-item"><span class="ref-num">01</span><div><b>目标框定</b><p>用目标与验收形成契约就绪</p><code>references/frame.md</code></div><small>核心</small></li><li class="ref-item"><span class="ref-num">02</span><div><b>最小研究</b><p>只查会改变决定的事实</p><code>references/research.md</code></div><small>框定反馈</small></li><li class="ref-item"><span class="ref-num">03</span><div><b>深度质询</b><p>挑战承重假设与失败代价</p><code>references/grill.md</code></div><small>框定反馈</small></li><li class="ref-item"><span class="ref-num">04</span><div><b>体验探索</b><p>体验会改方向时才展开</p><code>references/experience.md</code></div><small>框定反馈</small></li><li class="ref-item"><span class="ref-num">05</span><div><b>结果规划</b><p>形成可确认方案、责任与依赖</p><code>references/plan.md</code></div><small>核心</small></li><li class="ref-item"><span class="ref-num">06</span><div><b>编排协作</b><p>选择串并联、角色与隔离</p><code>references/orchestrate.md</code></div><small>执行支撑</small></li><li class="ref-item"><span class="ref-num">07</span><div><b>执行任务</b><p>形成产物与候选回执</p><code>references/execute.md</code></div><small>核心</small></li><li class="ref-item"><span class="ref-num">08</span><div><b>恢复失败</b><p>失败后用新证据改路径</p><code>references/recover.md</code></div><small>执行支撑</small></li><li class="ref-item"><span class="ref-num">09</span><div><b>结果验真</b><p>接受覆盖结果的新鲜证据</p><code>references/prove.md</code></div><small>核心</small></li><li class="ref-item"><span class="ref-num">10</span><div><b>真实交付</b><p>把同一候选写入真实目标</p><code>references/deliver.md</code></div><small>条件</small></li><li class="ref-item"><span class="ref-num">11</span><div><b>经验复盘</b><p>完成后识别优化并形成待确认方案</p><code>references/learn.md</code></div><small>条件</small></li></ul>
+      <ul class="ref-grid"><li class="ref-item"><span class="ref-num">01</span><div><b>目标框定</b><p>用目标与验收形成契约就绪</p><code>references/frame.md</code></div><small>核心</small></li><li class="ref-item"><span class="ref-num">02</span><div><b>最小研究</b><p>只查会改变决定的事实</p><code>references/research.md</code></div><small>框定反馈</small></li><li class="ref-item"><span class="ref-num">03</span><div><b>深度质询</b><p>挑战承重假设与失败代价</p><code>references/grill.md</code></div><small>框定反馈</small></li><li class="ref-item"><span class="ref-num">04</span><div><b>体验探索</b><p>体验会改方向时才展开</p><code>references/experience.md</code></div><small>框定反馈</small></li><li class="ref-item"><span class="ref-num">05</span><div><b>结果规划</b><p>形成可确认方案、责任与依赖</p><code>references/plan.md</code></div><small>核心</small></li><li class="ref-item"><span class="ref-num">06</span><div><b>编排协作</b><p>选择串并联、角色与隔离</p><code>references/orchestrate.md</code></div><small>执行支撑</small></li><li class="ref-item"><span class="ref-num">07</span><div><b>执行任务</b><p>形成产物与候选回执</p><code>references/execute.md</code></div><small>核心</small></li><li class="ref-item"><span class="ref-num">08</span><div><b>恢复失败</b><p>失败后用新证据改路径</p><code>references/recover.md</code></div><small>执行支撑</small></li><li class="ref-item"><span class="ref-num">09</span><div><b>结果验真</b><p>接受覆盖结果的新鲜证据</p><code>references/prove.md</code></div><small>核心</small></li><li class="ref-item"><span class="ref-num">10</span><div><b>真实交付</b><p>把同一候选写入真实目标</p><code>references/deliver.md</code></div><small>条件</small></li><li class="ref-item"><span class="ref-num">11</span><div><b>经验复盘</b><p>完成后识别优化并形成待确认方案</p><code>references/learn.md</code></div><small>条件</small></li><li class="ref-item"><span class="ref-num">12</span><div><b>项目初始化</b><p>只在兼容代际候选出现时整体改造存量项目</p><code>references/initialize.md</code></div><small>条件</small></li></ul>
     </div>
   </section>
 
@@ -232,7 +232,7 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
         <div class="install-commands">git clone --depth 1 https://github.com/qzl0215/workflow.git<br>cd workflow<br>python3 scripts/install.py install --target "&lt;skills父目录&gt;"<br>python3 scripts/install.py check --target "&lt;skills父目录&gt;"</div>
       </div>
     </div>
-    <footer class="shell footer"><span>作者 zhonglin · 页面由正式真源生成，不手改。</span><span><a href="https://github.com/qzl0215/workflow">GitHub</a> · source sha256 <code>d0dbf6a8d369</code></span></footer>
+    <footer class="shell footer"><span>作者 zhonglin · 页面由正式真源生成，不手改。</span><span><a href="https://github.com/qzl0215/workflow">GitHub</a> · source sha256 <code>eeba8a0850bb</code></span></footer>
   </section>
 </main>
 <script>
