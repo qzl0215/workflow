@@ -21,40 +21,45 @@
 
 ## 必需检查
 
-开发时先运行与影响面相称的定向测试。最终候选只运行一次完整发布门：
-
-```bash
-python3 -B -m unittest discover -s tests -p 'test_*.py'
-python3 -B scripts/release_check.py
-```
-
-完整测试使用默认简洁输出，成功时保留范围与总结果，失败时测试框架会展开具体错误。`release_check.py` 负责 manifest、运行时 doctor、发布资产和生成视觉图的一致性检查。不要把同一检查拆成重复的发布仪式。视觉源变化时先生成页面：
+开发时先运行与影响面相称的定向测试。视觉源变化时先生成页面：
 
 ```bash
 python3 -B scripts/generate_visual_map.py
 python3 -B scripts/generate_visual_map.py --check
 ```
 
-运行时内容稳定后刷新逐文件身份；正式资产必须从一个完整、不可变的提交构建：
+运行时内容稳定后刷新逐文件身份并提交候选：
 
 ```bash
 python3 -B scripts/release_check.py --write-manifest
-python3 -B scripts/release_check.py --build-runtime /tmp/workflow.zip --git-ref <完整提交SHA>
+git add <本次文件>
+git commit
 ```
 
-`--git-ref` 拒绝分支名和标签，避免构建期间目标漂移。刷新 manifest 后需重新执行最终发布门，并从最终集成提交构建资产。
+完整测试与组合发布门由正式发布入口在最终 target-first 集成 SHA 上恰好运行一次；`release_check.py` 继续负责 manifest、运行时 doctor、发布资产和生成视觉图的一致性，发布入口只编排而不复制这些责任。
+
+发布入口内部执行下面这组完整门，维护者不要在同一源码身份上手工重复：
+
+```bash
+python3 -B -m unittest discover -s tests -p 'test_*.py'
+python3 -B scripts/release_check.py
+```
+
+成功时只保留范围与总结果，失败时展开具体错误和恢复入口。
 
 不得提交凭据、私有路径、生产报告、缓存、环境专属信息或组织内部发布实现。
 
 ## 正式发布
 
-发布先完成提交、合并、正式 immutable Release 和 Release 资产验证。发布由 Codex 本机执行时，随后**发布后立即同步本机 Codex**：
+候选已提交且工作树干净后，正式发布只有一个项目入口：
 
 ```bash
-python3 -B scripts/install.py sync --target codex
+python3 -B scripts/publish.py --version <版本> --yes
 ```
 
-`sync` 会识别本机 Codex 的 skills 目录，下载并核对 GitHub 最新正式版本，安全切换活动副本并确认可以正常使用，因此不再为同一输入追加一次重复检查。命令显示的本机版本与 Release tag 一致后，本机发布链才完成；新任务会使用新版本，已经打开的任务按宿主已有上下文继续运行。
+该入口复用 `safe_merge.py` 在最新 `main` 上形成 target-first 集成，只在该最终 SHA 上执行一次完整测试与组合门，然后以 `git push --atomic` 同时更新 `main` 和新版本标签。标签碰撞时失败关闭；已原子落地但 Release 尚未完成时，可从同一不可变标签恢复 Release、资产验证和本机同步，不重跑同一完整门。
+
+入口随后从该完整 SHA 构建唯一 `workflow.zip`，创建或核对正式 immutable Release，下载比对资产，再调用 `install.py sync --target codex`，也就是发布后立即同步本机 Codex。本机版本与 Release tag 一致后发布链才完成；新任务会使用新版本，已经打开的任务按宿主已有上下文继续运行。
 
 登录时及每 24 小时自动同步继续作为兜底，用于接收从其他机器发布的新版本。
 

@@ -1,14 +1,14 @@
 {
   "schema": 1,
   "name": "workflow",
-  "version": "3.6.0",
+  "version": "3.7.0",
   "entrypoint": "SKILL.md",
   "runtime": {
     "files": {
       "LICENSE": "sha256:6f56797263fb6d17252bfd325544640f0c173926558345975fed3973b1c7fc45",
       "NOTICE.md": "sha256:6de937c69cbda7c0e3b7814d3040b74be8a182ae9303ccd8eec7bd3ae581d42a",
-      "SKILL.md": "sha256:c23a69f2a4bace5c3d036f23fce7272652cae2797fe5ddd5dc22bfdf61f62d5f",
-      "references/deliver.md": "sha256:3c054c7fbe724a3a5e4098791b3d3b72fefa399ed1ce9e7e3cfc3ed80598d829",
+      "SKILL.md": "sha256:df2f876d3ea50afe425cc6ce6c1125c9ceebc1c4f6293786c4aa34a325d7e7f7",
+      "references/deliver.md": "sha256:cecd3763757b55facc2be9ef54bd4d33e6d3c04e6f89a4a42d6cb44d05006b4b",
       "references/execute.md": "sha256:c6c5fae4a933b6941bace9d9ab6dc2d6280b59e66e58b7e091b2009923749f36",
       "references/experience.md": "sha256:2e0801fe3c37cfb08cba03974e1b9726740d13eeda93ec36cf5f71cdb971d42d",
       "references/frame.md": "sha256:8cab828b8038ebec47dc1019a937d9d1c0c65ee1a049b66ca8794ad1068b3840",
@@ -22,7 +22,7 @@
       "references/research.md": "sha256:dff09c07acc249424dcbe783b3e578ad69f014195723edce6e47bfca652d4efa",
       "scripts/install.py": "sha256:3209fcdc2921868cf8c61889cea686b459b900438a4741f6d69294c113271d8e",
       "scripts/project_init.py": "sha256:8a3bde3ebbc0c94a11ceec5f5ea33e60d7ac4a5be3b22be2da2bbc2efbefe623",
-      "scripts/safe_merge.py": "sha256:2436b83280792e64a5d743c8270c9f9fd1de87fe0423301e900471926de74fc2",
+      "scripts/safe_merge.py": "sha256:25913aecd7e53fa710d4f34baa51e7a4bc39750df4d3db2c6589fe491c681b41",
       "scripts/work_context.py": "sha256:4e8774def03d06a27b11389d55a9340246c9b7cc1e12faf7fde5307c8daaf6aa",
       "scripts/workflow_doctor.py": "sha256:87d316c0313ddd5b7ff4863833ecf38c190c1c84bcb039d20287f6e24474e9ce",
       "templates/work.md": "sha256:ec4342fceff1fedb0f038d5a71019c925dce06b27eb3800307abae68414d8673"
@@ -37,10 +37,12 @@
     "SECURITY.md",
     "docs/workflow-visual-map.html",
     "scripts/generate_visual_map.py",
+    "scripts/publish.py",
     "scripts/release_check.py",
     "tests/test_portability.py",
     "tests/test_project_init.py",
     "tests/test_protocol_v3.py",
+    "tests/test_publish.py",
     "tests/test_release_v3.py",
     "tests/test_safe_merge.py",
     "tests/test_work_context.py"

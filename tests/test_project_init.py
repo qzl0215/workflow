@@ -55,7 +55,7 @@ class ProjectInitializationTest(unittest.TestCase):
             )
             self.assertEqual(recorded.returncode, 0, recorded.stdout)
             state = json.loads((project / STATE).read_text(encoding="utf-8"))
-            self.assertEqual(state["reviewed_with"], "3.6.0")
+            self.assertEqual(state["reviewed_with"], "3.7.0")
             state["reviewed_with"] = "3.6.1"
             (project / STATE).write_text(
                 json.dumps(state, ensure_ascii=False, indent=2) + "\n",

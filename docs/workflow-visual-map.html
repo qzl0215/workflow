@@ -39,11 +39,11 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
-<body data-source-digest="9597aca04c7c">
+<body data-source-digest="f2be3a63d976">
 <!-- 生成文件，请勿手改。真源：SKILL.md、README.md、CHANGELOG.md、十二份 references 与 templates/work.md。 -->
 <header class="topbar">
   <div class="shell">
-    <a class="brand" href="#top">workflow <span>V3.6.0</span></a>
+    <a class="brand" href="#top">workflow <span>V3.7.0</span></a>
     <nav class="nav" aria-label="页面导航">
       <a href="#architecture">主链</a><a href="#frame">框定反馈</a><a href="#agents">多 Agent</a><a href="#migration">迁移</a>
     </nav>
@@ -171,7 +171,7 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
       </header>
       <div class="boundary-grid">
         <article class="boundary-card"><b>Prove · 必经</b><p>证明当前产物和用户状态满足结果契约。</p><p>相同输入、环境和验证语义上的有效证据可以复用；跨真实环境边界必须 fresh。</p></article>
-        <article class="boundary-card is-conditional"><b>Deliver · 条件</b><p>把同一候选写入真实目标，并在真实消费入口冒烟。</p><p>任一步失败就停止后续外部写入，保留可恢复现场。</p></article>
+        <article class="boundary-card is-conditional"><b>Deliver · 条件</b><p>把同一候选写入真实目标，并在真实消费入口冒烟。</p><p>任一步失败就停止并保留现场；宿主拒绝时只按原载荷、目标和后续动作请求可解锁的精确授权。</p></article>
         <article class="boundary-card is-conditional"><b>Learn · 条件</b><p>完成陈述后分别识别项目级更新与 workflow 级更新；每项候选给出证据、影响、最小改动、责任者、验收与不处理代价。</p><p>双 no-op 不要求回复；回灌只建立独立新目标，重新走确认门。</p></article>
       </div>
       <p class="boundary-note"><b>默认顺序：</b>有交付时先 `prove → deliver → 完成陈述 → 优化识别`；有可行动发现才展开 `learn`，并把方案交给用户确认。无交付时也在 `prove` 与完成陈述后做同一识别。等待平台时可并行收集与交付结果无关的候选观察，但最终接受发生在交付事实之后。</p>
@@ -232,7 +232,7 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
         <div class="install-commands">git clone --depth 1 https://github.com/qzl0215/workflow.git<br>cd workflow<br>python3 scripts/install.py install --target "&lt;skills父目录&gt;"<br>python3 scripts/install.py check --target "&lt;skills父目录&gt;"</div>
       </div>
     </div>
-    <footer class="shell footer"><span>作者 zhonglin · 页面由正式真源生成，不手改。</span><span><a href="https://github.com/qzl0215/workflow">GitHub</a> · source sha256 <code>9597aca04c7c</code></span></footer>
+    <footer class="shell footer"><span>作者 zhonglin · 页面由正式真源生成，不手改。</span><span><a href="https://github.com/qzl0215/workflow">GitHub</a> · source sha256 <code>f2be3a63d976</code></span></footer>
   </section>
 </main>
 <script>

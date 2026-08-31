@@ -180,6 +180,7 @@ def write_receipt(state: dict[str, Any], *, status: str, transport_attempts: int
         "duration_seconds": round(time.time() - float(state["integration_started_epoch"]), 3),
         "remote": state["remote"],
         "target": state["target"],
+        "tag": state.get("tag") or None,
         "base_target_sha": state["base_target_sha"],
         "candidate_sha": state["candidate_sha"],
         "verified_integration_sha": verified_sha,
@@ -287,6 +288,24 @@ def fetch_target(remote: str, target: str) -> str | None:
     return git_output("rev-parse", "--verify", "FETCH_HEAD^{commit}")
 
 
+def remote_ref_sha(remote: str, ref: str) -> str | None:
+    result = subprocess.run(
+        ("git", "ls-remote", "--refs", remote, ref),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode:
+        raise RuntimeError(result.stderr.strip() or f"could not read remote ref {ref}")
+    records = [line.split() for line in result.stdout.splitlines() if line.strip()]
+    if not records:
+        return None
+    if len(records) != 1 or len(records[0]) != 2 or records[0][1] != ref:
+        raise RuntimeError(f"remote ref lookup was ambiguous for {ref}")
+    return records[0][0]
+
+
 def validate_repository_parameters(remote: str, target: str) -> None:
     if not remote or remote.startswith("-"):
         raise RuntimeError("remote must be a configured Git remote name")
@@ -294,6 +313,20 @@ def validate_repository_parameters(remote: str, target: str) -> None:
         raise RuntimeError("target must be a valid branch name")
     git_output("remote", "get-url", remote)
     git_output("check-ref-format", "--branch", target)
+
+
+def validate_tag(tag: str) -> None:
+    if not tag:
+        return
+    result = subprocess.run(
+        ("git", "check-ref-format", f"refs/tags/{tag}"),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode:
+        raise RuntimeError("--tag must be a valid Git tag name")
 
 
 def sync_baseline(args: argparse.Namespace) -> int:
@@ -335,6 +368,9 @@ def sync_baseline(args: argparse.Namespace) -> int:
 
 def start_merge_attempt(args: argparse.Namespace, candidate_branch: str, candidate_sha: str, attempt: int) -> int:
     remote_ref = f"{args.remote}/{args.target}"
+    if args.tag and remote_ref_sha(args.remote, f"refs/tags/{args.tag}") is not None:
+        print(f"safe_merge: tag already exists: {args.tag}", file=sys.stderr)
+        return EXIT_PRECONDITION
     base_target_sha = fetch_target(args.remote, args.target)
     if base_target_sha is None:
         return EXIT_PRECONDITION
@@ -360,6 +396,7 @@ def start_merge_attempt(args: argparse.Namespace, candidate_branch: str, candida
         "original_branch": candidate_branch,
         "remote": args.remote,
         "target": args.target,
+        "tag": args.tag,
         "integration_started_epoch": time.time(),
     }
     save_state(state)
@@ -405,6 +442,12 @@ def finalize_integration(
     remote_ref = f"{remote}/{target}"
     verified_sha = str(state["verified_integration_sha"])
     for transport_attempt in range(1, args.max_retries + 1):
+        tag = str(state.get("tag") or "")
+        remote_tag_sha = remote_ref_sha(remote, f"refs/tags/{tag}") if tag else None
+        if remote_tag_sha is not None and remote_tag_sha != verified_sha:
+            print(f"safe_merge: tag already exists: {tag}", file=sys.stderr)
+            restore_candidate(state, delete_integration=True)
+            return EXIT_PRECONDITION
         current_target_sha = fetch_target(remote, target)
         if current_target_sha is None:
             if transport_attempt < args.max_retries:
@@ -413,6 +456,12 @@ def finalize_integration(
             print("safe_merge: transport unavailable; verified integration retained for --continue.")
             return EXIT_BUSY
         if current_target_sha == verified_sha:
+            if tag and remote_tag_sha != verified_sha:
+                print(
+                    "safe_merge: target contains the verified integration but the requested tag is absent.",
+                    file=sys.stderr,
+                )
+                return EXIT_PRECONDITION
             receipt = write_receipt(
                 state, status="pushed", transport_attempts=transport_attempt - 1
             )
@@ -429,13 +478,20 @@ def finalize_integration(
                 file=sys.stderr,
             )
             return EXIT_VERIFY
-        pushed = command("git", "push", remote, f"{verified_sha}:refs/heads/{target}")
+        push_parts = ["git", "push"]
+        if tag:
+            push_parts.append("--atomic")
+        push_parts.extend((remote, f"{verified_sha}:refs/heads/{target}"))
+        if tag:
+            push_parts.append(f"{verified_sha}:refs/tags/{tag}")
+        pushed = command(*push_parts)
         if pushed.returncode == 0:
             receipt = write_receipt(
                 state, status="pushed", transport_attempts=transport_attempt
             )
             restore_candidate(state, delete_integration=True)
-            print(f"safe_merge: pushed target-first merge to {remote_ref}; receipt {receipt}.")
+            action = "atomically pushed target and tag" if tag else "pushed target-first merge"
+            print(f"safe_merge: {action} to {remote_ref}; receipt {receipt}.")
             return 0
         if transport_attempt < args.max_retries:
             print("safe_merge: push failed; retrying the same verified integration.")
@@ -450,6 +506,8 @@ def continue_merge(args: argparse.Namespace) -> int:
     state = load_state()
     if args.remote != state.get("remote") or args.target != state.get("target"):
         raise RuntimeError("--continue remote/target does not match the preserved integration")
+    if args.tag != str(state.get("tag") or ""):
+        raise RuntimeError("--continue tag does not match the preserved integration")
     if git_output("branch", "--show-current") != state.get("integration_branch"):
         raise RuntimeError("--continue must run from the preserved integration branch")
     lease = IntegrationLease(integration_owner())
@@ -566,6 +624,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-retries", type=int, default=5)
     parser.add_argument("--continue", dest="continue_merge", action="store_true")
     parser.add_argument("--push", action="store_true", help="push the verified merge to the target")
+    parser.add_argument("--tag", default="", help="atomically create this tag with the target push")
     lifecycle = parser.add_mutually_exclusive_group()
     lifecycle.add_argument("--sync-baseline", action="store_true")
     lifecycle.add_argument("--create-worktree")
@@ -577,6 +636,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def validate_mode(args: argparse.Namespace) -> None:
+    if args.tag and not args.push:
+        raise RuntimeError("--tag requires --push")
     if args.sync_baseline and (
         args.continue_merge
         or args.push
@@ -584,12 +645,14 @@ def validate_mode(args: argparse.Namespace) -> None:
         or args.branch
         or args.task_id
         or args.yes
+        or args.tag
     ):
         raise RuntimeError("--sync-baseline cannot be combined with integration or worktree options")
-    if args.create_worktree and (args.continue_merge or args.push or args.verify or args.yes):
+    if args.create_worktree and (args.continue_merge or args.push or args.verify or args.yes or args.tag):
         raise RuntimeError("--create-worktree cannot be combined with integration options")
     if args.cleanup_worktree and (
         args.continue_merge or args.push or args.verify or args.branch
+        or args.tag
     ):
         raise RuntimeError("--cleanup-worktree cannot be combined with integration options")
     if not (args.sync_baseline or args.create_worktree or args.cleanup_worktree) and (
@@ -608,6 +671,7 @@ def main() -> int:
         if git_output("rev-parse", "--is-inside-work-tree") != "true":
             raise RuntimeError("not inside a git worktree")
         validate_repository_parameters(args.remote, args.target)
+        validate_tag(args.tag)
         if args.sync_baseline:
             return sync_baseline(args)
         if args.create_worktree:
