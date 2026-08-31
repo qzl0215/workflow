@@ -34,6 +34,7 @@ RUNTIME_FILES = {
     *(f"references/{name}" for name in REFERENCES),
     "templates/work.md",
     "scripts/install.py",
+    "scripts/safe_merge.py",
     "scripts/work_context.py",
     "scripts/workflow_doctor.py",
 }
@@ -47,7 +48,6 @@ SOURCE_ONLY_FILES = {
     "docs/workflow-visual-map.html",
     "scripts/generate_visual_map.py",
     "scripts/release_check.py",
-    "scripts/safe_merge.py",
     "tests/test_portability.py",
     "tests/test_protocol_v3.py",
     "tests/test_release_v3.py",
@@ -115,7 +115,7 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
         self.assertEqual(set(value), {"schema", "name", "version", "entrypoint", "runtime", "source_only"})
         self.assertEqual(value["schema"], 1)
         self.assertEqual(value["name"], "workflow")
-        self.assertEqual(value["version"], "3.3.0")
+        self.assertEqual(value["version"], "3.4.0")
         self.assertEqual(value["entrypoint"], "SKILL.md")
         self.assertEqual(set(value["runtime"]), {"files"})
         files = value["runtime"]["files"]
@@ -139,6 +139,15 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
                 if path.is_file()
             }
             self.assertEqual(actual, RUNTIME_FILES | {MANIFEST})
+            help_result = run(
+                sys.executable,
+                "-B",
+                str(runtime / "scripts/safe_merge.py"),
+                "--help",
+                cwd=runtime,
+            )
+            self.assertEqual(help_result.returncode, 0, help_result.stdout)
+            self.assertIn("--sync-baseline", help_result.stdout)
 
     def test_doctor_fails_on_missing_extra_hash_and_partial_source(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
