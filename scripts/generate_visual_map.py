@@ -269,7 +269,7 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
           <div class="feedback-list">
             <article class="feedback-card"><code>research</code><div><h3>事实不足才做最小研究</h3><p>只查会改变当前决定的事实；达到停止条件就结束，不追求资料穷尽。</p></div></article>
             <article class="feedback-card"><code>grill-me</code><div><h3>承重决定仍不稳才深度质询</h3><p>用反例、失败场景、隐藏代价和可逆替代方向挑战假设，直到边际信息不再改变推荐。</p></div></article>
-            <article class="feedback-card"><code>experience</code><div><h3>体验会改变方向才探索</h3><p>用户旅程、信息结构或交互方向决定成败时展开；局部美化不重开目标。</p></div></article>
+            <article class="feedback-card"><code>experience</code><div><h3>现有页面局部修改走真实预览</h3><p>在真实源码划分改动面与保护面，优先使用复用真实登录态的只读独立验收入口；只有承重方向分歧才制作独立概念稿。</p></div></article>
           </div>
           <p class="feedback-rule"><b>并行例外：</b>事实线彼此独立、能隔离且明显缩短关键路径时，可以并行取得候选输入；目标责任者统一合成。新结论只重开受影响部分，不全量循环。</p>
         </div>
