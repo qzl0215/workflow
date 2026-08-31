@@ -5,7 +5,7 @@
 `workflow` 是一个可独立安装的中文 AI 工作协议。3.0 不再把模型固定在细密的七阶段流程里，而是守住结果、风险、授权和证据四类边界，让能力更强的模型自行选择研究方法、拆分粒度、并行方式与验证组合。
 
 作者：zhonglin · MIT License
-当前协议版本：`3.7.0`
+当前协议版本：`3.8.0`
 
 [打开完整可视化](docs/workflow-visual-map.html) · [查看正式协议](SKILL.md)
 
@@ -88,6 +88,8 @@ workflow 先把用户的意见、设想或原则整理成候选目标。需求�
 - 仓库地址、remote、目标分支、验证命令和发布/部署或 reconciler 都写在项目真源中。workflow 只提供平台中立的方法与机械护栏，不保存具体项目参数。
 
 需要发布版本的项目可以让自己的单一发布入口薄编排这些现有责任者；本仓库使用 `python3 -B scripts/publish.py --version <版本> --yes`。它只负责把 target-first 集成、最终集成 SHA 上的一次完整门、主分支与新标签的原子推送、Release 资产、本机同步串成一条线，不复制验证、合并、构建或安装逻辑。同版本并发发布只有一个原子推送能成功，其余执行者在标签碰撞后停止并基于最新主线重新规划。
+
+最终集成验证失败但现场仍干净时，`safe_merge.py` 会自动回到原候选分支、解除临时状态锁，并保留失败集成分支与日志供复查；冲突或验证副作用让现场变脏时仍原地失败关闭，不用自动切换掩盖待恢复内容。
 
 因此，一个成熟项目无需每次重新发现发布方式或重复运行流程体检；稳定契约由项目维护，任务只执行与本次变化相称的同步、验证、集成和线上检查。
 
@@ -202,7 +204,7 @@ python3 scripts/install.py enable-auto-update --target "/path/to/agent/skills"
 错过 2.26 时，不要手工删除旧文件再把 ZIP 覆盖进去。建议使用临时克隆：
 
 ```bash
-git clone --depth 1 --branch 3.7.0 https://github.com/qzl0215/workflow.git workflow-3
+git clone --depth 1 --branch 3.8.0 https://github.com/qzl0215/workflow.git workflow-3
 cd workflow-3
 python3 scripts/install.py update --target "/path/to/agent/skills"
 python3 scripts/install.py check --target "/path/to/agent/skills"

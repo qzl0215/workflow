@@ -278,8 +278,106 @@ class SafeMergeIntegrationTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 4, result.stdout)
         self.assertIn("verification changed the integration worktree", result.stdout)
+        self.assertTrue(
+            run("git", "branch", "--show-current", cwd=candidate).stdout.strip().startswith(
+                "workflow/integrate/"
+            )
+        )
+        self.assertTrue((candidate / ".git" / "workflow-integration-state.json").exists())
         run("git", "fetch", "origin", "main", cwd=candidate)
         self.assertEqual(run("git", "rev-parse", "origin/main", cwd=candidate).stdout.strip(), remote_before)
+
+    def test_clean_verification_failure_restores_candidate_and_retains_diagnostics(self) -> None:
+        candidate = self.clone("clean-verifier-failure")
+        self.branch(candidate, "feature-clean-verifier-failure")
+        (candidate / "a.txt").write_text("candidate change\n")
+        run("git", "add", "a.txt", cwd=candidate)
+        run("git", "commit", "-m", "candidate change", cwd=candidate)
+        candidate_sha = run("git", "rev-parse", "HEAD", cwd=candidate).stdout.strip()
+        remote_before = run("git", "rev-parse", "origin/main", cwd=candidate).stdout.strip()
+        verify_command = f"{sys.executable} -c \"print('CLEAN_FAILURE_MARKER'); raise SystemExit(9)\""
+
+        result = run(
+            sys.executable,
+            "-B",
+            str(SCRIPT),
+            "--target",
+            "main",
+            "--remote",
+            "origin",
+            "--verify",
+            verify_command,
+            "--push",
+            cwd=candidate,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 4, result.stdout)
+        self.assertIn("verification failed", result.stdout)
+        self.assertIn("restored candidate", result.stdout)
+        self.assertEqual(
+            run("git", "branch", "--show-current", cwd=candidate).stdout.strip(),
+            "feature-clean-verifier-failure",
+        )
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=candidate).stdout.strip(), candidate_sha)
+        retained = run(
+            "git", "branch", "--list", "workflow/integrate/*", cwd=candidate
+        ).stdout.strip().splitlines()
+        self.assertEqual(len(retained), 1, retained)
+        integration_sha = run(
+            "git", "rev-parse", retained[0].lstrip("* "), cwd=candidate
+        ).stdout.strip()
+        common_dir = Path(run("git", "rev-parse", "--git-common-dir", cwd=candidate).stdout.strip())
+        if not common_dir.is_absolute():
+            common_dir = (candidate / common_dir).resolve()
+        failure_log = common_dir / "codex" / "safe-merge-logs" / f"{integration_sha}.log"
+        self.assertTrue(failure_log.is_file())
+        self.assertIn("CLEAN_FAILURE_MARKER", failure_log.read_text())
+        self.assertFalse((candidate / ".git" / "workflow-integration-state.json").exists())
+        self.assertFalse((candidate / ".git" / "workflow-merge.lock").exists())
+        run("git", "fetch", "origin", "main", cwd=candidate)
+        self.assertEqual(run("git", "rev-parse", "origin/main", cwd=candidate).stdout.strip(), remote_before)
+        retried = self.safe_merge(candidate, "--push")
+        self.assertEqual(retried.returncode, 0, retried.stdout)
+        self.assertEqual(
+            run("git", "branch", "--show-current", cwd=candidate).stdout.strip(),
+            "feature-clean-verifier-failure",
+        )
+
+    def test_failed_verifier_with_git_operation_preserves_integration_for_recovery(self) -> None:
+        candidate = self.clone("git-operation-verifier-failure")
+        self.branch(candidate, "feature-git-operation-verifier-failure")
+        (candidate / "a.txt").write_text("candidate change\n")
+        run("git", "add", "a.txt", cwd=candidate)
+        run("git", "commit", "-m", "candidate change", cwd=candidate)
+        verify_command = (
+            f"{sys.executable} -c \"from pathlib import Path; "
+            "Path('.git/CHERRY_PICK_HEAD').write_text('0' * 40); raise SystemExit(9)\""
+        )
+
+        result = run(
+            sys.executable,
+            "-B",
+            str(SCRIPT),
+            "--target",
+            "main",
+            "--remote",
+            "origin",
+            "--verify",
+            verify_command,
+            "--push",
+            cwd=candidate,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 4, result.stdout)
+        self.assertTrue(
+            run("git", "branch", "--show-current", cwd=candidate).stdout.strip().startswith(
+                "workflow/integrate/"
+            )
+        )
+        self.assertTrue((candidate / ".git" / "workflow-integration-state.json").exists())
+        self.assertTrue((candidate / ".git" / "CHERRY_PICK_HEAD").exists())
 
     def test_verification_cannot_replace_the_integration_commit(self) -> None:
         candidate = self.clone("commit-verifier")
