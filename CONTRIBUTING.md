@@ -46,6 +46,18 @@ python3 -B scripts/release_check.py --build-runtime /tmp/workflow.zip --git-ref 
 
 不得提交凭据、私有路径、生产报告、缓存、环境专属信息或组织内部发布实现。
 
+## 正式发布
+
+发布先完成提交、合并、正式 immutable Release 和 Release 资产验证。发布由 Codex 本机执行时，随后**发布后立即同步本机 Codex**：
+
+```bash
+python3 -B scripts/install.py sync --target codex
+```
+
+`sync` 会识别本机 Codex 的 skills 目录，下载并核对 GitHub 最新正式版本，安全切换活动副本并确认可以正常使用，因此不再为同一输入追加一次重复检查。命令显示的本机版本与 Release tag 一致后，本机发布链才完成；新任务会使用新版本，已经打开的任务按宿主已有上下文继续运行。
+
+登录时及每 24 小时自动同步继续作为兜底，用于接收从其他机器发布的新版本。
+
 ## 合并请求说明
 
 说明用户结果、删除或合并了哪些复杂度、实际验证结果、兼容影响与残余风险。无关清理应与当前变更分开。

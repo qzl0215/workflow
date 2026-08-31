@@ -5,7 +5,7 @@
 `workflow` 是一个可独立安装的中文 AI 工作协议。3.0 不再把模型固定在细密的七阶段流程里，而是守住结果、风险、授权和证据四类边界，让能力更强的模型自行选择研究方法、拆分粒度、并行方式与验证组合。
 
 作者：zhonglin · MIT License
-当前协议版本：`3.1.0`
+当前协议版本：`3.2.0`
 
 [打开完整可视化](docs/workflow-visual-map.html) · [查看正式协议](SKILL.md)
 
@@ -178,7 +178,7 @@ python3 scripts/install.py enable-auto-update --target "/path/to/agent/skills"
 错过 2.26 时，不要手工删除旧文件再把 ZIP 覆盖进去。建议使用临时克隆：
 
 ```bash
-git clone --depth 1 --branch 3.1.0 https://github.com/qzl0215/workflow.git workflow-3
+git clone --depth 1 --branch 3.2.0 https://github.com/qzl0215/workflow.git workflow-3
 cd workflow-3
 python3 scripts/install.py update --target "/path/to/agent/skills"
 python3 scripts/install.py check --target "/path/to/agent/skills"
@@ -194,6 +194,14 @@ python3 scripts/install.py check --target "/path/to/agent/skills"
 python3 scripts/install.py sync --target "/path/to/agent/skills"
 python3 scripts/install.py disable-auto-update
 ```
+
+在 Codex 本机可以使用稳定名称，不需要写入个人绝对路径：
+
+```bash
+python3 scripts/install.py sync --target codex
+```
+
+同步更新的是 Codex 在磁盘上的活动 workflow。新任务会使用新版本；已经打开的任务可能继续使用启动时载入的上下文，需要立即核对新规则时，新建任务即可，宿主仍未重新发现时再重启 Codex。
 
 永久卸载会删除唯一活动副本，需要显式确认：
 

@@ -24,6 +24,7 @@ RUNTIME_FILES = workflow_doctor.EXPECTED_RUNTIME_FILES
 SOURCE_ONLY_FILES = frozenset(
     {
         ".gitignore",
+        "AGENTS.md",
         "README.md",
         "SECURITY.md",
         "CONTRIBUTING.md",

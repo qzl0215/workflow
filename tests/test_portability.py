@@ -163,6 +163,28 @@ class PortabilityContractTest(unittest.TestCase):
         for token in ("single active package", "immutable GitHub Release", "SHA-256"):
             self.assertIn(token, security)
 
+    def test_release_contract_activates_the_new_release_in_local_codex(self) -> None:
+        contributing = (PACKAGE / "CONTRIBUTING.md").read_text(encoding="utf-8")
+        for token in (
+            "发布后立即同步本机 Codex",
+            "sync --target codex",
+            "新任务",
+        ):
+            self.assertIn(token, contributing)
+
+        agents = (PACKAGE / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("CONTRIBUTING.md", agents)
+        self.assertIn("本机 Codex", agents)
+
+    def test_named_codex_target_resolves_the_active_codex_skills_directory(self) -> None:
+        installer = load_installer_module()
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp) / "home"
+            expected = home / ".codex" / "skills"
+            with mock.patch.object(installer.Path, "home", return_value=home):
+                actual = installer.resolve_target("codex", "sync")
+            self.assertEqual(actual, expected.resolve())
+
     def test_installer_install_check_update_and_uninstall_leave_one_or_zero_copies(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             target = Path(temp) / "Agent Skills"
