@@ -31,7 +31,7 @@ REFERENCE_SPECS = (
     ("恢复失败", "recover.md", "执行支撑", "失败后用新证据改路径"),
     ("结果验真", "prove.md", "核心", "接受覆盖结果的新鲜证据"),
     ("真实交付", "deliver.md", "条件", "把同一候选写入真实目标"),
-    ("经验复盘", "learn.md", "条件", "只沉淀会改变未来行动的经验"),
+    ("经验复盘", "learn.md", "条件", "压缩必查，只沉淀可行动经验"),
 )
 
 AGENT_PROMPT = (
@@ -252,7 +252,7 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
       <div class="conditional-flow">
         <article class="conditional-card"><b>条件：真实交付</b><p>只有提交、合并、部署、发布或外部写入才进入；验真不自动授权交付。</p></article>
         <div class="flow-arrow">→</div>
-        <article class="conditional-card"><b>条件：经验复盘</b><p>只有事实能改变未来行动才进入；没有复用价值就是 no-op。</p></article>
+        <article class="conditional-card"><b>条件：经验复盘</b><p>事实能改变未来行动时进入；发生上下文压缩时必须检查治理与无效动作，检查后仍可 no-op。</p></article>
       </div>
     </div>
   </section>
@@ -341,9 +341,9 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
       <div class="boundary-grid">
         <article class="boundary-card"><b>Prove · 必经</b><p>证明当前产物和用户状态满足结果契约。</p><p>相同输入、环境和验证语义上的有效证据可以复用；跨真实环境边界必须 fresh。</p></article>
         <article class="boundary-card is-conditional"><b>Deliver · 条件</b><p>把同一候选写入真实目标，并在真实消费入口冒烟。</p><p>任一步失败就停止后续外部写入，保留可恢复现场。</p></article>
-        <article class="boundary-card is-conditional"><b>Learn · 条件</b><p>只接受有未来触发场景、证据和唯一真源的经验。</p><p>没有会改变未来行动的价值就是 no-op。</p></article>
+        <article class="boundary-card is-conditional"><b>Learn · 条件</b><p>只接受有未来触发场景、证据和唯一真源的经验。</p><p>上下文压缩强制检查 workflow / 项目 harness 的冗余、真源、导航与无效动作；无可行动发现就是 no-op。</p></article>
       </div>
-      <p class="boundary-note"><b>默认顺序：</b>有交付时先 `prove → deliver`，有复用价值信号才进入 `learn`；无交付时也在 `prove` 后先过同一复盘门。等待平台时可并行收集与交付结果无关的候选观察，但最终接受发生在交付事实之后。</p>
+      <p class="boundary-note"><b>默认顺序：</b>有交付时先 `prove → deliver`，有复用价值信号才进入 `learn`；上下文压缩始终构成该信号。无交付时也在 `prove` 后先过同一复盘门。等待平台时可并行收集与交付结果无关的候选观察，但最终接受发生在交付事实之后。</p>
     </div>
   </section>
 
