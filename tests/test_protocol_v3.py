@@ -92,7 +92,7 @@ class WorkflowV3MainlineTest(unittest.TestCase):
         skill = read(PACKAGE / "SKILL.md")
         version = re.search(r"(?m)^version:\s*(\S+)\s*$", skill)
         self.assertIsNotNone(version)
-        self.assertEqual(version.group(1), "3.0.0")
+        self.assertEqual(version.group(1), "3.0.1")
 
         positions = [skill.index(outcome) for outcome in (*CORE_OUTCOMES, *CONDITIONAL_OUTCOMES)]
         self.assertEqual(positions, sorted(positions))
@@ -413,12 +413,14 @@ class DeliveryLearningAndTruthTest(unittest.TestCase):
 
 
 class UserCommunicationAndLanguageTest(unittest.TestCase):
-    def test_user_snapshot_keeps_four_lines_without_repeating_unchanged_state(self) -> None:
+    def test_user_snapshot_is_mandatory_at_key_exits_without_repeating_unchanged_state(self) -> None:
         skill = read(PACKAGE / "SKILL.md")
-        for label in ("进度", "技能", "成果", "路径"):
+        for label in ("结论", "进度", "技能", "成果", "路径"):
             self.assertRegex(skill, rf"(?m)^(?:>\s*)?{label}[｜|]", label)
-        assert_any(self, skill, ("状态变化", "阶段变化", "实质变化"), "快照触发")
-        assert_any(self, skill, ("交回控制权", "等待用户", "用户交接"), "交接触发")
+        for trigger in ("首次", "实质变化", "真实阻塞", "最终交付", "交回控制权"):
+            self.assertIn(trigger, skill, f"关键出口缺少：{trigger}")
+        assert_any(self, skill, ("必须展示", "强制展示", "必须使用"), "关键出口强制画面")
+        assert_any(self, skill, ("同一轮", "轻量任务"), "轻量任务合并播报")
         assert_any(
             self,
             skill,
@@ -428,7 +430,34 @@ class UserCommunicationAndLanguageTest(unittest.TestCase):
 
         path_lines = [line for line in skill.splitlines() if re.match(r"^(?:>\s*)?路径[｜|]", line)]
         self.assertTrue(path_lines)
-        self.assertTrue(any(re.search(r"\b[PT]\d+\b", line) for line in path_lines))
+        result_lines = [line for line in skill.splitlines() if re.match(r"^(?:>\s*)?成果[｜|]", line)]
+        self.assertTrue(result_lines)
+        sample = "\n".join(result_lines + path_lines)
+        for internal in ("runtime", "Manifest", "doctor", "SHA", "P01", "T03"):
+            self.assertNotIn(internal, sample, f"用户主画面泄漏内部术语：{internal}")
+        assert_any(
+            self,
+            skill,
+            ("业务含义", "业务人员", "用户能理解", "对用户意味着什么"),
+            "业务阅读意义",
+        )
+        assert_any(
+            self,
+            skill,
+            ("技术证据", "技术细节", "内部标识"),
+            "技术信息降级",
+        )
+        assert_any(
+            self,
+            skill,
+            ("发生了什么", "现在是否可用", "是否需要行动"),
+            "主视图决策价值",
+        )
+        self.assertRegex(
+            skill,
+            r"内部\s*`?P/T`?.{0,40}(?:补充|定位价值)",
+            "内部任务编号只能按需作为定位补充",
+        )
 
     def test_human_readable_protocol_body_is_chinese(self) -> None:
         allowed = {
