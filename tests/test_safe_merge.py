@@ -588,6 +588,101 @@ class SafeMergeIntegrationTest(unittest.TestCase):
         self.assertEqual(receipt["status"], "pushed")
         self.assertEqual(receipt["transport_attempts"], 2)
 
+    def test_atomic_publish_moves_target_and_new_tag_to_same_verified_sha(self) -> None:
+        candidate = self.clone("atomic-publish")
+        self.branch(candidate, "feature-atomic-publish")
+        (candidate / "a.txt").write_text("atomic publish\n")
+        run("git", "add", "a.txt", cwd=candidate)
+        run("git", "commit", "-m", "atomic publish", cwd=candidate)
+
+        result = self.safe_merge(candidate, "--push", "--tag", "3.7.0")
+
+        self.assertEqual(result.returncode, 0, result.stdout)
+        refs = run(
+            "git",
+            "ls-remote",
+            str(self.remote),
+            "refs/heads/main",
+            "refs/tags/3.7.0",
+            cwd=self.root,
+        ).stdout.splitlines()
+        resolved = {line.split()[1]: line.split()[0] for line in refs}
+        self.assertEqual(resolved["refs/heads/main"], resolved["refs/tags/3.7.0"])
+        self.assertIn("atomically pushed", result.stdout)
+
+    def test_existing_release_tag_fails_closed_without_moving_target(self) -> None:
+        run("git", "tag", "3.7.0", cwd=self.seed)
+        run("git", "push", "origin", "refs/tags/3.7.0", cwd=self.seed)
+        remote_before = run(
+            "git", "ls-remote", str(self.remote), "refs/heads/main", cwd=self.root
+        ).stdout.split()[0]
+        candidate = self.clone("tag-collision")
+        self.branch(candidate, "feature-tag-collision")
+        (candidate / "a.txt").write_text("must not publish\n")
+        run("git", "add", "a.txt", cwd=candidate)
+        run("git", "commit", "-m", "tag collision", cwd=candidate)
+
+        result = self.safe_merge(candidate, "--push", "--tag", "3.7.0")
+
+        self.assertEqual(result.returncode, 2, result.stdout)
+        self.assertIn("tag already exists", result.stdout)
+        remote_after = run(
+            "git", "ls-remote", str(self.remote), "refs/heads/main", cwd=self.root
+        ).stdout.split()[0]
+        self.assertEqual(remote_after, remote_before)
+
+    def test_losing_same_tag_race_restores_candidate_for_replanning(self) -> None:
+        candidate = self.clone("tag-race")
+        self.branch(candidate, "feature-tag-race")
+        (candidate / "a.txt").write_text("tag race\n")
+        run("git", "add", "a.txt", cwd=candidate)
+        run("git", "commit", "-m", "tag race", cwd=candidate)
+        candidate_sha = run("git", "rev-parse", "HEAD", cwd=candidate).stdout.strip()
+        base_sha = run(
+            "git", "ls-remote", str(self.remote), "refs/heads/main", cwd=self.root
+        ).stdout.split()[0]
+        hook = candidate / ".git" / "hooks" / "pre-push"
+        marker = self.root / "race-created"
+        hook.write_text(
+            "#!/bin/sh\n"
+            f"if [ ! -f '{marker}' ]; then\n"
+            f"  : > '{marker}'\n"
+            f"  git --git-dir='{self.remote}' update-ref refs/tags/3.7.0 {base_sha}\n"
+            "fi\n"
+            "exit 0\n"
+        )
+        hook.chmod(0o755)
+
+        result = self.safe_merge(candidate, "--push", "--tag", "3.7.0", "--max-retries", "2")
+
+        self.assertEqual(result.returncode, 2, result.stdout)
+        self.assertIn("tag already exists", result.stdout)
+        self.assertEqual(
+            run("git", "branch", "--show-current", cwd=candidate).stdout.strip(),
+            "feature-tag-race",
+        )
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=candidate).stdout.strip(), candidate_sha)
+        self.assertFalse((candidate / ".git" / "workflow-integration-state.json").exists())
+        remote_main = run(
+            "git", "ls-remote", str(self.remote), "refs/heads/main", cwd=self.root
+        ).stdout.split()[0]
+        self.assertEqual(remote_main, base_sha)
+
+    def test_tag_requires_push_and_valid_tag_name(self) -> None:
+        candidate = self.clone("invalid-tag")
+        self.branch(candidate, "feature-invalid-tag")
+        (candidate / "a.txt").write_text("invalid tag\n")
+        run("git", "add", "a.txt", cwd=candidate)
+        run("git", "commit", "-m", "invalid tag", cwd=candidate)
+
+        missing_push = self.safe_merge(candidate, "--tag", "3.7.0")
+        invalid_name = self.safe_merge(candidate, "--push", "--tag", "bad tag")
+
+        self.assertEqual(missing_push.returncode, 2, missing_push.stdout)
+        self.assertIn("--tag requires --push", missing_push.stdout)
+        self.assertEqual(invalid_name.returncode, 2, invalid_name.stdout)
+        self.assertIn("valid Git tag", invalid_name.stdout)
+
     def test_multi_commit_conflict_is_resolved_once_without_rewriting_candidate(self) -> None:
         first = self.clone("conflict-first")
         second = self.clone("conflict-second")

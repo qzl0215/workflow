@@ -5,7 +5,7 @@
 `workflow` 是一个可独立安装的中文 AI 工作协议。3.0 不再把模型固定在细密的七阶段流程里，而是守住结果、风险、授权和证据四类边界，让能力更强的模型自行选择研究方法、拆分粒度、并行方式与验证组合。
 
 作者：zhonglin · MIT License
-当前协议版本：`3.6.0`
+当前协议版本：`3.7.0`
 
 [打开完整可视化](docs/workflow-visual-map.html) · [查看正式协议](SKILL.md)
 
@@ -86,6 +86,8 @@ workflow 先把用户的意见、设想或原则整理成候选目标。需求�
 - 首次写入前，从项目真源读取远端与目标分支。干净且尚未开始的现场，以项目工作树为当前目录，通过 `python3 -B <已安装 workflow 根>/scripts/safe_merge.py --sync-baseline --remote <项目远端> --target <项目目标>` fast-forward 到服务器最新目标；已有本地工作时不自动 rebase。
 - 多线程候选默认保持自身提交不变，按最新目标逐个 target-first 合并并对确切集成 SHA 验证；GitHub/GitLab 的 PR、MR、合并队列以及项目明确的安全偏好优先。
 - 仓库地址、remote、目标分支、验证命令和发布/部署或 reconciler 都写在项目真源中。workflow 只提供平台中立的方法与机械护栏，不保存具体项目参数。
+
+需要发布版本的项目可以让自己的单一发布入口薄编排这些现有责任者；本仓库使用 `python3 -B scripts/publish.py --version <版本> --yes`。它只负责把 target-first 集成、最终集成 SHA 上的一次完整门、主分支与新标签的原子推送、Release 资产、本机同步串成一条线，不复制验证、合并、构建或安装逻辑。同版本并发发布只有一个原子推送能成功，其余执行者在标签碰撞后停止并基于最新主线重新规划。
 
 因此，一个成熟项目无需每次重新发现发布方式或重复运行流程体检；稳定契约由项目维护，任务只执行与本次变化相称的同步、验证、集成和线上检查。
 
@@ -200,7 +202,7 @@ python3 scripts/install.py enable-auto-update --target "/path/to/agent/skills"
 错过 2.26 时，不要手工删除旧文件再把 ZIP 覆盖进去。建议使用临时克隆：
 
 ```bash
-git clone --depth 1 --branch 3.6.0 https://github.com/qzl0215/workflow.git workflow-3
+git clone --depth 1 --branch 3.7.0 https://github.com/qzl0215/workflow.git workflow-3
 cd workflow-3
 python3 scripts/install.py update --target "/path/to/agent/skills"
 python3 scripts/install.py check --target "/path/to/agent/skills"
@@ -235,16 +237,26 @@ python3 scripts/install.py uninstall --target "/path/to/agent/skills" --yes
 
 - 未经明确授权，不扩大外部副作用；范围已清楚的持续交付授权不重复询问。
 - 任一验证、集成、部署或发布后检查失败时，停止后续外部写入，保留可恢复现场并报告真实状态。
+- 宿主实际拒绝外部写入时不绕过；只有拒绝信息明确允许用户授权解锁，才展示不变的载荷、目标和后续动作并请求精确授权。宿主策略不可解锁时如实阻断。
 - 没有子 Agent 就由同一模型顺序承担职责；没有持久存储就留在上下文；没有 Git 就交付文件和证据。工具降级不能把未覆盖写成通过。
 - 纯问答、解释、只读审查和一次性查询不启动 workflow。
 
 ## 项目维护
 
-完整候选只跑一次正式门：
+开发时运行与影响面相称的定向测试；正式候选由唯一发布入口在最终集成 SHA 上只跑一次完整门：
 
 ```bash
 python3 -B -m unittest discover -s tests -p 'test_*.py'
 python3 -B scripts/release_check.py
 ```
 
-完整测试使用默认简洁输出，失败时展开具体错误。`release_check.py` 负责调用 runtime doctor、校验 manifest 与生成页面，不需要把相同检查拆成多次仪式。贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)，安全边界见 [SECURITY.md](SECURITY.md)，来源与 clean-room 边界见 [NOTICE.md](NOTICE.md)。
+上面是发布入口内部持有的完整门，不在同一源码身份上手工重复。维护者实际执行：
+
+```bash
+python3 -B scripts/release_check.py --write-manifest
+git add <本次文件>
+git commit
+python3 -B scripts/publish.py --version <版本> --yes
+```
+
+`publish.py` 复用 `safe_merge.py`、`release_check.py` 和 `install.py`，不建立第二套发布状态机。完整测试使用默认简洁输出，失败时展开具体错误。贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)，安全边界见 [SECURITY.md](SECURITY.md)，来源与 clean-room 边界见 [NOTICE.md](NOTICE.md)。

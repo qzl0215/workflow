@@ -93,7 +93,7 @@ class WorkflowV3MainlineTest(unittest.TestCase):
         skill = read(PACKAGE / "SKILL.md")
         version = re.search(r"(?m)^version:\s*(\S+)\s*$", skill)
         self.assertIsNotNone(version)
-        self.assertEqual(version.group(1), "3.6.0")
+        self.assertEqual(version.group(1), "3.7.0")
 
         positions = [skill.index(outcome) for outcome in (*CORE_OUTCOMES, *CONDITIONAL_OUTCOMES)]
         self.assertEqual(positions, sorted(positions))
@@ -722,6 +722,22 @@ class DeliveryLearningAndTruthTest(unittest.TestCase):
             ("实际回灌另走结果门", "回灌另走结果门", "回灌另行验真"),
             "根契约不让复盘绕过结果门",
         )
+
+    def test_host_safety_rejection_stops_and_requests_only_exact_missing_authority(self) -> None:
+        delivery = reference("deliver.md")
+        for token in ("宿主", "实际拒绝", "停止", "保留", "载荷", "目标", "后续动作"):
+            self.assertIn(token, delivery)
+        assert_any(self, delivery, ("不可解锁", "不能解锁"), "不可授权解锁的宿主策略")
+        assert_any(self, delivery, ("保持不变", "没有变化", "未变化"), "重试身份不变")
+        assert_any(self, delivery, ("当前对话", "本次对话"), "短任务授权承载")
+        self.assertIn("work.md", delivery)
+        assert_any(
+            self,
+            delivery,
+            ("不重复需求确认", "无需重复需求确认", "不重走需求确认"),
+            "拒绝不重开原契约",
+        )
+        self.assertNotIn("external_write_receipt", read(PACKAGE / "SKILL.md") + delivery)
 
     def test_work_replaces_legacy_state_templates_and_has_one_writer(self) -> None:
         actual = {path.name for path in TEMPLATES.glob("*.md")}
