@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""从 Workflow 3.0 正式真源生成单页完整改造画面。"""
+"""从 Workflow 3.x 正式真源生成单页完整改造画面。"""
 
 from __future__ import annotations
 
@@ -95,6 +95,8 @@ def validate_sources(skill_text: str, changelog_text: str, version: str) -> list
         "技能｜",
         "成果｜",
         "路径｜",
+        "关键出口必须展示",
+        "业务含义",
     )
     missing_tokens = [token for token in required_root_tokens if token not in skill_text]
     if missing_tokens:
@@ -348,18 +350,20 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
   <section class="section">
     <div class="shell">
       <header class="section-head">
-        <div><p class="kicker">用户阶段画面</p><h2>四行就够，状态不变不重复。</h2></div>
-        <p class="intro">只在开始、环节实质变化、真实阻断和交回控制权时更新；内部队列不占用用户注意力。</p>
+        <div><p class="kicker">用户阶段画面</p><h2>关键出口必须出现，内容先让业务人员读懂。</h2></div>
+        <p class="intro">首次进展、环节实质变化、真实阻断、最终交付和交回控制权强制展示；状态不变不重复，轻量任务可只在最终出口展示一次。</p>
       </header>
       <div class="status-shell">
         <div class="status-top"><i></i><i></i><i></i></div>
         <div class="status-body">
-          <p><b>进度｜</b><span class="current">■■◆□ · 任务执行</span></p>
-          <p><b>技能｜</b><span>任务编排 · 任务执行</span></p>
-          <p><b>成果｜</b><span class="done">✓ 结果契约 · ✓ 计划 P01–P04 · </span><span class="current">● P02 / T03</span><span> · ○ 结果验真</span></p>
-          <p><b>路径｜</b><span>P01 → </span><span class="current">● P02 / T03</span><span> → P04</span></p>
+          <p><b>结论｜</b><span class="done">新版工作流已安全启用，后续任务会按新规则执行</span></p>
+          <p><b>进度｜</b><span class="current">■■■■｜■— · 核心结果完成 · 已完成真实更新 · 本次无需复盘</span></p>
+          <p><b>技能｜</b><span>任务执行 · 结果验真 · 真实交付</span></p>
+          <p><b>成果｜</b><span class="done">✓ 旧版已安全替换 · ✓ 新版已确认可正常使用 · ✓ 没有产生重复安装</span></p>
+          <p><b>路径｜</b><span>确认更新目标 → 安全替换旧版 → 验证实际可用</span></p>
         </div>
       </div>
+      <p class="boundary-note"><b>业务阅读门：</b>主画面先回答发生了什么、对谁有什么影响、现在是否可用、有什么风险、是否需要行动。文件数、检查器、命令、哈希和内部编号只在影响决定或可信度时作为技术证据展开，并先解释业务含义。</p>
       <div class="status-explain"><div><b>进度</b>当前实际进入的用户环节</div><div><b>技能</b>本轮真正读取的参考</div><div><b>成果</b>已接受结果与下一验证点</div><div><b>路径</b>多任务时的最短活动路径</div></div>
     </div>
   </section>
