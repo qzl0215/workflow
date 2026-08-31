@@ -425,6 +425,25 @@ def finalize_integration(
 ) -> int:
     verified = verify_integration(args, state)
     if verified:
+        integration_branch = str(state["integration_branch"])
+        integration_sha = str(state.get("integration_sha") or "")
+        worktree = Path(git_output("rev-parse", "--show-toplevel"))
+        clean_failure = (
+            verified == EXIT_VERIFY
+            and not merge_in_progress()
+            and not other_git_operation_in_progress(worktree)
+            and not conflict_files()
+            and not git_output("status", "--porcelain")
+            and git_output("branch", "--show-current") == integration_branch
+            and git_output("rev-parse", "HEAD") == integration_sha
+        )
+        if clean_failure:
+            candidate_branch = str(state["original_branch"])
+            restore_candidate(state, delete_integration=False)
+            print(
+                f"safe_merge: restored candidate {candidate_branch}; "
+                f"failed integration retained as {integration_branch}."
+            )
         return verified
 
     integration_branch = str(state["integration_branch"])

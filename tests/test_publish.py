@@ -25,7 +25,7 @@ def run(*parts: str) -> subprocess.CompletedProcess[str]:
 
 class WorkflowPublisherContractTest(unittest.TestCase):
     def test_publisher_requires_explicit_yes_and_exact_package_version(self) -> None:
-        missing_yes = run(sys.executable, "-B", str(SCRIPT), "--version", "3.7.0")
+        missing_yes = run(sys.executable, "-B", str(SCRIPT), "--version", "3.8.0")
         mismatch = run(
             sys.executable,
             "-B",
@@ -53,13 +53,13 @@ class WorkflowPublisherContractTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temp:
             asset = Path(temp) / "workflow.zip"
-            commands = module.release_commands("3.7.0", "a" * 40, asset)
+            commands = module.release_commands("3.8.0", "a" * 40, asset)
 
         flattened = [tuple(command) for command in commands]
         merge = next(command for command in flattened if "safe_merge.py" in " ".join(command))
         self.assertIn("--push", merge)
         self.assertIn("--tag", merge)
-        self.assertIn("3.7.0", merge)
+        self.assertIn("3.8.0", merge)
         verify = merge[merge.index("--verify") + 1]
         self.assertEqual(verify.count("unittest discover"), 1)
         self.assertEqual(verify.count("release_check.py"), 1)

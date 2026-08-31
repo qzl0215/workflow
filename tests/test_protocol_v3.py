@@ -93,7 +93,7 @@ class WorkflowV3MainlineTest(unittest.TestCase):
         skill = read(PACKAGE / "SKILL.md")
         version = re.search(r"(?m)^version:\s*(\S+)\s*$", skill)
         self.assertIsNotNone(version)
-        self.assertEqual(version.group(1), "3.7.0")
+        self.assertEqual(version.group(1), "3.8.0")
 
         positions = [skill.index(outcome) for outcome in (*CORE_OUTCOMES, *CONDITIONAL_OUTCOMES)]
         self.assertEqual(positions, sorted(positions))
@@ -738,6 +738,13 @@ class DeliveryLearningAndTruthTest(unittest.TestCase):
             "拒绝不重开原契约",
         )
         self.assertNotIn("external_write_receipt", read(PACKAGE / "SKILL.md") + delivery)
+
+    def test_clean_integration_verification_failure_returns_to_candidate_without_losing_diagnostics(self) -> None:
+        delivery = reference("deliver.md")
+        for token in ("验证失败", "工作树干净", "候选分支", "失败集成分支", "失败日志"):
+            self.assertIn(token, delivery)
+        assert_any(self, delivery, ("解除", "清除"), "解除阻塞状态")
+        assert_any(self, delivery, ("冲突", "变脏"), "不安全现场继续保留")
 
     def test_work_replaces_legacy_state_templates_and_has_one_writer(self) -> None:
         actual = {path.name for path in TEMPLATES.glob("*.md")}
