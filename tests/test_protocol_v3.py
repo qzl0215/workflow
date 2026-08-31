@@ -92,7 +92,7 @@ class WorkflowV3MainlineTest(unittest.TestCase):
         skill = read(PACKAGE / "SKILL.md")
         version = re.search(r"(?m)^version:\s*(\S+)\s*$", skill)
         self.assertIsNotNone(version)
-        self.assertEqual(version.group(1), "3.0.2")
+        self.assertEqual(version.group(1), "3.1.0")
 
         positions = [skill.index(outcome) for outcome in (*CORE_OUTCOMES, *CONDITIONAL_OUTCOMES)]
         self.assertEqual(positions, sorted(positions))
@@ -227,6 +227,55 @@ class ProgressiveRoutingTest(unittest.TestCase):
             self.assertIn(token, experience)
 
 
+class ReadinessAndConfirmationTest(unittest.TestCase):
+    def test_goal_and_acceptance_are_the_minimum_contract(self) -> None:
+        root = read(PACKAGE / "SKILL.md")
+        frame = reference("frame.md")
+        minimum = frame.split("## 最小停止条件", 1)[0]
+
+        for token in ("目标", "验收"):
+            self.assertIn(token, minimum)
+        self.assertNotIn("非目标", minimum)
+        assert_any(
+            self,
+            frame,
+            ("会改变方案时", "会改变决定时", "确实影响方案时", "按需边界"),
+            "其他边界按需出现",
+        )
+        for token in ("契约就绪", "目标", "验收"):
+            self.assertIn(token, root)
+        assert_any(self, frame, ("意见", "设想", "原则"), "原则性输入")
+        self.assertIn("候选", nearby(frame, "意见", 260))
+
+    def test_confirmed_solution_and_start_signal_unlock_continuous_delivery(self) -> None:
+        root = read(PACKAGE / "SKILL.md")
+        plan = reference("plan.md")
+        delivery = reference("deliver.md")
+
+        solution = nearby(plan, "方案就绪", 900)
+        for token in ("目标", "推荐方案", "验收", "交付路径"):
+            self.assertIn(token, solution)
+        assert_any(self, solution, ("用户确认", "确认或明确委托", "确认或委托"), "方案确认")
+        for token in ("开动", "实施", "验真", "提交", "合并", "发布", "发布后"):
+            self.assertIn(token, root + "\n" + delivery)
+        assert_any(
+            self,
+            root + "\n" + delivery,
+            ("一次确认持续有效", "连续完成", "连续兑现"),
+            "开动后的连续交付",
+        )
+
+    def test_occam_is_expressed_as_positive_result_value(self) -> None:
+        root = read(PACKAGE / "SKILL.md")
+        learning = reference("learn.md")
+        self.assertIn("结果承载", root)
+        for name in ("frame.md", "research.md", "grill.md", "experience.md", "plan.md"):
+            self.assertNotIn("## 奥卡姆硬门", reference(name), name)
+        for token in ("结果", "风险", "可恢复", "证据"):
+            self.assertIn(token, learning)
+        assert_any(self, learning, ("合并", "退役"), "重复或无消费价值动作的去向")
+
+
 class DepthAndCoordinationTest(unittest.TestCase):
     def test_grill_preserves_depth_but_stops_on_contract_stability(self) -> None:
         source = reference("grill.md")
@@ -323,6 +372,35 @@ class DepthAndCoordinationTest(unittest.TestCase):
 
 
 class DeliveryLearningAndTruthTest(unittest.TestCase):
+    def test_context_compaction_adds_governance_and_result_value_review(self) -> None:
+        skill = read(PACKAGE / "SKILL.md")
+        learning = reference("learn.md")
+
+        compaction_context = nearby(skill, "上下文压缩", 320)
+        assert_any(
+            self,
+            compaction_context,
+            ("复盘包含", "作为治理信号", "进入复盘", "复盘自然包含"),
+            "上下文压缩触发复盘",
+        )
+        for choices, label in (
+            (("workflow", "工作流"), "workflow harness"),
+            (("项目级", "项目内", "当前项目"), "项目级 harness"),
+            (("重复", "冗余"), "重复冗余"),
+            (("唯一真源", "单一真源"), "唯一真源精炼度"),
+            (("导航", "入口", "可发现"), "导航清晰度"),
+            (("合并", "退役"), "低价值动作去向"),
+            (("结果",), "结果关联"),
+            (("风险",), "风险覆盖"),
+        ):
+            assert_any(self, learning, choices, label)
+        assert_any(
+            self,
+            learning,
+            ("不等于缺陷", "不直接证明", "不自动判定", "仍可 no-op"),
+            "压缩事件不预设缺陷结论",
+        )
+
     def test_delivery_and_learning_have_distinct_gates_and_one_real_status_boundary(self) -> None:
         delivery = reference("deliver.md")
         learning = reference("learn.md")
@@ -449,7 +527,7 @@ class DeliveryLearningAndTruthTest(unittest.TestCase):
         assert_any(self, source, ("默认内联", "优先内联"), "capsule / receipt 默认形态")
         assert_any(self, source, ("复杂协作", "跨上下文", "昂贵证据"), "物化触发")
         assert_any(self, source, ("输入 / 真源", "输入与真源", "已接受上游证据"), "恢复所需输入")
-        assert_any(self, source, ("授权 / 非目标", "授权与非目标"), "任务授权边界")
+        assert_any(self, source, ("授权 / 按需边界", "授权与按需边界", "授权 / 结果边界"), "任务授权边界")
         assert_any(self, source, ("验证 / 返回", "验证与返回条件"), "任务返回边界")
         assert_any(self, source, ("恢复入口", "物化候选入口"), "按需物化定位")
         assert_any(self, source, ("整体验真", "计划验真"), "父计划结果不能由子任务绿灯替代")
@@ -457,18 +535,18 @@ class DeliveryLearningAndTruthTest(unittest.TestCase):
         assert_any(self, source, ("相对目标契约的增量", "继承内容不重复"), "任务字段不复制上游契约")
 
         waiting = source.split("#### P01-T02", 1)[1].split("## 当前结果", 1)[0]
-        for expanded in ("输入 / 真源", "授权 / 非目标", "文件 / 资源隔离", "验证 / 返回"):
+        for expanded in ("输入 / 真源", "授权 / 按需边界", "文件 / 资源隔离", "验证 / 返回"):
             self.assertNotIn(expanded, waiting, f"waiting 任务不应提前展开：{expanded}")
 
 
 class UserCommunicationAndLanguageTest(unittest.TestCase):
-    def test_user_snapshot_is_mandatory_at_key_exits_without_repeating_unchanged_state(self) -> None:
+    def test_user_snapshot_appears_at_key_exits_without_repeating_unchanged_state(self) -> None:
         skill = read(PACKAGE / "SKILL.md")
         for label in ("结论", "进度", "技能", "成果", "路径"):
             self.assertRegex(skill, rf"(?m)^(?:>\s*)?{label}[｜|]", label)
         for trigger in ("首次", "实质变化", "真实阻塞", "最终交付", "交回控制权"):
             self.assertIn(trigger, skill, f"关键出口缺少：{trigger}")
-        assert_any(self, skill, ("必须展示", "强制展示", "必须使用"), "关键出口强制画面")
+        assert_any(self, skill, ("关键出口展示", "关键出口呈现", "这些关键出口展示"), "关键出口画面")
         assert_any(self, skill, ("同一轮", "轻量任务"), "轻量任务合并播报")
         assert_any(
             self,
@@ -506,6 +584,20 @@ class UserCommunicationAndLanguageTest(unittest.TestCase):
             skill,
             r"内部\s*`?P/T`?.{0,40}(?:补充|定位价值)",
             "内部任务编号只能按需作为定位补充",
+        )
+
+    def test_user_language_prioritizes_real_understanding_and_decisions(self) -> None:
+        skill = read(PACKAGE / "SKILL.md")
+        assert_any(self, skill, ("真正看懂", "真正理解"), "理解优先")
+        for token in ("发生了什么", "影响", "决定", "行动"):
+            self.assertIn(token, skill)
+        assert_any(self, skill, ("用户熟悉的词", "用户熟悉的语言"), "熟悉表达")
+        self.assertIn("专业术语", skill)
+        assert_any(
+            self,
+            nearby(skill, "专业术语", 260),
+            ("实际含义", "先解释", "具体意义"),
+            "术语先解释含义",
         )
 
     def test_human_readable_protocol_body_is_chinese(self) -> None:
