@@ -92,7 +92,7 @@ class WorkflowV3MainlineTest(unittest.TestCase):
         skill = read(PACKAGE / "SKILL.md")
         version = re.search(r"(?m)^version:\s*(\S+)\s*$", skill)
         self.assertIsNotNone(version)
-        self.assertEqual(version.group(1), "3.0.2")
+        self.assertEqual(version.group(1), "3.1.0")
 
         positions = [skill.index(outcome) for outcome in (*CORE_OUTCOMES, *CONDITIONAL_OUTCOMES)]
         self.assertEqual(positions, sorted(positions))
@@ -323,6 +323,35 @@ class DepthAndCoordinationTest(unittest.TestCase):
 
 
 class DeliveryLearningAndTruthTest(unittest.TestCase):
+    def test_context_compaction_forces_a_harness_and_occam_retrospective(self) -> None:
+        skill = read(PACKAGE / "SKILL.md")
+        learning = reference("learn.md")
+
+        compaction_context = nearby(skill, "上下文压缩", 320)
+        assert_any(
+            self,
+            compaction_context,
+            ("必须进入", "强制进入", "必进", "不得略过"),
+            "上下文压缩触发复盘",
+        )
+        for choices, label in (
+            (("workflow", "工作流"), "workflow harness"),
+            (("项目级", "项目内", "当前项目"), "项目级 harness"),
+            (("重复", "冗余"), "重复冗余"),
+            (("唯一真源", "单一真源"), "唯一真源精炼度"),
+            (("导航", "入口", "可发现"), "导航清晰度"),
+            (("删除", "移除"), "无效动作删除测试"),
+            (("结果",), "结果关联"),
+            (("风险",), "风险覆盖"),
+        ):
+            assert_any(self, learning, choices, label)
+        assert_any(
+            self,
+            learning,
+            ("不等于缺陷", "不直接证明", "不自动判定", "仍可 no-op"),
+            "压缩事件不预设缺陷结论",
+        )
+
     def test_delivery_and_learning_have_distinct_gates_and_one_real_status_boundary(self) -> None:
         delivery = reference("deliver.md")
         learning = reference("learn.md")

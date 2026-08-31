@@ -5,7 +5,7 @@
 `workflow` 是一个可独立安装的中文 AI 工作协议。3.0 不再把模型固定在细密的七阶段流程里，而是守住结果、风险、授权和证据四类边界，让能力更强的模型自行选择研究方法、拆分粒度、并行方式与验证组合。
 
 作者：zhonglin · MIT License
-当前协议版本：`3.0.2`
+当前协议版本：`3.1.0`
 
 [打开完整可视化](docs/workflow-visual-map.html) · [查看正式协议](SKILL.md)
 
@@ -37,7 +37,7 @@
 两个条件环节不为了流程完整而出现：
 
 - **真实交付**只在目标包含提交、合并、部署、发布或外部写入时进入。
-- **经验复盘**只在本次事实能改变未来行动时进入；没有复用价值就是 `no-op`。
+- **经验复盘**只在本次事实能改变未来行动时进入；任何线程发生上下文压缩都会强制进入这道复盘门，检查 workflow 或项目级 `harness` 的上下文治理与无效业务动作。压缩本身不等于缺陷，检查后仍可 `no-op`。
 
 当两者都需要时，默认顺序是 `Prove → Deliver → Learn`。等待外部平台时可以并行收集不依赖交付结果的复盘候选，但最终经验必须在真实交付状态确定后接受，不能预判发布成功。
 
@@ -170,7 +170,7 @@ python3 scripts/install.py enable-auto-update --target "/path/to/agent/skills"
 错过 2.26 时，不要手工删除旧文件再把 ZIP 覆盖进去。建议使用临时克隆：
 
 ```bash
-git clone --depth 1 --branch 3.0.2 https://github.com/qzl0215/workflow.git workflow-3
+git clone --depth 1 --branch 3.1.0 https://github.com/qzl0215/workflow.git workflow-3
 cd workflow-3
 python3 scripts/install.py update --target "/path/to/agent/skills"
 python3 scripts/install.py check --target "/path/to/agent/skills"

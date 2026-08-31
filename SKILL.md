@@ -1,7 +1,7 @@
 ---
 name: workflow
 description: 通用状态变更工作流。以真实用户结果为主线，按风险渐进展开目标、计划、执行、验真、交付与复盘；不用于纯问答和一次性只读操作。
-version: 3.0.2
+version: 3.1.0
 author: zhonglin
 license: MIT
 ---
@@ -46,7 +46,7 @@ license: MIT
 2. 结果覆盖、依赖或验真路径需要拆解时，读取 [结果规划](references/plan.md)。
 3. 单一、局部任务可直接执行；实施边界需要展开时读取 [任务执行](references/execute.md)，只有出现多责任、独立复核或真实并行收益时才读取 [任务编排](references/orchestrate.md)。
 4. 声明完成前必须满足结果验真门；证据覆盖或失效边界不显然时读取 [结果验真](references/prove.md)。
-5. 只有存在真实外部交付目标时读取 [真实交付](references/deliver.md)；只有存在复用价值信号时读取 [经验复盘](references/learn.md)。
+5. 只有存在真实外部交付目标时读取 [真实交付](references/deliver.md)；只有存在复用价值信号时读取 [经验复盘](references/learn.md)。任何线程一旦发生上下文压缩，就视为必须进入复盘门的复用价值信号；压缩本身不预设存在缺陷或必须持久化结果。
 
 只读取当前决定所需的参考，不预读整套文件。每份参考都是渐进路由器：先做最小动作并检查停止条件，再由真实触发信号展开深度。
 
