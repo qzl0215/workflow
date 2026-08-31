@@ -5,7 +5,7 @@
 `workflow` 是一个可独立安装的中文 AI 工作协议。3.0 不再把模型固定在细密的七阶段流程里，而是守住结果、风险、授权和证据四类边界，让能力更强的模型自行选择研究方法、拆分粒度、并行方式与验证组合。
 
 作者：zhonglin · MIT License
-当前协议版本：`3.2.0`
+当前协议版本：`3.3.0`
 
 [打开完整可视化](docs/workflow-visual-map.html) · [查看正式协议](SKILL.md)
 
@@ -19,8 +19,8 @@
 
   目标框定 Frame  →  结果规划 Plan  →  任务执行 Execute  →  结果验真 Prove
         │                  │                   │                    │
-        │                  ├→ 方案确认          └→ 失败时恢复        ├→ 无外部交付：完成或按信号复盘
-        │                  └→ 串并联编排                              └→ 有外部交付：Deliver → 按信号 Learn
+        │                  ├→ 方案确认          └→ 失败时恢复        ├→ 无外部交付：完成陈述 → 优化识别
+        │                  └→ 串并联编排                              └→ 有外部交付：Deliver → 完成陈述 → 优化识别
         │
         └→ 只把会改变结果、风险、代价或授权的承重决定交给用户
 ```
@@ -37,9 +37,9 @@
 两个条件环节不为了流程完整而出现：
 
 - **真实交付**只在目标包含提交、合并、部署、发布或外部写入时进入。
-- **经验复盘**只在本次事实能改变未来行动时进入；上下文压缩自然成为治理信号，复盘会检查工作规则、项目入口、信息组织与业务动作。压缩本身不等于缺陷，检查后仍可 `no-op`。
+- 每个面向用户的目标完成陈述后都会进行一次最小优化识别；只有本次事实能改变未来行动时才展开**经验复盘**，展示问题诊断与待确认方案。上下文压缩自然成为治理信号，复盘会检查工作规则、项目入口、信息组织与业务动作；没有可行动发现就简洁说明 `no-op`。
 
-当两者都需要时，默认顺序是 `Prove → Deliver → Learn`。等待外部平台时可以并行收集不依赖交付结果的复盘候选，但最终经验必须在真实交付状态确定后接受，不能预判发布成功。
+有真实交付时，默认顺序是 `Prove → Deliver → 完成陈述 → 优化识别`。等待外部平台时可以并行收集不依赖交付结果的复盘候选，但最终经验必须在真实交付状态确定后接受，不能预判发布成功。可行动优化是新的目标，经用户确认后再实施。
 
 ## 从想法到开动
 
@@ -55,7 +55,7 @@ workflow 先把用户的意见、设想或原则整理成候选目标。默认�
 
 1. **先判断事实是否足够。** 足够就不研究；不足时才由模型做最小研究，避免拿可查事实向用户提问。
 2. **承重决定仍不稳，才进入 grill。** `grill-me` 兼容入口仍保留，并且是更强的挑战深度，不是简单列问题。它寻找反例、失败场景、隐藏代价和更简单的可逆方向，直到新增信息不再改变推荐。
-3. **体验会改变方向，才进入 experience。** 对现有页面局部修改，直接在真实源码划分改动面与保护面，优先使用复用真实登录态的只读独立验收入口展示同一候选；结构性保真足够时不做全量人工前后对比。只有多个互斥方向形成承重方向分歧时才制作独立概念稿。
+3. **体验会改变方向，才进入 experience。** 对现有页面局部修改，直接在真实源码划分改动面与保护面，优先使用复用真实登录态的只读独立验收入口展示同一候选；浏览器视觉方案在确认前先展示只改目标区域、保留其他元素的视觉演示。只有多个互斥方向形成承重方向分歧时才制作独立概念稿。
 4. **只有独立且能缩短关键路径时并行。** 并行取得的只是候选输入，最后由目标责任者合成为一个结果契约。
 5. **只回流受影响部分。** 新发现只有实质改变契约才重开另一条能力，不全量重跑。
 
@@ -178,7 +178,7 @@ python3 scripts/install.py enable-auto-update --target "/path/to/agent/skills"
 错过 2.26 时，不要手工删除旧文件再把 ZIP 覆盖进去。建议使用临时克隆：
 
 ```bash
-git clone --depth 1 --branch 3.2.0 https://github.com/qzl0215/workflow.git workflow-3
+git clone --depth 1 --branch 3.3.0 https://github.com/qzl0215/workflow.git workflow-3
 cd workflow-3
 python3 scripts/install.py update --target "/path/to/agent/skills"
 python3 scripts/install.py check --target "/path/to/agent/skills"
@@ -221,8 +221,8 @@ python3 scripts/install.py uninstall --target "/path/to/agent/skills" --yes
 完整候选只跑一次正式门：
 
 ```bash
-python3 -B -m unittest discover -s tests -p 'test_*.py' -v
+python3 -B -m unittest discover -s tests -p 'test_*.py'
 python3 -B scripts/release_check.py
 ```
 
-`release_check.py` 负责调用 runtime doctor、校验 manifest 与生成页面，不需要把相同检查拆成多次仪式。贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)，安全边界见 [SECURITY.md](SECURITY.md)，来源与 clean-room 边界见 [NOTICE.md](NOTICE.md)。
+完整测试使用默认简洁输出，失败时展开具体错误。`release_check.py` 负责调用 runtime doctor、校验 manifest 与生成页面，不需要把相同检查拆成多次仪式。贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)，安全边界见 [SECURITY.md](SECURITY.md)，来源与 clean-room 边界见 [NOTICE.md](NOTICE.md)。
