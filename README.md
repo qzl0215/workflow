@@ -5,7 +5,7 @@
 `workflow` 是一个可独立安装的中文 AI 工作协议。3.0 不再把模型固定在细密的七阶段流程里，而是守住结果、风险、授权和证据四类边界，让能力更强的模型自行选择研究方法、拆分粒度、并行方式与验证组合。
 
 作者：zhonglin · MIT License
-当前协议版本：`3.5.0`
+当前协议版本：`3.6.0`
 
 [打开完整可视化](docs/workflow-visual-map.html) · [查看正式协议](SKILL.md)
 
@@ -160,7 +160,9 @@ workflow 启动后的首次进展、环节实质变化、真实阻断、最终�
 - `技能` 只列本轮真正使用的中文能力名。
 - `路径` 使用业务结果或用户动作；内部 Plan/Task 编号只在确有定位价值时补充。
 
-文件数量、`runtime`、`Manifest`、`doctor`、测试命令和哈希属于按需技术证据。只有它们会改变决定、风险或可信度时才展开，并且先说明业务含义。需要用户接棒时，再按需补充风险、下一步和最短回复建议；没有用户行动就不制造栏目。
+文件数量、`runtime`、`Manifest`、`doctor`、测试命令和哈希属于按需技术证据。只有它们会改变决定、风险或可信度时才展开，并且先说明业务含义。
+
+每个关键出口都会标明下一步责任者。只要仍有安全、已授权且可执行的动作，workflow 就继续推进，不把计划、子任务、测试绿灯、候选结果或进展汇报当成停点。真正需要用户接棒时，相关选择合并成一次紧凑决策包：待决策、推荐下一步及理由、备选与取舍、不决定的影响、最短回复；用户可以接受推荐、选择备选或明确委托模型决定。没有用户行动就不制造栏目。
 
 用户首先看到的文字使用熟悉的词和具体结果，帮助他理解发生了什么、影响什么以及怎样决定或行动。专业术语确有定位价值时，先解释实际含义，再保留术语作为按需证据；不使用固定字数或术语数量代替真实理解。
 
@@ -198,7 +200,7 @@ python3 scripts/install.py enable-auto-update --target "/path/to/agent/skills"
 错过 2.26 时，不要手工删除旧文件再把 ZIP 覆盖进去。建议使用临时克隆：
 
 ```bash
-git clone --depth 1 --branch 3.5.0 https://github.com/qzl0215/workflow.git workflow-3
+git clone --depth 1 --branch 3.6.0 https://github.com/qzl0215/workflow.git workflow-3
 cd workflow-3
 python3 scripts/install.py update --target "/path/to/agent/skills"
 python3 scripts/install.py check --target "/path/to/agent/skills"

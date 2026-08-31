@@ -360,7 +360,7 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
     <div class="shell">
       <header class="section-head">
         <div><p class="kicker">用户阶段画面</p><h2>关键出口清楚呈现，让用户真正看懂。</h2></div>
-        <p class="intro">首次进展、环节实质变化、真实阻断、最终交付和交回控制权形成新的用户画面；状态不变不重复，轻量任务可只在最终出口展示一次。</p>
+        <p class="intro">首次进展、环节实质变化、真实阻断、最终交付和交回控制权形成新的用户画面；每次标明下一步责任者，模型能安全推进就继续，只有真实用户决策才暂停。</p>
       </header>
       <div class="status-shell">
         <div class="status-top"><i></i><i></i><i></i></div>
@@ -372,7 +372,7 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
           <p><b>路径｜</b><span>确认更新目标 → 安全替换旧版 → 验证实际可用</span></p>
         </div>
       </div>
-      <p class="boundary-note"><b>理解优先：</b>主画面使用用户熟悉的词，先回答发生了什么、有什么影响、怎样决定或行动。专业术语先解释实际含义；文件数、检查器、命令、哈希和内部编号只在影响决定或可信度时作为技术证据展开。</p>
+      <p class="boundary-note"><b>推进优先：</b>计划、子任务、测试绿灯和候选结果都只是下一动作的输入。交回用户时把选择合并为“待决策 → 推荐及理由 → 备选取舍 → 不决定的影响 → 最短回复”，也允许用户明确委托模型决定。</p>
       <div class="status-explain"><div><b>进度</b>当前实际进入的用户环节</div><div><b>技能</b>本轮真正读取的参考</div><div><b>成果</b>已接受结果与下一验证点</div><div><b>路径</b>多任务时的最短活动路径</div></div>
     </div>
   </section>
