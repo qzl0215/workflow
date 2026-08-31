@@ -26,6 +26,7 @@ REFERENCES = {
     "prove.md",
     "deliver.md",
     "learn.md",
+    "initialize.md",
 }
 RUNTIME_FILES = {
     "SKILL.md",
@@ -37,6 +38,7 @@ RUNTIME_FILES = {
     "scripts/safe_merge.py",
     "scripts/work_context.py",
     "scripts/workflow_doctor.py",
+    "scripts/project_init.py",
 }
 SOURCE_ONLY_FILES = {
     ".gitignore",
@@ -50,6 +52,7 @@ SOURCE_ONLY_FILES = {
     "scripts/release_check.py",
     "tests/test_portability.py",
     "tests/test_protocol_v3.py",
+    "tests/test_project_init.py",
     "tests/test_release_v3.py",
     "tests/test_safe_merge.py",
     "tests/test_work_context.py",
@@ -115,7 +118,7 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
         self.assertEqual(set(value), {"schema", "name", "version", "entrypoint", "runtime", "source_only"})
         self.assertEqual(value["schema"], 1)
         self.assertEqual(value["name"], "workflow")
-        self.assertEqual(value["version"], "3.4.0")
+        self.assertEqual(value["version"], "3.5.0")
         self.assertEqual(value["entrypoint"], "SKILL.md")
         self.assertEqual(set(value["runtime"]), {"files"})
         files = value["runtime"]["files"]

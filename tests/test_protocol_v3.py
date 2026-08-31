@@ -12,6 +12,7 @@ TEMPLATES = PACKAGE / "templates"
 REQUIRED_CAPABILITY_FILES = {
     "frame.md",
     "grill.md",
+    "initialize.md",
     "plan.md",
     "execute.md",
     "prove.md",
@@ -92,7 +93,7 @@ class WorkflowV3MainlineTest(unittest.TestCase):
         skill = read(PACKAGE / "SKILL.md")
         version = re.search(r"(?m)^version:\s*(\S+)\s*$", skill)
         self.assertIsNotNone(version)
-        self.assertEqual(version.group(1), "3.4.0")
+        self.assertEqual(version.group(1), "3.5.0")
 
         positions = [skill.index(outcome) for outcome in (*CORE_OUTCOMES, *CONDITIONAL_OUTCOMES)]
         self.assertEqual(positions, sorted(positions))
@@ -176,6 +177,32 @@ class ProgressiveRoutingTest(unittest.TestCase):
             ("反馈回", "回到目标", "重算目标", "改写目标契约", "重开受影响", "吸收到契约"),
             "结果反馈",
         )
+
+    def test_project_initialization_is_a_generation_gated_conditional_entry(self) -> None:
+        root = read(PACKAGE / "SKILL.md")
+        source = reference("initialize.md")
+
+        self.assertIn("initialize.md", root)
+        for token in ("项目初始化", "兼容代际", "显式", "不是用户可见主链"):
+            self.assertIn(token, root + "\n" + source)
+        for token in ("comment_summary", "ranking_app"):
+            self.assertIn(token, source)
+        assert_any(self, source, ("直接退出", "立即退出", "停止初始化"), "当前项目的短路出口")
+        assert_any(self, source, ("不扫描", "不做仓库扫描", "禁止扫描"), "短路时不扫描项目")
+        assert_any(
+            self,
+            source,
+            ("不调用模型判断", "不进入模型诊断", "不做模型判断"),
+            "短路时不消耗模型诊断",
+        )
+        assert_any(
+            self,
+            source,
+            ("不是每个 workflow 版本", "不随每个 workflow 版本", "版本号变化不触发"),
+            "兼容代际独立于普通版本",
+        )
+        for token in ("入口", "真源", "验证", "交付", "安全", "生成物", "AI"):
+            self.assertIn(token, source)
 
     def test_existing_page_changes_use_one_real_preview_and_scoped_proof_path(self) -> None:
         root = read(PACKAGE / "SKILL.md")
@@ -285,6 +312,101 @@ class ReadinessAndConfirmationTest(unittest.TestCase):
         self.assertIn("视觉演示", combined)
         assert_any(self, combined, ("其他元素", "其余元素", "原页面其他"), "非目标元素保真")
         assert_any(self, combined, ("截图", "可访问预览", "预览入口"), "用户可见演示")
+
+    def test_every_state_change_has_user_visible_requirement_and_solution_gates(self) -> None:
+        root = read(PACKAGE / "SKILL.md")
+        frame = reference("frame.md")
+        plan = reference("plan.md")
+        execute = reference("execute.md")
+        combined = root + "\n" + frame + "\n" + plan + "\n" + execute
+
+        for token in ("需求澄清", "需求确认", "方案确认", "首次状态变更"):
+            self.assertIn(token, combined)
+        for token in ("我需要", "帮我做", "实现一下"):
+            self.assertIn(token, combined)
+        assert_any(
+            self,
+            combined,
+            ("不构成执行授权", "不能视为执行授权", "不等于执行授权"),
+            "请求表达不能跳过确认",
+        )
+        assert_any(
+            self,
+            combined,
+            ("方案出现前", "方案展示前", "尚未展示方案"),
+            "提前开动失效边界",
+        )
+        assert_any(
+            self,
+            execute,
+            ("缺少确认凭证", "确认凭证无效", "凭证缺失"),
+            "执行失败关闭",
+        )
+
+    def test_requirement_contract_contains_every_load_bearing_tradeoff(self) -> None:
+        frame = reference("frame.md")
+        for token in ("关键取舍", "用户选择", "逐项", "委托"):
+            self.assertIn(token, frame)
+        assert_any(
+            self,
+            frame,
+            ("没有关键取舍", "不存在关键取舍", "无关键取舍"),
+            "无承重决策也要给出判断",
+        )
+
+    def test_solution_confirmation_combines_an_adapted_demo_and_full_plan(self) -> None:
+        experience = reference("experience.md")
+        plan = reference("plan.md")
+        combined = experience + "\n" + plan
+
+        for token in ("线框", "流程", "状态", "API", "命令", "数据"):
+            self.assertIn(token, combined)
+        for token in ("局部", "简单", "完整文字方案", "同一次确认"):
+            self.assertIn(token, combined)
+        assert_any(
+            self,
+            combined,
+            ("隔离临时", "隔离的临时", "一次性隔离"),
+            "确认前演示隔离",
+        )
+
+    def test_simple_tasks_may_merge_gates_only_under_a_strict_confidence_contract(self) -> None:
+        root = read(PACKAGE / "SKILL.md")
+        frame = reference("frame.md")
+        plan = reference("plan.md")
+        combined = root + "\n" + frame + "\n" + plan
+
+        for token in ("90%", "没有关键承重决策", "冲突真源", "可逆", "生产", "安全", "破坏性"):
+            self.assertIn(token, combined)
+        assert_any(
+            self,
+            combined,
+            ("合并确认", "合并为一次确认", "一次合并确认"),
+            "简单任务合并门",
+        )
+        assert_any(
+            self,
+            combined,
+            ("仍需用户回复", "仍等待用户明确回复", "仍必须等待用户回复"),
+            "简单任务不能静默执行",
+        )
+
+    def test_confirmation_receipts_bind_contract_solution_and_long_task_control(self) -> None:
+        root = read(PACKAGE / "SKILL.md")
+        execute = reference("execute.md")
+        work = read(TEMPLATES / "work.md")
+        combined = root + "\n" + execute + "\n" + work
+
+        for token in ("requirement_receipt", "solution_receipt", "writeback_receipt"):
+            self.assertIn(token, combined)
+        for token in ("需求契约身份", "方案身份", "交付路径", "失效"):
+            self.assertIn(token, combined)
+        assert_any(
+            self,
+            work,
+            ("长任务", "跨上下文"),
+            "持久确认凭证边界",
+        )
 
 
 class DepthAndCoordinationTest(unittest.TestCase):
@@ -434,6 +556,43 @@ class DeliveryLearningAndTruthTest(unittest.TestCase):
             self.assertIn(token, learning)
         assert_any(self, learning, ("新的目标", "新目标"), "优化执行重新形成目标")
         assert_any(self, learning, ("no-op", "没有追加优化", "无需追加优化"), "允许空优化结果")
+
+    def test_retrospective_writeback_has_two_independent_confirmation_scopes(self) -> None:
+        learning = reference("learn.md")
+
+        for token in (
+            "项目级更新",
+            "workflow 级更新",
+            "触发证据",
+            "影响范围",
+            "最小改动",
+            "唯一责任者",
+            "验收方式",
+            "不处理的代价",
+        ):
+            self.assertIn(token, learning)
+        for token in ("回灌", "延后", "放弃", "委托"):
+            self.assertIn(token, learning)
+        assert_any(
+            self,
+            learning,
+            ("无需用户回复", "不要求用户回复", "直接结束且不等待回复"),
+            "双 no-op 不制造确认",
+        )
+        assert_any(
+            self,
+            learning,
+            ("只授权建立新需求", "只表示建立新需求", "不授权实施"),
+            "回灌不继承实施授权",
+        )
+        for token in ("独立新目标", "需求澄清", "方案确认", "开动"):
+            self.assertIn(token, learning)
+        assert_any(
+            self,
+            learning,
+            ("不改变原任务", "不反向改写原任务", "不影响原任务"),
+            "复盘候选不改写完成事实",
+        )
 
     def test_accepted_evidence_is_compact_on_success_and_expands_on_failure(self) -> None:
         proof = reference("prove.md")

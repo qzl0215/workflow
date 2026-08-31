@@ -34,6 +34,7 @@ SOURCE_ONLY_FILES = frozenset(
         "scripts/release_check.py",
         "tests/test_portability.py",
         "tests/test_protocol_v3.py",
+        "tests/test_project_init.py",
         "tests/test_release_v3.py",
         "tests/test_safe_merge.py",
         "tests/test_work_context.py",

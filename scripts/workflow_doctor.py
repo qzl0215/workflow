@@ -25,6 +25,7 @@ REQUIRED_REFERENCES = (
     "prove.md",
     "deliver.md",
     "learn.md",
+    "initialize.md",
 )
 REQUIRED_TEMPLATES = ("work.md",)
 REQUIRED_RUNTIME_SCRIPTS = (
@@ -32,6 +33,7 @@ REQUIRED_RUNTIME_SCRIPTS = (
     "safe_merge.py",
     "work_context.py",
     "workflow_doctor.py",
+    "project_init.py",
 )
 EXPECTED_RUNTIME_FILES = frozenset(
     {
