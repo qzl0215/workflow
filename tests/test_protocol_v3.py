@@ -92,7 +92,7 @@ class WorkflowV3MainlineTest(unittest.TestCase):
         skill = read(PACKAGE / "SKILL.md")
         version = re.search(r"(?m)^version:\s*(\S+)\s*$", skill)
         self.assertIsNotNone(version)
-        self.assertEqual(version.group(1), "3.0.1")
+        self.assertEqual(version.group(1), "3.0.2")
 
         positions = [skill.index(outcome) for outcome in (*CORE_OUTCOMES, *CONDITIONAL_OUTCOMES)]
         self.assertEqual(positions, sorted(positions))
@@ -176,6 +176,55 @@ class ProgressiveRoutingTest(unittest.TestCase):
             ("反馈回", "回到目标", "重算目标", "改写目标契约", "重开受影响", "吸收到契约"),
             "结果反馈",
         )
+
+    def test_existing_page_changes_use_one_real_preview_and_scoped_proof_path(self) -> None:
+        root = read(PACKAGE / "SKILL.md")
+        experience = reference("experience.md")
+        proof = reference("prove.md")
+        readme = read(PACKAGE / "README.md")
+        visual_source = read(PACKAGE / "scripts/generate_visual_map.py")
+
+        for token in ("改动面", "保护面", "优先复用原实现", "不做全量人工前后对比", "共享边界"):
+            self.assertIn(token, root, f"根不变量缺少 {token}")
+
+        for source, label in ((experience, "体验路由"), (readme, "对外说明"), (visual_source, "视觉真源")):
+            assert_any(self, source, ("现有页面局部修改", "现有页面的局部修改"), f"{label}局部范围")
+            self.assertIn("真实源码", source, f"{label}没有复用真实源码")
+            self.assertIn("保护面", source, f"{label}没有声明保护面")
+            assert_any(
+                self,
+                source,
+                (
+                    "登录态独立验收入口",
+                    "受登录保护的独立验收入口",
+                    "真实登录态的独立验收入口",
+                    "真实登录态的只读独立验收入口",
+                ),
+                f"{label}真实验收入口",
+            )
+            assert_any(
+                self,
+                source,
+                ("承重方向分歧", "方向确有承重分歧", "多个互斥方向"),
+                f"{label}独立概念稿门",
+            )
+
+        for token in ("保护面", "结构性保真", "全量人工前后对比", "受影响入口", "高风险连接点"):
+            self.assertIn(token, proof)
+        assert_any(
+            self,
+            proof,
+            ("不要求全量人工前后对比", "不做全量人工前后对比", "无需全量人工前后对比"),
+            "局部修改的最小验真",
+        )
+        assert_any(
+            self,
+            proof,
+            ("真实登录态", "当前用户登录态", "受登录保护"),
+            "登录态环境边界",
+        )
+        for token in ("不自动获得新的业务写入授权", "默认只读"):
+            self.assertIn(token, experience)
 
 
 class DepthAndCoordinationTest(unittest.TestCase):

@@ -5,7 +5,7 @@
 `workflow` 是一个可独立安装的中文 AI 工作协议。3.0 不再把模型固定在细密的七阶段流程里，而是守住结果、风险、授权和证据四类边界，让能力更强的模型自行选择研究方法、拆分粒度、并行方式与验证组合。
 
 作者：zhonglin · MIT License
-当前协议版本：`3.0.1`
+当前协议版本：`3.0.2`
 
 [打开完整可视化](docs/workflow-visual-map.html) · [查看正式协议](SKILL.md)
 
@@ -49,7 +49,7 @@
 
 1. **先判断事实是否足够。** 足够就不研究；不足时才由模型做最小研究，避免拿可查事实向用户提问。
 2. **承重决定仍不稳，才进入 grill。** `grill-me` 兼容入口仍保留，并且是更强的挑战深度，不是简单列问题。它寻找反例、失败场景、隐藏代价和更简单的可逆方向，直到新增信息不再改变推荐。
-3. **体验会改变方向，才进入 experience。** 只优化文案或局部样式，不值得重开目标；用户旅程、信息结构或交互方向会改变结果时才探索。
+3. **体验会改变方向，才进入 experience。** 对现有页面局部修改，直接在真实源码划分改动面与保护面，优先使用复用真实登录态的只读独立验收入口展示同一候选；结构性保真足够时不做全量人工前后对比。只有多个互斥方向形成承重方向分歧时才制作独立概念稿。
 4. **只有独立且能缩短关键路径时并行。** 并行取得的只是候选输入，最后由目标责任者合成为一个结果契约。
 5. **只回流受影响部分。** 新发现只有实质改变契约才重开另一条能力，不全量重跑。
 
@@ -170,7 +170,7 @@ python3 scripts/install.py enable-auto-update --target "/path/to/agent/skills"
 错过 2.26 时，不要手工删除旧文件再把 ZIP 覆盖进去。建议使用临时克隆：
 
 ```bash
-git clone --depth 1 --branch 3.0.1 https://github.com/qzl0215/workflow.git workflow-3
+git clone --depth 1 --branch 3.0.2 https://github.com/qzl0215/workflow.git workflow-3
 cd workflow-3
 python3 scripts/install.py update --target "/path/to/agent/skills"
 python3 scripts/install.py check --target "/path/to/agent/skills"
