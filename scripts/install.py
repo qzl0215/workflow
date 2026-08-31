@@ -147,6 +147,12 @@ def show_detection() -> int:
 
 
 def resolve_target(raw: str | None, action: str) -> Path:
+    if raw and raw.casefold() == "codex":
+        for label, path in known_targets():
+            if label == "Codex":
+                resolved = path.expanduser().resolve()
+                print(f"已选择 Codex skills 目录：{resolved}")
+                return resolved
     if raw and raw != "auto":
         return Path(raw).expanduser().resolve()
     candidates = auto_candidates()
@@ -1134,7 +1140,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--target",
-        help=f"skills 父目录；省略或填 auto 时安全探测，也可设置 {TARGET_ENV}",
+        help=(
+            "skills 父目录；Codex 本机可填 codex；"
+            f"省略或填 auto 时安全探测，也可设置 {TARGET_ENV}"
+        ),
     )
     parser.add_argument("--yes", action="store_true", help="确认永久卸载")
     parser.add_argument("--dry-run", action="store_true", help="只展示自动更新配置，不写系统")

@@ -1,7 +1,7 @@
 ---
 name: workflow
 description: 通用状态变更工作流。以真实用户结果为主线，按风险渐进展开目标、计划、执行、验真、交付与复盘；不用于纯问答和一次性只读操作。
-version: 3.1.0
+version: 3.2.0
 author: zhonglin
 license: MIT
 ---
