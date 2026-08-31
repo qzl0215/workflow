@@ -29,6 +29,7 @@ REQUIRED_REFERENCES = (
 REQUIRED_TEMPLATES = ("work.md",)
 REQUIRED_RUNTIME_SCRIPTS = (
     "install.py",
+    "safe_merge.py",
     "work_context.py",
     "workflow_doctor.py",
 )

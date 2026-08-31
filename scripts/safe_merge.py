@@ -131,7 +131,10 @@ def verification_log_path(integration_sha: str) -> Path:
     return log_dir / f"{integration_sha}.log"
 
 
-def verify(command_text: str, integration_sha: str) -> tuple[int, float]:
+def verify(
+    command_text: str,
+    integration_sha: str,
+) -> tuple[int, float]:
     started = time.monotonic()
     result = subprocess.run(
         command_text,
@@ -194,8 +197,34 @@ def write_receipt(state: dict[str, Any], *, status: str, transport_attempts: int
     return receipt_path
 
 
+def bind_integration_sha(state: dict[str, Any]) -> str:
+    current_sha = git_output("rev-parse", "HEAD")
+    expected_sha = state.get("integration_sha")
+    if expected_sha:
+        if current_sha != expected_sha:
+            raise RuntimeError(
+                "integration HEAD changed from the preserved immutable integration "
+                f"{str(expected_sha)[:12]}"
+            )
+        return current_sha
+
+    commit = git_output("rev-list", "--parents", "-n", "1", "HEAD").split()
+    expected_parents = [str(state["base_target_sha"]), str(state["candidate_sha"])]
+    if commit[1:] != expected_parents:
+        raise RuntimeError("integration HEAD does not have the expected target-first parents")
+    state["integration_sha"] = current_sha
+    save_state(state)
+    return current_sha
+
+
 def verify_integration(args: argparse.Namespace, state: dict[str, Any]) -> int:
-    integration_sha = git_output("rev-parse", "HEAD")
+    integration_sha = bind_integration_sha(state)
+    if git_output("status", "--porcelain"):
+        print(
+            "safe_merge: integration worktree is not clean before verification.",
+            file=sys.stderr,
+        )
+        return EXIT_PRECONDITION
     identity = verification_identity(args.verify)
     if (
         state.get("verified_integration_sha") == integration_sha
@@ -204,6 +233,12 @@ def verify_integration(args: argparse.Namespace, state: dict[str, Any]) -> int:
         print(f"safe_merge: reusing verification for immutable integration {integration_sha[:12]}.")
         return 0
     verified, duration = verify(args.verify, integration_sha)
+    if git_output("rev-parse", "HEAD") != integration_sha or git_output("status", "--porcelain"):
+        print(
+            "safe_merge: verification changed the integration worktree; push refused.",
+            file=sys.stderr,
+        )
+        return EXIT_VERIFY
     if verified:
         return verified
     state["verified_integration_sha"] = integration_sha
@@ -245,22 +280,77 @@ def restore_candidate(state: dict[str, Any], *, delete_integration: bool) -> Non
     clear_state()
 
 
-def fetch_target(remote: str, target: str) -> int:
-    return command("git", "fetch", remote, target).returncode
+def fetch_target(remote: str, target: str) -> str | None:
+    fetched = command("git", "fetch", "--no-tags", remote, f"refs/heads/{target}")
+    if fetched.returncode:
+        return None
+    return git_output("rev-parse", "--verify", "FETCH_HEAD^{commit}")
+
+
+def validate_repository_parameters(remote: str, target: str) -> None:
+    if not remote or remote.startswith("-"):
+        raise RuntimeError("remote must be a configured Git remote name")
+    if not target or target.startswith("-"):
+        raise RuntimeError("target must be a valid branch name")
+    git_output("remote", "get-url", remote)
+    git_output("check-ref-format", "--branch", target)
+
+
+def sync_baseline(args: argparse.Namespace) -> int:
+    if state_path().exists():
+        raise RuntimeError("preserved integration state must be resolved before baseline sync")
+    if git_output("status", "--porcelain"):
+        raise RuntimeError("worktree has uncommitted changes")
+    worktree = Path(git_output("rev-parse", "--show-toplevel"))
+    if other_git_operation_in_progress(worktree):
+        raise RuntimeError("worktree has an in-progress Git operation")
+    target_sha = fetch_target(args.remote, args.target)
+    if target_sha is None:
+        return EXIT_PRECONDITION
+
+    remote_ref = f"{args.remote}/{args.target}"
+    current_sha = git_output("rev-parse", "HEAD")
+    if current_sha == target_sha:
+        print(f"safe_merge: baseline already current at {target_sha[:12]}.")
+        return 0
+    if command("git", "merge-base", "--is-ancestor", current_sha, target_sha).returncode:
+        raise RuntimeError(
+            f"cannot fast-forward baseline: HEAD {current_sha[:12]} has work not in {remote_ref}"
+        )
+    advanced = command("git", "merge", "--ff-only", target_sha)
+    if advanced.returncode:
+        return EXIT_PRECONDITION
+    if git_output("rev-parse", "HEAD") != target_sha or git_output("status", "--porcelain"):
+        print(
+            "safe_merge: baseline postcondition failed; moved state was preserved for inspection.",
+            file=sys.stderr,
+        )
+        return EXIT_PRECONDITION
+    print(
+        f"safe_merge: baseline fast-forwarded from {current_sha[:12]} "
+        f"to {target_sha[:12]} using {remote_ref}."
+    )
+    return 0
 
 
 def start_merge_attempt(args: argparse.Namespace, candidate_branch: str, candidate_sha: str, attempt: int) -> int:
     remote_ref = f"{args.remote}/{args.target}"
-    if fetch_target(args.remote, args.target):
+    base_target_sha = fetch_target(args.remote, args.target)
+    if base_target_sha is None:
         return EXIT_PRECONDITION
-    base_target_sha = git_output("rev-parse", remote_ref)
-    if command("git", "merge-base", "--is-ancestor", candidate_sha, remote_ref).returncode == 0:
-        print(f"safe_merge: candidate {candidate_branch} is already contained in {remote_ref}.")
-        verified, _ = verify(args.verify, candidate_sha)
-        return verified
+    if command("git", "merge-base", "--is-ancestor", candidate_sha, base_target_sha).returncode == 0:
+        print(
+            "safe_merge: status=already_integrated "
+            f"candidate_sha={candidate_sha} target_sha={base_target_sha} remote_ref={remote_ref}."
+        )
+        return 0
+    if not args.verify:
+        if args.push:
+            raise RuntimeError("--verify is required with --push")
+        raise RuntimeError("integration requires --verify")
 
     integration_branch = f"workflow/integrate/{candidate_sha[:12]}-{os.getpid()}-{attempt}"
-    switched = command("git", "switch", "--create", integration_branch, "--no-track", remote_ref)
+    switched = command("git", "switch", "--create", integration_branch, "--no-track", base_target_sha)
     if switched.returncode:
         return EXIT_PRECONDITION
     state = {
@@ -315,13 +405,13 @@ def finalize_integration(
     remote_ref = f"{remote}/{target}"
     verified_sha = str(state["verified_integration_sha"])
     for transport_attempt in range(1, args.max_retries + 1):
-        if fetch_target(remote, target):
+        current_target_sha = fetch_target(remote, target)
+        if current_target_sha is None:
             if transport_attempt < args.max_retries:
                 print("safe_merge: transport check failed; retrying the same verified integration.")
                 continue
             print("safe_merge: transport unavailable; verified integration retained for --continue.")
             return EXIT_BUSY
-        current_target_sha = git_output("rev-parse", remote_ref)
         if current_target_sha == verified_sha:
             receipt = write_receipt(
                 state, status="pushed", transport_attempts=transport_attempt - 1
@@ -333,7 +423,13 @@ def finalize_integration(
             print("safe_merge: target advanced before push; rebuilding from the latest target.")
             restore_candidate(state, delete_integration=not preserve_on_retry)
             return RETRY
-        pushed = command("git", "push", remote, f"HEAD:{target}")
+        if git_output("rev-parse", "HEAD") != verified_sha or git_output("status", "--porcelain"):
+            print(
+                "safe_merge: integration changed after verification; push refused.",
+                file=sys.stderr,
+            )
+            return EXIT_VERIFY
+        pushed = command("git", "push", remote, f"{verified_sha}:refs/heads/{target}")
         if pushed.returncode == 0:
             receipt = write_receipt(
                 state, status="pushed", transport_attempts=transport_attempt
@@ -349,6 +445,8 @@ def finalize_integration(
 
 
 def continue_merge(args: argparse.Namespace) -> int:
+    if not args.verify:
+        raise RuntimeError("integration requires --verify")
     state = load_state()
     if args.remote != state.get("remote") or args.target != state.get("target"):
         raise RuntimeError("--continue remote/target does not match the preserved integration")
@@ -399,7 +497,8 @@ def create_worktree(args: argparse.Namespace) -> int:
     target_path = Path(args.create_worktree).expanduser().resolve()
     if target_path.exists():
         raise RuntimeError(f"worktree path already exists: {target_path}")
-    if fetch_target(args.remote, args.target):
+    target_sha = fetch_target(args.remote, args.target)
+    if target_sha is None:
         return EXIT_PRECONDITION
     reason = f"workflow:{args.task_id}"
     created = command(
@@ -412,7 +511,7 @@ def create_worktree(args: argparse.Namespace) -> int:
         "-b",
         args.branch,
         str(target_path),
-        f"{args.remote}/{args.target}",
+        target_sha,
     )
     if created.returncode:
         return EXIT_PRECONDITION
@@ -439,11 +538,12 @@ def cleanup_worktree(args: argparse.Namespace) -> int:
         raise RuntimeError("worktree has uncommitted changes")
     if other_git_operation_in_progress(target_path):
         raise RuntimeError("worktree has an in-progress Git operation")
-    if fetch_target(args.remote, args.target):
+    target_sha = fetch_target(args.remote, args.target)
+    if target_sha is None:
         return EXIT_PRECONDITION
     head = git_output("rev-parse", "HEAD", cwd=target_path)
     remote_ref = f"{args.remote}/{args.target}"
-    if command("git", "merge-base", "--is-ancestor", head, remote_ref).returncode:
+    if command("git", "merge-base", "--is-ancestor", head, target_sha).returncode:
         raise RuntimeError(f"worktree HEAD has not been absorbed by {remote_ref}")
 
     unlocked = command("git", "worktree", "unlock", str(target_path))
@@ -467,6 +567,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--continue", dest="continue_merge", action="store_true")
     parser.add_argument("--push", action="store_true", help="push the verified merge to the target")
     lifecycle = parser.add_mutually_exclusive_group()
+    lifecycle.add_argument("--sync-baseline", action="store_true")
     lifecycle.add_argument("--create-worktree")
     lifecycle.add_argument("--cleanup-worktree")
     parser.add_argument("--branch", default="")
@@ -475,22 +576,44 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def validate_mode(args: argparse.Namespace) -> None:
+    if args.sync_baseline and (
+        args.continue_merge
+        or args.push
+        or args.verify
+        or args.branch
+        or args.task_id
+        or args.yes
+    ):
+        raise RuntimeError("--sync-baseline cannot be combined with integration or worktree options")
+    if args.create_worktree and (args.continue_merge or args.push or args.verify or args.yes):
+        raise RuntimeError("--create-worktree cannot be combined with integration options")
+    if args.cleanup_worktree and (
+        args.continue_merge or args.push or args.verify or args.branch
+    ):
+        raise RuntimeError("--cleanup-worktree cannot be combined with integration options")
+    if not (args.sync_baseline or args.create_worktree or args.cleanup_worktree) and (
+        args.branch or args.task_id or args.yes
+    ):
+        raise RuntimeError("worktree lifecycle options require a lifecycle action")
+
+
 def main() -> int:
     args = parse_args()
     if args.max_retries < 1:
         print("safe_merge: --max-retries must be positive.", file=sys.stderr)
         return EXIT_PRECONDITION
     try:
+        validate_mode(args)
         if git_output("rev-parse", "--is-inside-work-tree") != "true":
             raise RuntimeError("not inside a git worktree")
+        validate_repository_parameters(args.remote, args.target)
+        if args.sync_baseline:
+            return sync_baseline(args)
         if args.create_worktree:
             return create_worktree(args)
         if args.cleanup_worktree:
             return cleanup_worktree(args)
-        if args.push and not args.verify:
-            raise RuntimeError("--verify is required with --push")
-        if not args.verify:
-            raise RuntimeError("integration requires --verify")
         if args.continue_merge:
             return continue_merge(args)
         if state_path().exists() or merge_in_progress():

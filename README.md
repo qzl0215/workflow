@@ -5,7 +5,7 @@
 `workflow` 是一个可独立安装的中文 AI 工作协议。3.0 不再把模型固定在细密的七阶段流程里，而是守住结果、风险、授权和证据四类边界，让能力更强的模型自行选择研究方法、拆分粒度、并行方式与验证组合。
 
 作者：zhonglin · MIT License
-当前协议版本：`3.3.0`
+当前协议版本：`3.4.0`
 
 [打开完整可视化](docs/workflow-visual-map.html) · [查看正式协议](SKILL.md)
 
@@ -75,6 +75,17 @@ workflow 先把用户的意见、设想或原则整理成候选目标。默认�
 ```
 
 只有同时满足这些条件才并行：输入和输出边界清楚、可写现场或共享资源能隔离、无需频繁互相等待、汇合成本低于节省的时间。否则串行通常更快、更稳。
+
+## 长期项目的最短 Git 路径
+
+长期重复使用 workflow 时，日常路径只保留三件事：开始前取得新鲜基线，完成后安全集成，目标更新后走项目自己的发布入口。
+
+- 只读调研、代码阅读和一次性数据查询不创建 worktree；会写代码或污染项目现场时，复用一个宿主提供的隔离 worktree，不嵌套第二个交付 worktree。
+- 首次写入前，从项目真源读取远端与目标分支。干净且尚未开始的现场，以项目工作树为当前目录，通过 `python3 -B <已安装 workflow 根>/scripts/safe_merge.py --sync-baseline --remote <项目远端> --target <项目目标>` fast-forward 到服务器最新目标；已有本地工作时不自动 rebase。
+- 多线程候选默认保持自身提交不变，按最新目标逐个 target-first 合并并对确切集成 SHA 验证；GitHub/GitLab 的 PR、MR、合并队列以及项目明确的安全偏好优先。
+- 仓库地址、remote、目标分支、验证命令和发布/部署或 reconciler 都写在项目真源中。workflow 只提供平台中立的方法与机械护栏，不保存具体项目参数。
+
+因此，一个成熟项目无需每次重新发现发布方式或重复运行流程体检；稳定契约由项目维护，任务只执行与本次变化相称的同步、验证、集成和线上检查。
 
 每个子任务独立决定思考深度，不继承父计划的形式复杂度：
 
@@ -178,7 +189,7 @@ python3 scripts/install.py enable-auto-update --target "/path/to/agent/skills"
 错过 2.26 时，不要手工删除旧文件再把 ZIP 覆盖进去。建议使用临时克隆：
 
 ```bash
-git clone --depth 1 --branch 3.3.0 https://github.com/qzl0215/workflow.git workflow-3
+git clone --depth 1 --branch 3.4.0 https://github.com/qzl0215/workflow.git workflow-3
 cd workflow-3
 python3 scripts/install.py update --target "/path/to/agent/skills"
 python3 scripts/install.py check --target "/path/to/agent/skills"

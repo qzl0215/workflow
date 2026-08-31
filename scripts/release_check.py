@@ -32,7 +32,6 @@ SOURCE_ONLY_FILES = frozenset(
         "docs/workflow-visual-map.html",
         "scripts/generate_visual_map.py",
         "scripts/release_check.py",
-        "scripts/safe_merge.py",
         "tests/test_portability.py",
         "tests/test_protocol_v3.py",
         "tests/test_release_v3.py",

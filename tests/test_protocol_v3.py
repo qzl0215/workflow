@@ -92,7 +92,7 @@ class WorkflowV3MainlineTest(unittest.TestCase):
         skill = read(PACKAGE / "SKILL.md")
         version = re.search(r"(?m)^version:\s*(\S+)\s*$", skill)
         self.assertIsNotNone(version)
-        self.assertEqual(version.group(1), "3.3.0")
+        self.assertEqual(version.group(1), "3.4.0")
 
         positions = [skill.index(outcome) for outcome in (*CORE_OUTCOMES, *CONDITIONAL_OUTCOMES)]
         self.assertEqual(positions, sorted(positions))
@@ -383,6 +383,39 @@ class DepthAndCoordinationTest(unittest.TestCase):
 
 
 class DeliveryLearningAndTruthTest(unittest.TestCase):
+    def test_git_worktrees_and_repository_parameters_stay_minimal_and_project_owned(self) -> None:
+        execution = reference("execute.md")
+        orchestration = reference("orchestrate.md")
+        delivery = reference("deliver.md")
+        combined = execution + "\n" + orchestration + "\n" + delivery
+
+        assert_any(
+            self,
+            combined,
+            ("只读任务不创建工作树", "只读任务无需创建工作树"),
+            "只读任务不承担写隔离成本",
+        )
+        assert_any(
+            self,
+            combined,
+            ("复用宿主已经提供的隔离工作树", "复用已有隔离工作树"),
+            "不嵌套创建第二个 worktree",
+        )
+        for token in ("远端", "目标分支", "项目真源", "fast-forward", "target-first"):
+            self.assertIn(token, combined)
+        assert_any(
+            self,
+            combined,
+            ("GitHub、GitLab", "GitHub / GitLab", "GitHub 或 GitLab"),
+            "仓库平台由项目选择",
+        )
+        assert_any(
+            self,
+            delivery,
+            ("不在 workflow 写入具体仓库", "不把具体仓库", "不硬编码仓库"),
+            "Workflow 不持有项目仓库参数",
+        )
+
     def test_completion_is_reported_before_automatic_improvement_identification(self) -> None:
         skill = read(PACKAGE / "SKILL.md")
         delivery = reference("deliver.md")

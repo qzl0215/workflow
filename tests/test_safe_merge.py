@@ -6,13 +6,20 @@ import tempfile
 import unittest
 from pathlib import Path
 import json
+import os
+import shutil
 
 
 PACKAGE = Path(__file__).resolve().parents[1]
 SCRIPT = PACKAGE / "scripts/safe_merge.py"
 
 
-def run(*parts: str, cwd: Path, check: bool = True) -> subprocess.CompletedProcess[str]:
+def run(
+    *parts: str,
+    cwd: Path,
+    check: bool = True,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     result = subprocess.run(
         list(parts),
         cwd=cwd,
@@ -20,6 +27,7 @@ def run(*parts: str, cwd: Path, check: bool = True) -> subprocess.CompletedProce
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         check=False,
+        env=env,
     )
     if check and result.returncode:
         raise AssertionError(f"command failed ({result.returncode}): {' '.join(parts)}\n{result.stdout}")
@@ -113,6 +121,416 @@ class SafeMergeIntegrationTest(unittest.TestCase):
         self.assertEqual((audit / "b.txt").read_text(), "second\n")
         parents = run("git", "rev-list", "--parents", "-n", "1", "HEAD", cwd=audit).stdout.split()
         self.assertEqual(parents[1:], [target_sha, candidate_sha])
+
+    def test_sync_baseline_fast_forwards_a_clean_unstarted_worktree(self) -> None:
+        stale = self.clone("stale-baseline")
+        self.branch(stale, "feature-stale-baseline")
+        old_sha = run("git", "rev-parse", "HEAD", cwd=stale).stdout.strip()
+
+        updater = self.clone("baseline-updater")
+        self.branch(updater, "feature-baseline-updater")
+        (updater / "a.txt").write_text("latest baseline\n")
+        run("git", "add", "a.txt", cwd=updater)
+        run("git", "commit", "-m", "advance baseline", cwd=updater)
+        run("git", "push", "origin", "HEAD:main", cwd=updater)
+        latest_sha = run("git", "rev-parse", "HEAD", cwd=updater).stdout.strip()
+
+        synced = self.lifecycle(stale, "--sync-baseline")
+
+        self.assertEqual(synced.returncode, 0, synced.stdout)
+        self.assertIn("baseline fast-forwarded", synced.stdout)
+        self.assertEqual(run("git", "branch", "--show-current", cwd=stale).stdout.strip(), "feature-stale-baseline")
+        self.assertNotEqual(old_sha, latest_sha)
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=stale).stdout.strip(), latest_sha)
+        self.assertEqual((stale / "a.txt").read_text(), "latest baseline\n")
+
+    def test_sync_baseline_refuses_dirty_or_diverged_work(self) -> None:
+        dirty = self.clone("dirty-baseline")
+        self.branch(dirty, "feature-dirty-baseline")
+        (dirty / "a.txt").write_text("uncommitted intent\n")
+        refused_dirty = self.lifecycle(dirty, "--sync-baseline")
+        self.assertEqual(refused_dirty.returncode, 2, refused_dirty.stdout)
+        self.assertIn("worktree has uncommitted changes", refused_dirty.stdout)
+
+        diverged = self.clone("diverged-baseline")
+        self.branch(diverged, "feature-diverged-baseline")
+        (diverged / "b.txt").write_text("local candidate\n")
+        run("git", "add", "b.txt", cwd=diverged)
+        run("git", "commit", "-m", "local candidate", cwd=diverged)
+        refused_diverged = self.lifecycle(diverged, "--sync-baseline")
+        self.assertEqual(refused_diverged.returncode, 2, refused_diverged.stdout)
+        self.assertIn("cannot fast-forward baseline", refused_diverged.stdout)
+
+    def test_sync_baseline_refuses_preserved_integration_state_and_mixed_modes(self) -> None:
+        stale = self.clone("stateful-baseline")
+        self.branch(stale, "feature-stateful-baseline")
+        old_sha = run("git", "rev-parse", "HEAD", cwd=stale).stdout.strip()
+
+        updater = self.clone("stateful-baseline-updater")
+        self.branch(updater, "feature-stateful-baseline-updater")
+        (updater / "a.txt").write_text("latest baseline\n")
+        run("git", "add", "a.txt", cwd=updater)
+        run("git", "commit", "-m", "advance baseline", cwd=updater)
+        run("git", "push", "origin", "HEAD:main", cwd=updater)
+
+        state = Path(
+            run(
+                "git",
+                "rev-parse",
+                "--path-format=absolute",
+                "--git-path",
+                "workflow-integration-state.json",
+                cwd=stale,
+            ).stdout.strip()
+        )
+        state.write_text("{}", encoding="utf-8")
+        refused_state = self.lifecycle(stale, "--sync-baseline")
+        self.assertEqual(refused_state.returncode, 2, refused_state.stdout)
+        self.assertIn("integration state", refused_state.stdout)
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=stale).stdout.strip(), old_sha)
+
+        state.unlink()
+        refused_mode = self.lifecycle(stale, "--sync-baseline", "--push")
+        self.assertEqual(refused_mode.returncode, 2, refused_mode.stdout)
+        self.assertIn("cannot be combined", refused_mode.stdout)
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=stale).stdout.strip(), old_sha)
+
+    def test_sync_baseline_checks_the_exact_fetched_sha_and_clean_postcondition(self) -> None:
+        stale = self.clone("hooked-baseline")
+        self.branch(stale, "feature-hooked-baseline")
+
+        updater = self.clone("hooked-baseline-updater")
+        self.branch(updater, "feature-hooked-baseline-updater")
+        (updater / "a.txt").write_text("latest baseline\n")
+        run("git", "add", "a.txt", cwd=updater)
+        run("git", "commit", "-m", "advance baseline", cwd=updater)
+        run("git", "push", "origin", "HEAD:main", cwd=updater)
+        latest_sha = run("git", "rev-parse", "HEAD", cwd=updater).stdout.strip()
+
+        hook = stale / ".git" / "hooks" / "post-merge"
+        hook.write_text("#!/bin/sh\nprintf 'hook side effect\\n' > shared.txt\n", encoding="utf-8")
+        hook.chmod(0o755)
+        result = self.lifecycle(stale, "--sync-baseline")
+
+        self.assertEqual(result.returncode, 2, result.stdout)
+        self.assertIn("baseline postcondition failed", result.stdout)
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=stale).stdout.strip(), latest_sha)
+        self.assertIn("shared.txt", run("git", "status", "--short", cwd=stale).stdout)
+
+    def test_already_integrated_candidate_is_a_noop_without_revalidating_old_tree(self) -> None:
+        candidate = self.clone("already-integrated")
+        self.branch(candidate, "feature-already-integrated")
+        (candidate / "a.txt").write_text("already integrated\n")
+        run("git", "add", "a.txt", cwd=candidate)
+        run("git", "commit", "-m", "already integrated", cwd=candidate)
+        run("git", "push", "origin", "HEAD:main", cwd=candidate)
+
+        marker = self.root / "stale-tree-verify-ran"
+        verify_command = (
+            f"{sys.executable} -c \"from pathlib import Path; "
+            f"Path(r'{marker}').write_text('ran'); raise SystemExit(9)\""
+        )
+        result = run(
+            sys.executable,
+            "-B",
+            str(SCRIPT),
+            "--target",
+            "main",
+            "--remote",
+            "origin",
+            "--verify",
+            verify_command,
+            "--push",
+            cwd=candidate,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("already_integrated", result.stdout)
+        self.assertFalse(marker.exists())
+
+    def test_verification_must_leave_the_exact_integration_tree_clean(self) -> None:
+        candidate = self.clone("dirty-verifier")
+        self.branch(candidate, "feature-dirty-verifier")
+        (candidate / "a.txt").write_text("candidate change\n")
+        run("git", "add", "a.txt", cwd=candidate)
+        run("git", "commit", "-m", "candidate change", cwd=candidate)
+        remote_before = run("git", "rev-parse", "origin/main", cwd=candidate).stdout.strip()
+
+        verify_command = (
+            f"{sys.executable} -c \"from pathlib import Path; "
+            "Path('shared.txt').write_text('verification side effect\\n')\""
+        )
+        result = run(
+            sys.executable,
+            "-B",
+            str(SCRIPT),
+            "--target",
+            "main",
+            "--remote",
+            "origin",
+            "--verify",
+            verify_command,
+            "--push",
+            cwd=candidate,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 4, result.stdout)
+        self.assertIn("verification changed the integration worktree", result.stdout)
+        run("git", "fetch", "origin", "main", cwd=candidate)
+        self.assertEqual(run("git", "rev-parse", "origin/main", cwd=candidate).stdout.strip(), remote_before)
+
+    def test_verification_cannot_replace_the_integration_commit(self) -> None:
+        candidate = self.clone("commit-verifier")
+        self.branch(candidate, "feature-commit-verifier")
+        (candidate / "a.txt").write_text("candidate change\n")
+        run("git", "add", "a.txt", cwd=candidate)
+        run("git", "commit", "-m", "candidate change", cwd=candidate)
+        remote_before = run("git", "rev-parse", "origin/main", cwd=candidate).stdout.strip()
+
+        verify_command = (
+            f"{sys.executable} -c \"from pathlib import Path; "
+            "Path('shared.txt').write_text('committed verification side effect\\n')\" "
+            "&& git add shared.txt && git commit -m 'verifier mutation'"
+        )
+        result = run(
+            sys.executable,
+            "-B",
+            str(SCRIPT),
+            "--target",
+            "main",
+            "--remote",
+            "origin",
+            "--verify",
+            verify_command,
+            "--push",
+            cwd=candidate,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 4, result.stdout)
+        self.assertIn("verification changed the integration worktree", result.stdout)
+        run("git", "fetch", "origin", "main", cwd=candidate)
+        self.assertEqual(run("git", "rev-parse", "origin/main", cwd=candidate).stdout.strip(), remote_before)
+
+    def test_failed_verifier_cannot_rebind_continue_to_its_own_commit(self) -> None:
+        candidate = self.clone("failed-commit-verifier")
+        self.branch(candidate, "feature-failed-commit-verifier")
+        (candidate / "a.txt").write_text("candidate change\n")
+        run("git", "add", "a.txt", cwd=candidate)
+        run("git", "commit", "-m", "candidate change", cwd=candidate)
+        remote_before = run("git", "rev-parse", "origin/main", cwd=candidate).stdout.strip()
+
+        mutating_failure = (
+            f"{sys.executable} -c \"from pathlib import Path; "
+            "Path('shared.txt').write_text('failed verifier mutation\\n')\" "
+            "&& git add shared.txt && git commit -m 'failed verifier mutation' && exit 9"
+        )
+        first = run(
+            sys.executable,
+            "-B",
+            str(SCRIPT),
+            "--target",
+            "main",
+            "--remote",
+            "origin",
+            "--verify",
+            mutating_failure,
+            "--push",
+            cwd=candidate,
+            check=False,
+        )
+        self.assertEqual(first.returncode, 4, first.stdout)
+        self.assertIn("verification changed the integration worktree", first.stdout)
+
+        second = run(
+            sys.executable,
+            "-B",
+            str(SCRIPT),
+            "--target",
+            "main",
+            "--remote",
+            "origin",
+            "--verify",
+            f"{sys.executable} -c \"raise SystemExit(0)\"",
+            "--continue",
+            "--push",
+            cwd=candidate,
+            check=False,
+        )
+
+        self.assertEqual(second.returncode, 2, second.stdout)
+        self.assertIn("integration HEAD changed", second.stdout)
+        run("git", "fetch", "origin", "main", cwd=candidate)
+        self.assertEqual(run("git", "rev-parse", "origin/main", cwd=candidate).stdout.strip(), remote_before)
+
+    def test_worktree_movement_after_verification_never_pushes_the_moved_head(self) -> None:
+        candidate = self.clone("late-head-movement")
+        self.branch(candidate, "feature-late-head-movement")
+        (candidate / "a.txt").write_text("candidate change\n")
+        run("git", "add", "a.txt", cwd=candidate)
+        run("git", "commit", "-m", "candidate change", cwd=candidate)
+        remote_before = run("git", "rev-parse", "origin/main", cwd=candidate).stdout.strip()
+
+        real_git = shutil.which("git")
+        self.assertIsNotNone(real_git)
+        wrapper_dir = self.root / "git-wrapper"
+        wrapper_dir.mkdir()
+        marker = self.root / "verification-finished"
+        done = self.root / "late-mutation-done"
+        wrapper = wrapper_dir / "git"
+        wrapper.write_text(
+            "#!/usr/bin/env python3\n"
+            "import os, subprocess, sys\n"
+            "from pathlib import Path\n"
+            "real = os.environ['REAL_GIT']\n"
+            "args = sys.argv[1:]\n"
+            "result = subprocess.run([real, *args], check=False)\n"
+            "marker = Path(os.environ['MUTATION_MARKER'])\n"
+            "done = Path(os.environ['MUTATION_DONE'])\n"
+            "if result.returncode == 0 and args and args[0] == 'fetch' and marker.exists() and not done.exists():\n"
+            "    done.touch()\n"
+            "    Path('shared.txt').write_text('late unverified mutation\\n')\n"
+            "    subprocess.run([real, 'add', 'shared.txt'], check=True)\n"
+            "    subprocess.run([real, 'commit', '-m', 'late unverified mutation'], check=True)\n"
+            "raise SystemExit(result.returncode)\n",
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
+        environment = {
+            **os.environ,
+            "PATH": f"{wrapper_dir}{os.pathsep}{os.environ.get('PATH', '')}",
+            "REAL_GIT": str(real_git),
+            "MUTATION_MARKER": str(marker),
+            "MUTATION_DONE": str(done),
+        }
+        verify_command = f"{sys.executable} -c \"from pathlib import Path; Path(r'{marker}').touch()\""
+        result = run(
+            sys.executable,
+            "-B",
+            str(SCRIPT),
+            "--target",
+            "main",
+            "--remote",
+            "origin",
+            "--verify",
+            verify_command,
+            "--push",
+            cwd=candidate,
+            check=False,
+            env=environment,
+        )
+
+        self.assertEqual(result.returncode, 4, result.stdout)
+        self.assertIn("integration changed after verification", result.stdout)
+        run("git", "fetch", "origin", "main", cwd=candidate)
+        self.assertEqual(run("git", "rev-parse", "origin/main", cwd=candidate).stdout.strip(), remote_before)
+
+    def test_continue_refuses_unrelated_dirty_changes_before_verification(self) -> None:
+        first = self.clone("continue-dirty-first")
+        candidate = self.clone("continue-dirty-candidate")
+        self.branch(first, "feature-continue-dirty-first")
+        self.branch(candidate, "feature-continue-dirty-candidate")
+
+        (first / "shared.txt").write_text("target intent\n")
+        run("git", "add", "shared.txt", cwd=first)
+        run("git", "commit", "-m", "target intent", cwd=first)
+        run("git", "push", "origin", "HEAD:main", cwd=first)
+        remote_before = run("git", "rev-parse", "HEAD", cwd=first).stdout.strip()
+
+        (candidate / "shared.txt").write_text("candidate intent\n")
+        run("git", "add", "shared.txt", cwd=candidate)
+        run("git", "commit", "-m", "candidate intent", cwd=candidate)
+        conflict = self.safe_merge(candidate, "--push")
+        self.assertEqual(conflict.returncode, 3, conflict.stdout)
+
+        (candidate / "shared.txt").write_text("target intent\ncandidate intent\n")
+        run("git", "add", "shared.txt", cwd=candidate)
+        (candidate / "a.txt").write_text("unrelated unstaged change\n")
+        marker = self.root / "dirty-continue-verifier-ran"
+        verify_command = f"{sys.executable} -c \"from pathlib import Path; Path(r'{marker}').touch()\""
+        continued = run(
+            sys.executable,
+            "-B",
+            str(SCRIPT),
+            "--target",
+            "main",
+            "--remote",
+            "origin",
+            "--verify",
+            verify_command,
+            "--continue",
+            "--push",
+            cwd=candidate,
+            check=False,
+        )
+
+        self.assertEqual(continued.returncode, 2, continued.stdout)
+        self.assertIn("not clean before verification", continued.stdout)
+        self.assertFalse(marker.exists())
+        run("git", "fetch", "origin", "main", cwd=candidate)
+        self.assertEqual(run("git", "rev-parse", "origin/main", cwd=candidate).stdout.strip(), remote_before)
+
+    def test_project_supplied_remote_and_target_use_forced_target_first_merge(self) -> None:
+        run("git", "push", "origin", "main:release/stable", cwd=self.seed)
+        base_sha = run("git", "rev-parse", "HEAD", cwd=self.seed).stdout.strip()
+        candidate = self.root / "custom-repository-contract"
+        run(
+            "git",
+            "clone",
+            "--single-branch",
+            "--branch",
+            "main",
+            str(self.remote),
+            str(candidate),
+            cwd=self.root,
+        )
+        run("git", "config", "user.name", "Workflow Test", cwd=candidate)
+        run("git", "config", "user.email", "workflow@example.test", cwd=candidate)
+        run("git", "remote", "rename", "origin", "upstream", cwd=candidate)
+        run("git", "checkout", "-b", "feature-custom-contract", cwd=candidate)
+        (candidate / "b.txt").write_text("custom target candidate\n")
+        run("git", "add", "b.txt", cwd=candidate)
+        run("git", "commit", "-m", "custom target candidate", cwd=candidate)
+        candidate_sha = run("git", "rev-parse", "HEAD", cwd=candidate).stdout.strip()
+
+        result = run(
+            sys.executable,
+            "-B",
+            str(SCRIPT),
+            "--target",
+            "release/stable",
+            "--remote",
+            "upstream",
+            "--verify",
+            f"{sys.executable} -c \"from pathlib import Path; assert Path('b.txt').exists()\"",
+            "--push",
+            cwd=candidate,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout)
+        audit = self.root / "custom-contract-audit"
+        run(
+            "git",
+            "clone",
+            "--branch",
+            "release/stable",
+            str(self.remote),
+            str(audit),
+            cwd=self.root,
+        )
+        parents = run("git", "rev-list", "--parents", "-n", "1", "HEAD", cwd=audit).stdout.split()
+        self.assertEqual(parents[1:], [base_sha, candidate_sha])
+        remote_main = run(
+            "git",
+            "ls-remote",
+            str(self.remote),
+            "refs/heads/main",
+            cwd=self.root,
+        ).stdout.split()[0]
+        self.assertEqual(remote_main, base_sha)
 
     def test_transport_retry_reuses_verified_sha_without_rerunning_verification(self) -> None:
         candidate = self.clone("transport-retry")
