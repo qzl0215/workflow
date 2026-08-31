@@ -21,17 +21,17 @@ OUTPUT = PACKAGE / "docs/workflow-visual-map.html"
 REPOSITORY = "https://github.com/qzl0215/workflow"
 
 REFERENCE_SPECS = (
-    ("目标框定", "frame.md", "核心", "把请求收束为结果契约"),
+    ("目标框定", "frame.md", "核心", "用目标与验收形成契约就绪"),
     ("最小研究", "research.md", "框定反馈", "只查会改变决定的事实"),
     ("深度质询", "grill.md", "框定反馈", "挑战承重假设与失败代价"),
     ("体验探索", "experience.md", "框定反馈", "体验会改方向时才展开"),
-    ("结果规划", "plan.md", "核心", "从验收反推责任与依赖"),
+    ("结果规划", "plan.md", "核心", "形成可确认方案、责任与依赖"),
     ("编排协作", "orchestrate.md", "执行支撑", "选择串并联、角色与隔离"),
     ("执行任务", "execute.md", "核心", "形成产物与候选回执"),
     ("恢复失败", "recover.md", "执行支撑", "失败后用新证据改路径"),
     ("结果验真", "prove.md", "核心", "接受覆盖结果的新鲜证据"),
     ("真实交付", "deliver.md", "条件", "把同一候选写入真实目标"),
-    ("经验复盘", "learn.md", "条件", "压缩必查，只沉淀可行动经验"),
+    ("经验复盘", "learn.md", "条件", "压缩带来治理检查与可行动经验"),
 )
 
 AGENT_PROMPT = (
@@ -95,8 +95,11 @@ def validate_sources(skill_text: str, changelog_text: str, version: str) -> list
         "技能｜",
         "成果｜",
         "路径｜",
-        "关键出口必须展示",
+        "关键出口展示",
         "业务含义",
+        "契约就绪",
+        "方案就绪",
+        "真正看懂",
     )
     missing_tokens = [token for token in required_root_tokens if token not in skill_text]
     if missing_tokens:
@@ -244,16 +247,17 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
         <p class="intro">阶段是进展投影，不是固定仪式。已有可信输入可以快速通过；发现缺口，就回到最早能修正它的位置。</p>
       </header>
       <div class="core-flow">
-        <article class="core-card"><span class="num">01 · FRAME</span><h3>目标框定</h3><p>定义用户状态、验收、范围、约束、授权与承重未知。</p><code>references/frame.md</code></article>
-        <article class="core-card"><span class="num">02 · PLAN</span><h3>结果规划</h3><p>从验收反推责任、依赖、任务边界与证据路径。</p><code>references/plan.md</code></article>
+        <article class="core-card"><span class="num">01 · FRAME</span><h3>目标框定</h3><p>默认用目标与验收形成契约就绪；其他边界确实影响方案时才补充。</p><code>references/frame.md</code></article>
+        <article class="core-card"><span class="num">02 · PLAN</span><h3>结果规划</h3><p>展示目标、推荐方案、验收和交付路径，经确认或委托形成方案就绪。</p><code>references/plan.md</code></article>
         <article class="core-card"><span class="num">03 · EXECUTE</span><h3>任务执行</h3><p>实施当前就绪责任，返回真实产物、候选证据和偏差。</p><code>references/execute.md</code></article>
         <article class="core-card"><span class="num">04 · PROVE</span><h3>结果验真</h3><p>读取实际产物，用新鲜证据证明任务、计划和用户结果。</p><code>references/prove.md</code></article>
       </div>
       <div class="conditional-flow">
         <article class="conditional-card"><b>条件：真实交付</b><p>只有提交、合并、部署、发布或外部写入才进入；验真不自动授权交付。</p></article>
         <div class="flow-arrow">→</div>
-        <article class="conditional-card"><b>条件：经验复盘</b><p>事实能改变未来行动时进入；发生上下文压缩时必须检查治理与无效动作，检查后仍可 no-op。</p></article>
+        <article class="conditional-card"><b>条件：经验复盘</b><p>事实能改变未来行动时进入；上下文压缩带来工作规则、信息组织和业务动作的治理检查，检查后仍可 no-op。</p></article>
       </div>
+      <p class="boundary-note"><b>就绪链：</b>意见与设想先整理为候选目标；目标与验收清楚后形成契约就绪，推荐方案经用户确认或委托后形成方案就绪。用户说“开动”后，一次确认在实施、验真和真实交付之间持续有效。</p>
     </div>
   </section>
 
@@ -264,7 +268,7 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
         <p class="intro">研究、质询、体验不是默认并行的三道工序。它们只为一个结果契约提供候选输入，并且只在结论真的改变时互相回流。</p>
       </header>
       <div class="frame-layout">
-        <div class="frame-hub"><div class="hub-inner"><span>统一合成责任</span><b>结果契约</b><span>结果 · 验收 · 边界 · 授权</span></div></div>
+        <div class="frame-hub"><div class="hub-inner"><span>统一合成责任</span><b>结果契约</b><span>目标 · 验收 · 按需边界</span></div></div>
         <div>
           <div class="feedback-list">
             <article class="feedback-card"><code>research</code><div><h3>事实不足才做最小研究</h3><p>只查会改变当前决定的事实；达到停止条件就结束，不追求资料穷尽。</p></div></article>
@@ -280,8 +284,8 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
   <section class="section" id="agents">
     <div class="shell">
       <header class="section-head">
-        <div><p class="kicker">Plan → Orchestrate → Execute</p><h2>按结果拆任务，按净收益做并行。</h2></div>
-        <p class="intro">并行不是多开几个 Agent。只有边界清楚、现场可隔离、无需频繁等待且汇合成本低于节省时间时，才值得并行。</p>
+        <div><p class="kicker">Plan → Confirm → Execute</p><h2>先让方案可判断，再按结果拆任务。</h2></div>
+        <p class="intro">用户先看到目标、推荐方案、验收和交付路径；确认后，内部任务再按真实依赖和净收益安排串并联。</p>
       </header>
       <div class="plan-grid">
         <article class="plan-panel">
@@ -341,7 +345,7 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
       <div class="boundary-grid">
         <article class="boundary-card"><b>Prove · 必经</b><p>证明当前产物和用户状态满足结果契约。</p><p>相同输入、环境和验证语义上的有效证据可以复用；跨真实环境边界必须 fresh。</p></article>
         <article class="boundary-card is-conditional"><b>Deliver · 条件</b><p>把同一候选写入真实目标，并在真实消费入口冒烟。</p><p>任一步失败就停止后续外部写入，保留可恢复现场。</p></article>
-        <article class="boundary-card is-conditional"><b>Learn · 条件</b><p>只接受有未来触发场景、证据和唯一真源的经验。</p><p>上下文压缩强制检查 workflow / 项目 harness 的冗余、真源、导航与无效动作；无可行动发现就是 no-op。</p></article>
+        <article class="boundary-card is-conditional"><b>Learn · 条件</b><p>只接受有未来触发场景、证据和唯一真源的经验。</p><p>上下文压缩带来工作规则、项目入口、冗余、真源、导航与动作价值检查；无可行动发现就是 no-op。</p></article>
       </div>
       <p class="boundary-note"><b>默认顺序：</b>有交付时先 `prove → deliver`，有复用价值信号才进入 `learn`；上下文压缩始终构成该信号。无交付时也在 `prove` 后先过同一复盘门。等待平台时可并行收集与交付结果无关的候选观察，但最终接受发生在交付事实之后。</p>
     </div>
@@ -350,8 +354,8 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
   <section class="section">
     <div class="shell">
       <header class="section-head">
-        <div><p class="kicker">用户阶段画面</p><h2>关键出口必须出现，内容先让业务人员读懂。</h2></div>
-        <p class="intro">首次进展、环节实质变化、真实阻断、最终交付和交回控制权强制展示；状态不变不重复，轻量任务可只在最终出口展示一次。</p>
+        <div><p class="kicker">用户阶段画面</p><h2>关键出口清楚呈现，让用户真正看懂。</h2></div>
+        <p class="intro">首次进展、环节实质变化、真实阻断、最终交付和交回控制权形成新的用户画面；状态不变不重复，轻量任务可只在最终出口展示一次。</p>
       </header>
       <div class="status-shell">
         <div class="status-top"><i></i><i></i><i></i></div>
@@ -363,7 +367,7 @@ a{color:inherit;text-decoration:none}button{font:inherit}code,.mono{font-family:
           <p><b>路径｜</b><span>确认更新目标 → 安全替换旧版 → 验证实际可用</span></p>
         </div>
       </div>
-      <p class="boundary-note"><b>业务阅读门：</b>主画面先回答发生了什么、对谁有什么影响、现在是否可用、有什么风险、是否需要行动。文件数、检查器、命令、哈希和内部编号只在影响决定或可信度时作为技术证据展开，并先解释业务含义。</p>
+      <p class="boundary-note"><b>理解优先：</b>主画面使用用户熟悉的词，先回答发生了什么、有什么影响、怎样决定或行动。专业术语先解释实际含义；文件数、检查器、命令、哈希和内部编号只在影响决定或可信度时作为技术证据展开。</p>
       <div class="status-explain"><div><b>进度</b>当前实际进入的用户环节</div><div><b>技能</b>本轮真正读取的参考</div><div><b>成果</b>已接受结果与下一验证点</div><div><b>路径</b>多任务时的最短活动路径</div></div>
     </div>
   </section>
