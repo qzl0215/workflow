@@ -20,7 +20,7 @@ REMOTE = "origin"
 TARGET = "main"
 REPOSITORY = "qzl0215/workflow"
 ASSET_NAME = "workflow.zip"
-VERSION = re.compile(r"3\.\d+\.\d+\Z")
+VERSION = re.compile(r"(?:[3-9]|[1-9][0-9]+)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\Z")
 FULL_GATE = (
     f"{sys.executable} -B -m unittest discover -s tests -p 'test_*.py' && "
     f"{sys.executable} -B scripts/release_check.py"
@@ -125,7 +125,7 @@ def remote_ref(ref: str) -> str | None:
 
 def validate_source_version(version: str) -> None:
     if not VERSION.fullmatch(version):
-        raise PublishError("--version must be a stable Workflow 3.x semantic version")
+        raise PublishError("--version must be a stable Workflow semantic version (major >= 3)")
     actual = package_version()
     if actual != version:
         raise PublishError(f"requested version {version} does not match package version {actual or 'missing'}")

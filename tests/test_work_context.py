@@ -13,6 +13,17 @@ SCRIPT = PACKAGE / "scripts/work_context.py"
 
 
 class WorkContextTest(unittest.TestCase):
+    def test_slim_template_still_supports_optional_task_extraction(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "work.md").write_text((PACKAGE / "templates/work.md").read_text())
+            result = self.run_context(root)
+            self.assertEqual(result.returncode, 0, result.stdout)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["task_id"], "P01-T01")
+            self.assertTrue(payload["dispatchable"])
+            self.assertEqual(payload["schema_version"], 3)
+
     def run_context(
         self,
         task_dir: Path,

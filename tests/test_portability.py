@@ -237,6 +237,32 @@ class PortabilityContractTest(unittest.TestCase):
             self.assertNotEqual(checked.returncode, 0, checked.stdout)
             self.assertIn("多个 workflow", checked.stdout)
 
+    def test_schema_one_major_upgrade_preserves_single_active_install(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            target = Path(temp) / "skills"
+            script = PACKAGE / "scripts/install.py"
+            def invoke(action):
+                return subprocess.run([sys.executable, "-B", str(script), action, "--target", str(target)],
+                                      text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            installed = invoke("install")
+            self.assertEqual(installed.returncode, 0, installed.stdout)
+            active = target / "workflow"
+            skill = active / "SKILL.md"
+            old_text = skill.read_text().replace("version: 4.0.0", "version: 3.9.0")
+            skill.write_text(old_text)
+            manifest_path = active / "workflow-package.json"
+            manifest = json.loads(manifest_path.read_text())
+            manifest["version"] = "3.9.0"
+            manifest["runtime"]["files"]["SKILL.md"] = "sha256:" + hashlib.sha256(skill.read_bytes()).hexdigest()
+            manifest_path.write_text(json.dumps(manifest))
+            checked = invoke("check")
+            self.assertEqual(checked.returncode, 0, checked.stdout)
+            updated = invoke("update")
+            self.assertEqual(updated.returncode, 0, updated.stdout)
+            self.assertEqual(skill.read_bytes(), (PACKAGE / "SKILL.md").read_bytes())
+            self.assertEqual(sorted(p.name for p in target.iterdir()), ["workflow"])
+            self.assertEqual(json.loads(manifest_path.read_text())["schema"], 1)
+
     def test_installer_sync_replaces_stale_copy_from_verified_latest_release(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
