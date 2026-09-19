@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""从 work.md 或旧版只读真源生成有界任务胶囊。"""
+"""可选：从 work.md 或旧版记录提取有界任务；可派发状态不验证授权。"""
 
 from __future__ import annotations
 

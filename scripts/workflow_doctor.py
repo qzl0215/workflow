@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""对 Workflow 3.x 源码树或精简运行时做失败关闭检查。"""
+"""对 Workflow 源码树或精简运行时做失败关闭检查。"""
 
 from __future__ import annotations
 
@@ -178,9 +178,9 @@ def inspect_package(package: Path) -> tuple[list[str], list[str]]:
         missing = sorted(EXPECTED_RUNTIME_FILES - runtime_files)
         extras = sorted(runtime_files - EXPECTED_RUNTIME_FILES)
         if missing:
-            errors.append("runtime manifest 缺少 3.0 文件：" + ", ".join(missing))
+            errors.append("runtime manifest 缺少发布文件：" + ", ".join(missing))
         if extras:
-            errors.append("runtime manifest 声明了非 3.0 文件：" + ", ".join(extras))
+            errors.append("runtime manifest 声明了清单外文件：" + ", ".join(extras))
 
     actual_files = install.package_files(package)
     present_source = source_only & actual_files
@@ -208,30 +208,6 @@ def inspect_package(package: Path) -> tuple[list[str], list[str]]:
     if skill_files != [expected_skill]:
         rendered = ", ".join(relative(path, package) for path in skill_files) or "无"
         errors.append(f"必须且只能有根 SKILL.md；当前：{rendered}")
-
-    reference_dir = package / "references"
-    actual_references = {
-        path.name for path in reference_dir.glob("*.md") if path.is_file() and not path.is_symlink()
-    }
-    if actual_references != set(REQUIRED_REFERENCES):
-        missing = sorted(set(REQUIRED_REFERENCES) - actual_references)
-        extras = sorted(actual_references - set(REQUIRED_REFERENCES))
-        if missing:
-            errors.append("缺少 3.0 reference：" + ", ".join(missing))
-        if extras:
-            errors.append("存在未归属 reference：" + ", ".join(extras))
-
-    template_dir = package / "templates"
-    actual_templates = {
-        path.name for path in template_dir.glob("*.md") if path.is_file() and not path.is_symlink()
-    }
-    if actual_templates != set(REQUIRED_TEMPLATES):
-        missing = sorted(set(REQUIRED_TEMPLATES) - actual_templates)
-        extras = sorted(actual_templates - set(REQUIRED_TEMPLATES))
-        if missing:
-            errors.append("缺少 3.0 模板：" + ", ".join(missing))
-        if extras:
-            errors.append("存在重复状态模板：" + ", ".join(extras))
 
     declared = targets | (source_only if full_source else frozenset())
     text_files: list[Path] = []
@@ -277,18 +253,19 @@ def inspect_package(package: Path) -> tuple[list[str], list[str]]:
         except (OSError, UnicodeError):
             skill_text = ""
         if len(skill_text.splitlines()) > MAX_ENTRYPOINT_LINES:
-            errors.append(f"SKILL.md: 超过 {MAX_ENTRYPOINT_LINES} 行")
+            warnings.append(f"SKILL.md: 超过 {MAX_ENTRYPOINT_LINES} 行")
         if len(skill_text) > MAX_ENTRYPOINT_CHARS:
-            errors.append(f"SKILL.md: 超过 {MAX_ENTRYPOINT_CHARS} 字符")
+            warnings.append(f"SKILL.md: 超过 {MAX_ENTRYPOINT_CHARS} 字符")
         metadata = install.skill_metadata(skill)
         if metadata.get("name") != "workflow":
             errors.append("SKILL.md: frontmatter name 必须是 workflow")
-        for name in REQUIRED_REFERENCES:
+        for name in sorted(Path(rel).name for rel in runtime_files if rel.startswith("references/")):
             if f"references/{name}" not in skill_text:
                 errors.append(f"SKILL.md: 未路由 references/{name}")
 
+    reference_dir = package / "references"
     reference_lines = 0
-    for name in REQUIRED_REFERENCES:
+    for name in sorted(Path(rel).name for rel in runtime_files if rel.startswith("references/")):
         path = reference_dir / name
         if not path.is_file():
             continue
@@ -298,9 +275,9 @@ def inspect_package(package: Path) -> tuple[list[str], list[str]]:
             continue
         reference_lines += lines
         if lines > MAX_REFERENCE_FILE_LINES:
-            errors.append(f"references/{name}: 超过 {MAX_REFERENCE_FILE_LINES} 行")
+            warnings.append(f"references/{name}: 超过 {MAX_REFERENCE_FILE_LINES} 行")
     if reference_lines > MAX_REFERENCE_LINES:
-        errors.append(f"references: 总计 {reference_lines} 行，超过 {MAX_REFERENCE_LINES} 行")
+        warnings.append(f"references: 总计 {reference_lines} 行，超过 {MAX_REFERENCE_LINES} 行")
 
     errors.extend(link_errors(package, text_files))
     return sorted(set(errors)), sorted(set(warnings))

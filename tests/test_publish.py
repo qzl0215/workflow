@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import subprocess
 import sys
 import tempfile
@@ -25,8 +26,27 @@ def run(*parts: str) -> subprocess.CompletedProcess[str]:
 
 
 class WorkflowPublisherContractTest(unittest.TestCase):
+    def test_major_upgrade_keeps_exact_candidate_version_validation(self) -> None:
+        spec = importlib.util.spec_from_file_location("workflow_publish_major", SCRIPT)
+        publish = importlib.util.module_from_spec(spec)
+        sys.path.insert(0, str(PACKAGE / "scripts"))
+        try:
+            spec.loader.exec_module(publish)
+        finally:
+            sys.path.remove(str(PACKAGE / "scripts"))
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "SKILL.md").write_text("---\nname: workflow\nversion: 4.0.0\n---\n")
+            (root / "workflow-package.json").write_text(json.dumps({"version": "4.0.0"}))
+            (root / "CHANGELOG.md").write_text("## [4.0.0]\n")
+            with patch.object(publish, "PACKAGE", root):
+                publish.validate_source_version("4.0.0")
+                for invalid in ("4.0", "04.0.0", "4.0.0-rc.1", "4.0.0+local", "4.0.1"):
+                    with self.subTest(version=invalid), self.assertRaises(publish.PublishError):
+                        publish.validate_source_version(invalid)
+
     def test_publisher_requires_explicit_yes_and_exact_package_version(self) -> None:
-        missing_yes = run(sys.executable, "-B", str(SCRIPT), "--version", "3.9.0")
+        missing_yes = run(sys.executable, "-B", str(SCRIPT), "--version", "4.0.0")
         mismatch = run(
             sys.executable,
             "-B",
@@ -54,7 +74,7 @@ class WorkflowPublisherContractTest(unittest.TestCase):
         with patch.object(publish, "remote_ref", side_effect=[tag_sha, target_sha]), \
                 patch.object(publish, "command", return_value=success), \
                 patch.object(publish, "checked", return_value=success) as checked:
-            self.assertEqual(publish.integration_for("3.9.0", "c" * 40, ["unused-merge"]), tag_sha)
+            self.assertEqual(publish.integration_for("4.0.0", "c" * 40, ["unused-merge"]), tag_sha)
         checked.assert_called_once_with(
             sys.executable, "-B", str(PACKAGE / "scripts/safe_merge.py"),
             "--remote", publish.REMOTE, "--target", publish.TARGET,
@@ -74,13 +94,13 @@ class WorkflowPublisherContractTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temp:
             asset = Path(temp) / "workflow.zip"
-            commands = module.release_commands("3.9.0", "a" * 40, asset)
+            commands = module.release_commands("4.0.0", "a" * 40, asset)
 
         flattened = [tuple(command) for command in commands]
         merge = next(command for command in flattened if "safe_merge.py" in " ".join(command))
         self.assertIn("--push", merge)
         self.assertIn("--tag", merge)
-        self.assertIn("3.9.0", merge)
+        self.assertIn("4.0.0", merge)
         verify = merge[merge.index("--verify") + 1]
         self.assertEqual(verify.count("unittest discover"), 1)
         self.assertEqual(verify.count("release_check.py"), 1)

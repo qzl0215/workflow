@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""生成 Workflow 3.x manifest、执行发布门禁并构建精简运行时。"""
+"""生成 Workflow manifest、执行发布门禁并构建精简运行时。"""
 
 from __future__ import annotations
 
@@ -29,6 +29,11 @@ SOURCE_ONLY_FILES = frozenset(
         "SECURITY.md",
         "CONTRIBUTING.md",
         "CHANGELOG.md",
+        "evals/README.md",
+        "evals/cases.json",
+        "evals/4.0.0-results.md",
+        "scripts/evaluate.py",
+        "tests/test_evaluate.py",
         "docs/workflow-visual-map.html",
         "scripts/generate_visual_map.py",
         "scripts/publish.py",
@@ -56,8 +61,8 @@ def sha256_bytes(data: bytes) -> str:
 
 def current_version(package: Path) -> str:
     version = install.skill_metadata(package / "SKILL.md").get("version", "").strip()
-    if not re.fullmatch(r"3\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", version):
-        raise ReleaseError("SKILL.md: Workflow 3.x version 无效")
+    if not re.fullmatch(r"(?:[3-9]|[1-9][0-9]+)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:[-+][0-9A-Za-z.-]+)?", version):
+        raise ReleaseError("SKILL.md: Workflow version 无效")
     return version
 
 
@@ -262,7 +267,7 @@ def ref_manifest(repo: Path, tree: dict[str, tuple[str, str, str]]) -> tuple[dic
     except ValueError as exc:
         raise ReleaseError(str(exc)) from exc
     if runtime_files != RUNTIME_FILES or source_only != SOURCE_ONLY_FILES:
-        raise ReleaseError("commit manifest 与 Workflow 3.0 发布拓扑不一致")
+        raise ReleaseError("commit manifest 与 当前 Workflow 发布清单不一致")
     if set(tree) != EXPECTED_SOURCE_FILES:
         missing = sorted(EXPECTED_SOURCE_FILES - set(tree))
         extras = sorted(set(tree) - EXPECTED_SOURCE_FILES)
