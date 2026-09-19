@@ -93,7 +93,7 @@ class WorkflowV3MainlineTest(unittest.TestCase):
         skill = read(PACKAGE / "SKILL.md")
         version = re.search(r"(?m)^version:\s*(\S+)\s*$", skill)
         self.assertIsNotNone(version)
-        self.assertEqual(version.group(1), "3.8.0")
+        self.assertEqual(version.group(1), "3.9.0")
 
         positions = [skill.index(outcome) for outcome in (*CORE_OUTCOMES, *CONDITIONAL_OUTCOMES)]
         self.assertEqual(positions, sorted(positions))

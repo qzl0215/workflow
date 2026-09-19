@@ -1,15 +1,15 @@
 {
   "schema": 1,
   "name": "workflow",
-  "version": "3.8.0",
+  "version": "3.9.0",
   "entrypoint": "SKILL.md",
   "runtime": {
     "files": {
       "LICENSE": "sha256:6f56797263fb6d17252bfd325544640f0c173926558345975fed3973b1c7fc45",
       "NOTICE.md": "sha256:6de937c69cbda7c0e3b7814d3040b74be8a182ae9303ccd8eec7bd3ae581d42a",
-      "SKILL.md": "sha256:e283567083f3380772491abcd4e36b638f2a52c2ca0eaef56b37956b308c2d20",
-      "references/deliver.md": "sha256:2fbbb878b6e9e9f5122ee8bb810d3bec0cb948eba6b8f37af5ef21f2adefb5a2",
-      "references/execute.md": "sha256:c6c5fae4a933b6941bace9d9ab6dc2d6280b59e66e58b7e091b2009923749f36",
+      "SKILL.md": "sha256:eaea824066aa1949554cd3fd94fdfacab2a3d09577b2dcdbc7ff6c5ef231bb47",
+      "references/deliver.md": "sha256:0b9b0b227ad006b232c545a9c6c5b0013029a31b25dcb658f19004496a6a65d7",
+      "references/execute.md": "sha256:99780053f9de15059419ad9f4ac35196119270244cc6c9181393e266d4aa2fcd",
       "references/experience.md": "sha256:2e0801fe3c37cfb08cba03974e1b9726740d13eeda93ec36cf5f71cdb971d42d",
       "references/frame.md": "sha256:8cab828b8038ebec47dc1019a937d9d1c0c65ee1a049b66ca8794ad1068b3840",
       "references/grill.md": "sha256:a9c599a8e0fe7bd1d353c5b768ec9e260afd255a0d5d43104d2ab3d72e278f7c",
@@ -22,7 +22,7 @@
       "references/research.md": "sha256:dff09c07acc249424dcbe783b3e578ad69f014195723edce6e47bfca652d4efa",
       "scripts/install.py": "sha256:3209fcdc2921868cf8c61889cea686b459b900438a4741f6d69294c113271d8e",
       "scripts/project_init.py": "sha256:8a3bde3ebbc0c94a11ceec5f5ea33e60d7ac4a5be3b22be2da2bbc2efbefe623",
-      "scripts/safe_merge.py": "sha256:8961bad62a2b05bef4b75f2167ddd96d603bcf2256900128b78baf72d71d62ce",
+      "scripts/safe_merge.py": "sha256:b6d3798f8b9e8dedf8f498061f723871342b80d5ca3f3942ffa6bdd721a64ffe",
       "scripts/work_context.py": "sha256:4e8774def03d06a27b11389d55a9340246c9b7cc1e12faf7fde5307c8daaf6aa",
       "scripts/workflow_doctor.py": "sha256:87d316c0313ddd5b7ff4863833ecf38c190c1c84bcb039d20287f6e24474e9ce",
       "templates/work.md": "sha256:ec4342fceff1fedb0f038d5a71019c925dce06b27eb3800307abae68414d8673"

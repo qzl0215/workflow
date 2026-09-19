@@ -149,6 +149,7 @@ def validate_candidate() -> tuple[str, str]:
 def integration_for(version: str, candidate_sha: str, merge_command: list[str]) -> str:
     tag_ref = f"refs/tags/{version}"
     existing = remote_ref(tag_ref)
+    resumed = existing is not None
     if existing is None:
         checked(*merge_command)
         existing = remote_ref(tag_ref)
@@ -160,6 +161,12 @@ def integration_for(version: str, candidate_sha: str, merge_command: list[str]) 
     target_sha = remote_ref(f"refs/heads/{TARGET}")
     if target_sha is None or command("git", "merge-base", "--is-ancestor", existing, target_sha).returncode:
         raise PublishError(f"remote target {TARGET} does not contain tag {version}")
+    if resumed:
+        checked(
+            sys.executable, "-B", str(PACKAGE / "scripts/safe_merge.py"),
+            "--remote", REMOTE, "--target", TARGET,
+            "--sync-baseline", "--confirmed-target", target_sha,
+        )
     return existing
 
 

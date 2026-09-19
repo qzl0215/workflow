@@ -93,6 +93,145 @@ class SafeMergeIntegrationTest(unittest.TestCase):
             check=False,
         )
 
+    def configured_task(self, name: str) -> tuple[Path, Path]:
+        baseline = self.clone(name)
+        task = self.root / f"{name}-task"
+        run("git", "worktree", "add", "-b", f"feature-{name}", str(task), cwd=baseline)
+        run("git", "config", "--local", "workflow.developmentBaseline", str(baseline), cwd=baseline)
+        (task / "a.txt").write_text("delivered\n")
+        run("git", "add", "a.txt", cwd=task)
+        run("git", "commit", "-m", "candidate", cwd=task)
+        return baseline, task
+
+    def test_delivery_syncs_only_configured_baseline_and_is_idempotent(self) -> None:
+        baseline, task = self.configured_task("delivery-baseline")
+        candidate_sha = run("git", "rev-parse", "HEAD", cwd=task).stdout.strip()
+        production = self.root / "production"
+        run("git", "worktree", "add", "--detach", str(production), "main", cwd=baseline)
+        old_production = run("git", "rev-parse", "HEAD", cwd=production).stdout
+        first = self.safe_merge(task, "--push")
+        self.assertEqual(first.returncode, 0, first.stdout)
+        self.assertIn("baseline_status=fast_forwarded", first.stdout)
+        delivered = run("git", "rev-parse", "main", cwd=self.remote).stdout.strip()
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=baseline).stdout.strip(), delivered)
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=task).stdout.strip(), candidate_sha)
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=production).stdout, old_production)
+        second = self.lifecycle(task, "--push")
+        self.assertEqual(second.returncode, 0, second.stdout)
+        self.assertIn("status=already_integrated", second.stdout)
+        self.assertIn("baseline_status=current", second.stdout)
+        self.assertNotIn("verification passed", second.stdout)
+
+    def test_remote_success_and_blocked_baseline_are_reported_separately_then_recovered(self) -> None:
+        baseline, task = self.configured_task("dirty-delivery")
+        before = run("git", "rev-parse", "HEAD", cwd=baseline).stdout
+        (baseline / "b.txt").write_text("preserve me\n")
+        first = self.safe_merge(task, "--push")
+        self.assertEqual(first.returncode, 2, first.stdout)
+        self.assertIn("pushed target-first merge", first.stdout)
+        self.assertIn("remote_status=confirmed", first.stdout)
+        self.assertIn("baseline_status=blocked", first.stdout)
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=baseline).stdout, before)
+        self.assertEqual((baseline / "b.txt").read_text(), "preserve me\n")
+        (baseline / "b.txt").write_text("base\n")
+        retry = self.lifecycle(task, "--push")
+        self.assertEqual(retry.returncode, 0, retry.stdout)
+        self.assertIn("baseline_status=fast_forwarded", retry.stdout)
+
+    def test_confirmed_target_sync_reuses_local_objects_without_network(self) -> None:
+        baseline, task = self.configured_task("confirmed-target")
+        confirmed = run("git", "rev-parse", "HEAD", cwd=task).stdout.strip()
+        run("git", "push", "origin", "HEAD:main", cwd=task)
+        run("git", "remote", "set-url", "origin", str(self.root / "offline.git"), cwd=task)
+        for expected in ("fast_forwarded", "current"):
+            result = self.lifecycle(task, "--sync-baseline", "--confirmed-target", confirmed)
+            self.assertEqual(result.returncode, 0, result.stdout)
+            self.assertIn(f"baseline_status={expected}", result.stdout)
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=baseline).stdout.strip(), confirmed)
+        self.assertEqual(run("git", "branch", "--show-current", cwd=task).stdout.strip(),
+                         "feature-confirmed-target")
+
+    def test_verified_only_does_not_sync_and_ignored_content_is_not_overwritten(self) -> None:
+        baseline, task = self.configured_task("ignored-content")
+        (baseline / ".git" / "info" / "exclude").write_text("local.txt\n")
+        (baseline / "local.txt").write_text("private local content\n")
+        (task / "local.txt").write_text("published content\n")
+        run("git", "add", "-f", "local.txt", cwd=task)
+        run("git", "commit", "-m", "new tracked file", cwd=task)
+        before = run("git", "rev-parse", "HEAD", cwd=baseline).stdout
+        dry = self.safe_merge(task)
+        self.assertEqual(dry.returncode, 0, dry.stdout)
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=baseline).stdout, before)
+        delivered = self.safe_merge(task, "--push")
+        self.assertEqual(delivered.returncode, 2, delivered.stdout)
+        self.assertIn("remote_status=confirmed", delivered.stdout)
+        self.assertIn("baseline_status=blocked", delivered.stdout)
+        self.assertEqual((baseline / "local.txt").read_text(), "private local content\n")
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=baseline).stdout, before)
+
+    def test_continue_after_lost_push_ack_reuses_verification_and_syncs_confirmed_commit(self) -> None:
+        baseline, task = self.configured_task("lost-ack")
+        old = run("git", "rev-parse", "HEAD", cwd=baseline).stdout
+        wrapper_dir = self.root / "wrapper"
+        wrapper_dir.mkdir()
+        wrapper = wrapper_dir / "git"
+        calls = self.root / "git-calls"
+        wrapper.write_text(
+            "#!/usr/bin/env python3\n"
+            "import os, subprocess, sys\n"
+            "from pathlib import Path\n"
+            "args = sys.argv[1:]\n"
+            "with Path(os.environ['CALLS']).open('a') as f: f.write(args[0] + '\\n')\n"
+            "result = subprocess.run([os.environ['REAL_GIT'], *args])\n"
+            "raise SystemExit(1 if args[0] == 'push' else result.returncode)\n"
+        )
+        wrapper.chmod(0o755)
+        env = {**os.environ, "PATH": f"{wrapper_dir}{os.pathsep}{os.environ['PATH']}",
+               "REAL_GIT": str(shutil.which("git")), "CALLS": str(calls)}
+        counter = self.root / "verifications"
+        verify = f"{sys.executable} -c \"from pathlib import Path; p=Path(r'{counter}'); p.write_text(p.read_text()+'1' if p.exists() else '1')\""
+        args = (sys.executable, "-B", str(SCRIPT), "--remote", "origin", "--target", "main",
+                "--push", "--verify", verify, "--max-retries", "1")
+        first = run(*args, cwd=task, env=env, check=False)
+        self.assertEqual(first.returncode, 5, first.stdout)
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=baseline).stdout, old)
+        second = run(*args, "--continue", cwd=task, env=env, check=False)
+        self.assertEqual(second.returncode, 0, second.stdout)
+        self.assertIn("remote already contains", second.stdout)
+        self.assertIn("baseline_status=fast_forwarded", second.stdout)
+        self.assertEqual(counter.read_text(), "1")
+        self.assertEqual(calls.read_text().splitlines().count("fetch"), 3)
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=baseline).stdout,
+                         run("git", "rev-parse", "main", cwd=self.remote).stdout)
+
+    def test_startup_skips_without_git_or_explicit_baseline(self) -> None:
+        for directory in (self.root, self.seed):
+            with self.subTest(directory=directory):
+                result = self.lifecycle(directory, "--sync-baseline")
+                self.assertEqual(result.returncode, 0, result.stdout)
+                self.assertIn("baseline_status=skipped", result.stdout)
+
+    def test_baseline_guards_and_shared_lease_preserve_state(self) -> None:
+        baseline, task = self.configured_task("guards")
+        old = run("git", "rev-parse", "HEAD", cwd=baseline).stdout
+        for name in ("CHERRY_PICK_HEAD", "sequencer", "index.lock", "workflow-integration-state.json", "workflow-merge.lock"):
+            with self.subTest(name=name):
+                marker = baseline / ".git" / name
+                marker.write_text("preserved")
+                result = self.lifecycle(task, "--sync-baseline")
+                self.assertNotEqual(result.returncode, 0, result.stdout)
+                self.assertEqual(marker.read_text(), "preserved")
+                self.assertEqual(run("git", "rev-parse", "HEAD", cwd=baseline).stdout, old)
+                marker.unlink()
+        for path in (task, self.seed, baseline / "subdirectory"):
+            with self.subTest(path=path):
+                result = self.lifecycle(task, "--sync-baseline", "--baseline", str(path))
+                self.assertEqual(result.returncode, 2, result.stdout)
+                self.assertIn("baseline_status=blocked", result.stdout)
+        run("git", "worktree", "lock", "--reason", "workflow:active-task", str(task), cwd=baseline)
+        result = self.lifecycle(task, "--sync-baseline", "--baseline", str(task))
+        self.assertEqual(result.returncode, 2, result.stdout)
+
     def test_non_conflicting_late_merger_preserves_candidate_and_target_first_parent(self) -> None:
         first = self.clone("first")
         second = self.clone("second")
@@ -124,7 +263,7 @@ class SafeMergeIntegrationTest(unittest.TestCase):
 
     def test_sync_baseline_fast_forwards_a_clean_unstarted_worktree(self) -> None:
         stale = self.clone("stale-baseline")
-        self.branch(stale, "feature-stale-baseline")
+        run("git", "config", "--local", "workflow.developmentBaseline", str(stale), cwd=stale)
         old_sha = run("git", "rev-parse", "HEAD", cwd=stale).stdout.strip()
 
         updater = self.clone("baseline-updater")
@@ -139,21 +278,21 @@ class SafeMergeIntegrationTest(unittest.TestCase):
 
         self.assertEqual(synced.returncode, 0, synced.stdout)
         self.assertIn("baseline fast-forwarded", synced.stdout)
-        self.assertEqual(run("git", "branch", "--show-current", cwd=stale).stdout.strip(), "feature-stale-baseline")
+        self.assertEqual(run("git", "branch", "--show-current", cwd=stale).stdout.strip(), "main")
         self.assertNotEqual(old_sha, latest_sha)
         self.assertEqual(run("git", "rev-parse", "HEAD", cwd=stale).stdout.strip(), latest_sha)
         self.assertEqual((stale / "a.txt").read_text(), "latest baseline\n")
 
     def test_sync_baseline_refuses_dirty_or_diverged_work(self) -> None:
         dirty = self.clone("dirty-baseline")
-        self.branch(dirty, "feature-dirty-baseline")
+        run("git", "config", "--local", "workflow.developmentBaseline", str(dirty), cwd=dirty)
         (dirty / "a.txt").write_text("uncommitted intent\n")
         refused_dirty = self.lifecycle(dirty, "--sync-baseline")
         self.assertEqual(refused_dirty.returncode, 2, refused_dirty.stdout)
         self.assertIn("worktree has uncommitted changes", refused_dirty.stdout)
 
         diverged = self.clone("diverged-baseline")
-        self.branch(diverged, "feature-diverged-baseline")
+        run("git", "config", "--local", "workflow.developmentBaseline", str(diverged), cwd=diverged)
         (diverged / "b.txt").write_text("local candidate\n")
         run("git", "add", "b.txt", cwd=diverged)
         run("git", "commit", "-m", "local candidate", cwd=diverged)
@@ -163,7 +302,7 @@ class SafeMergeIntegrationTest(unittest.TestCase):
 
     def test_sync_baseline_refuses_preserved_integration_state_and_mixed_modes(self) -> None:
         stale = self.clone("stateful-baseline")
-        self.branch(stale, "feature-stateful-baseline")
+        run("git", "config", "--local", "workflow.developmentBaseline", str(stale), cwd=stale)
         old_sha = run("git", "rev-parse", "HEAD", cwd=stale).stdout.strip()
 
         updater = self.clone("stateful-baseline-updater")
@@ -197,7 +336,7 @@ class SafeMergeIntegrationTest(unittest.TestCase):
 
     def test_sync_baseline_checks_the_exact_fetched_sha_and_clean_postcondition(self) -> None:
         stale = self.clone("hooked-baseline")
-        self.branch(stale, "feature-hooked-baseline")
+        run("git", "config", "--local", "workflow.developmentBaseline", str(stale), cwd=stale)
 
         updater = self.clone("hooked-baseline-updater")
         self.branch(updater, "feature-hooked-baseline-updater")
@@ -588,6 +727,9 @@ class SafeMergeIntegrationTest(unittest.TestCase):
         run("git", "config", "user.email", "workflow@example.test", cwd=candidate)
         run("git", "remote", "rename", "origin", "upstream", cwd=candidate)
         run("git", "checkout", "-b", "feature-custom-contract", cwd=candidate)
+        baseline = self.root / "custom-development-baseline"
+        run("git", "worktree", "add", "-b", "release/stable", str(baseline), base_sha, cwd=candidate)
+        run("git", "config", "--local", "workflow.developmentBaseline", str(baseline), cwd=candidate)
         (candidate / "b.txt").write_text("custom target candidate\n")
         run("git", "add", "b.txt", cwd=candidate)
         run("git", "commit", "-m", "custom target candidate", cwd=candidate)
@@ -609,6 +751,9 @@ class SafeMergeIntegrationTest(unittest.TestCase):
         )
 
         self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("baseline_status=fast_forwarded", result.stdout)
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=baseline).stdout,
+                         run("git", "rev-parse", "release/stable", cwd=self.remote).stdout)
         audit = self.root / "custom-contract-audit"
         run(
             "git",
@@ -633,6 +778,9 @@ class SafeMergeIntegrationTest(unittest.TestCase):
     def test_transport_retry_reuses_verified_sha_without_rerunning_verification(self) -> None:
         candidate = self.clone("transport-retry")
         self.branch(candidate, "feature-transport-retry")
+        baseline = self.root / "retry-baseline"
+        run("git", "worktree", "add", str(baseline), "main", cwd=candidate)
+        run("git", "config", "--local", "workflow.developmentBaseline", str(baseline), cwd=candidate)
         (candidate / "a.txt").write_text("transport retry\n")
         run("git", "add", "a.txt", cwd=candidate)
         run("git", "commit", "-m", "transport retry", cwd=candidate)
@@ -685,6 +833,9 @@ class SafeMergeIntegrationTest(unittest.TestCase):
         receipt = json.loads(receipts[0].read_text())
         self.assertEqual(receipt["status"], "pushed")
         self.assertEqual(receipt["transport_attempts"], 2)
+        self.assertIn("baseline_status=fast_forwarded", result.stdout)
+        self.assertEqual(run("git", "rev-parse", "HEAD", cwd=baseline).stdout.strip(),
+                         receipt["verified_integration_sha"])
 
     def test_atomic_publish_moves_target_and_new_tag_to_same_verified_sha(self) -> None:
         candidate = self.clone("atomic-publish")

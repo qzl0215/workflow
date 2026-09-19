@@ -73,6 +73,9 @@ def other_git_operation_in_progress(worktree: Path) -> bool:
         "BISECT_LOG",
         "rebase-merge",
         "rebase-apply",
+        "sequencer",
+        "index.lock",
+        "HEAD.lock",
     )
     return any(git_path(name, cwd=worktree).exists() for name in names)
 
@@ -329,41 +332,80 @@ def validate_tag(tag: str) -> None:
         raise RuntimeError("--tag must be a valid Git tag name")
 
 
-def sync_baseline(args: argparse.Namespace) -> int:
-    if state_path().exists():
-        raise RuntimeError("preserved integration state must be resolved before baseline sync")
-    if git_output("status", "--porcelain"):
-        raise RuntimeError("worktree has uncommitted changes")
-    worktree = Path(git_output("rev-parse", "--show-toplevel"))
-    if other_git_operation_in_progress(worktree):
-        raise RuntimeError("worktree has an in-progress Git operation")
-    target_sha = fetch_target(args.remote, args.target)
-    if target_sha is None:
-        return EXIT_PRECONDITION
-
-    remote_ref = f"{args.remote}/{args.target}"
-    current_sha = git_output("rev-parse", "HEAD")
-    if current_sha == target_sha:
-        print(f"safe_merge: baseline already current at {target_sha[:12]}.")
-        return 0
-    if command("git", "merge-base", "--is-ancestor", current_sha, target_sha).returncode:
-        raise RuntimeError(
-            f"cannot fast-forward baseline: HEAD {current_sha[:12]} has work not in {remote_ref}"
-        )
-    advanced = command("git", "merge", "--ff-only", target_sha)
-    if advanced.returncode:
-        return EXIT_PRECONDITION
-    if git_output("rev-parse", "HEAD") != target_sha or git_output("status", "--porcelain"):
-        print(
-            "safe_merge: baseline postcondition failed; moved state was preserved for inspection.",
-            file=sys.stderr,
-        )
-        return EXIT_PRECONDITION
-    print(
-        f"safe_merge: baseline fast-forwarded from {current_sha[:12]} "
-        f"to {target_sha[:12]} using {remote_ref}."
+def baseline_setting(args: argparse.Namespace) -> str:
+    if args.baseline:
+        return args.baseline
+    result = subprocess.run(
+        ("git", "config", "--local", "--get", "workflow.developmentBaseline"),
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
     )
-    return 0
+    if result.returncode not in (0, 1):
+        raise RuntimeError(result.stderr.strip() or "could not read development baseline")
+    return result.stdout.strip()
+
+
+def sync_baseline(args: argparse.Namespace, target_sha: str | None = None) -> int:
+    """Caller holds IntegrationLease; a supplied SHA is already remotely confirmed."""
+    remote_status = "confirmed" if target_sha else "not_checked"
+    try:
+        setting = baseline_setting(args)
+        if not setting:
+            print(f"safe_merge: remote_status={remote_status} baseline_status=skipped reason=not_configured.")
+            return 0
+        baseline = Path(setting).expanduser()
+        if not baseline.is_absolute():
+            raise RuntimeError("development baseline must be an explicit absolute path")
+        baseline = baseline.resolve()
+        record = next(
+            (item for item in worktree_records() if Path(item["worktree"]).resolve() == baseline), None
+        )
+        if record is None or not baseline.is_dir():
+            raise RuntimeError("development baseline must be a registered worktree of this repository")
+        common_dir = git_output("rev-parse", "--path-format=absolute", "--git-common-dir")
+        baseline_common = git_output("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=baseline)
+        if (Path(common_dir).resolve() != Path(baseline_common).resolve()
+                or Path(git_output("rev-parse", "--show-toplevel", cwd=baseline)).resolve() != baseline):
+            raise RuntimeError("development baseline repository identity changed; state preserved")
+        if "locked" in record or record.get("branch") != f"refs/heads/{args.target}":
+            raise RuntimeError("development baseline must be an unlocked checkout of the target branch; task worktrees are protected")
+        if target_sha is None:
+            target_sha = fetch_target(args.remote, args.target)
+            if target_sha is None:
+                raise RuntimeError("could not fetch remote target; baseline preserved")
+            remote_status = "confirmed"
+        if len(target_sha) not in (40, 64) or any(c not in "0123456789abcdef" for c in target_sha):
+            raise RuntimeError("confirmed target must be a full commit SHA")
+        target_sha = git_output("rev-parse", "--verify", f"{target_sha}^{{commit}}")
+        if git_output("branch", "--show-current", cwd=baseline) != args.target:
+            raise RuntimeError("development baseline branch changed; state preserved")
+        if git_path(STATE_NAME, cwd=baseline).exists():
+            raise RuntimeError("preserved integration state must be resolved before baseline sync")
+        if git_output("status", "--porcelain", "--untracked-files=all", cwd=baseline):
+            raise RuntimeError("worktree has uncommitted changes")
+        if other_git_operation_in_progress(baseline):
+            raise RuntimeError("worktree has an in-progress Git operation")
+        current_sha = git_output("rev-parse", "HEAD", cwd=baseline)
+        if current_sha == target_sha:
+            print(f"safe_merge: remote_status={remote_status} baseline_status=current target_sha={target_sha}.")
+            return 0
+        if command("git", "merge-base", "--is-ancestor", current_sha, target_sha).returncode:
+            raise RuntimeError("cannot fast-forward baseline: local HEAD has work not in the confirmed target")
+        advanced = command("git", "merge", "--ff-only", "--no-overwrite-ignore", target_sha, cwd=baseline)
+        if advanced.returncode:
+            raise RuntimeError("baseline fast-forward failed; state preserved for inspection")
+        if (git_output("rev-parse", "HEAD", cwd=baseline) != target_sha
+                or git_output("status", "--porcelain", "--untracked-files=all", cwd=baseline)
+                or git_output("branch", "--show-current", cwd=baseline) != args.target
+                or other_git_operation_in_progress(baseline)):
+            raise RuntimeError("baseline postcondition failed; moved state was preserved for inspection")
+        print(
+            f"safe_merge: remote_status={remote_status} baseline_status=fast_forwarded "
+            f"baseline fast-forwarded from {current_sha} to {target_sha}."
+        )
+        return 0
+    except (RuntimeError, OSError) as exc:
+        print(f"safe_merge: remote_status={remote_status} baseline_status=blocked reason={exc}", file=sys.stderr)
+        return EXIT_PRECONDITION
 
 
 def start_merge_attempt(args: argparse.Namespace, candidate_branch: str, candidate_sha: str, attempt: int) -> int:
@@ -379,7 +421,7 @@ def start_merge_attempt(args: argparse.Namespace, candidate_branch: str, candida
             "safe_merge: status=already_integrated "
             f"candidate_sha={candidate_sha} target_sha={base_target_sha} remote_ref={remote_ref}."
         )
-        return 0
+        return sync_baseline(args, base_target_sha)
     if not args.verify:
         if args.push:
             raise RuntimeError("--verify is required with --push")
@@ -486,7 +528,7 @@ def finalize_integration(
             )
             restore_candidate(state, delete_integration=True)
             print(f"safe_merge: remote already contains the verified integration; receipt {receipt}.")
-            return 0
+            return sync_baseline(args, verified_sha)
         if current_target_sha != str(state["base_target_sha"]):
             print("safe_merge: target advanced before push; rebuilding from the latest target.")
             restore_candidate(state, delete_integration=not preserve_on_retry)
@@ -511,7 +553,7 @@ def finalize_integration(
             restore_candidate(state, delete_integration=True)
             action = "atomically pushed target and tag" if tag else "pushed target-first merge"
             print(f"safe_merge: {action} to {remote_ref}; receipt {receipt}.")
-            return 0
+            return sync_baseline(args, verified_sha)
         if transport_attempt < args.max_retries:
             print("safe_merge: push failed; retrying the same verified integration.")
             continue
@@ -639,6 +681,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target", default="main")
     parser.add_argument("--remote", default="origin")
+    parser.add_argument("--baseline", default="", help="explicit local development baseline worktree path")
+    parser.add_argument("--confirmed-target", default="", help="already confirmed remote commit, for --sync-baseline only")
     parser.add_argument("--verify", default="")
     parser.add_argument("--max-retries", type=int, default=5)
     parser.add_argument("--continue", dest="continue_merge", action="store_true")
@@ -655,6 +699,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def validate_mode(args: argparse.Namespace) -> None:
+    if args.confirmed_target and not args.sync_baseline:
+        raise RuntimeError("--confirmed-target requires --sync-baseline")
     if args.tag and not args.push:
         raise RuntimeError("--tag requires --push")
     if args.sync_baseline and (
@@ -687,12 +733,28 @@ def main() -> int:
         return EXIT_PRECONDITION
     try:
         validate_mode(args)
-        if git_output("rev-parse", "--is-inside-work-tree") != "true":
+        inside = subprocess.run(
+            ("git", "rev-parse", "--is-inside-work-tree"),
+            text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+        )
+        if inside.returncode or inside.stdout.strip() != "true":
+            if args.sync_baseline:
+                print("safe_merge: remote_status=not_checked baseline_status=skipped reason=not_a_git_worktree.")
+                return 0
             raise RuntimeError("not inside a git worktree")
+        if args.sync_baseline and not baseline_setting(args):
+            remote_status = "confirmed" if args.confirmed_target else "not_checked"
+            print(f"safe_merge: remote_status={remote_status} baseline_status=skipped reason=not_configured.")
+            return 0
         validate_repository_parameters(args.remote, args.target)
         validate_tag(args.tag)
         if args.sync_baseline:
-            return sync_baseline(args)
+            lease = IntegrationLease(integration_owner())
+            lease.acquire()
+            try:
+                return sync_baseline(args, args.confirmed_target or None)
+            finally:
+                lease.release()
         if args.create_worktree:
             return create_worktree(args)
         if args.cleanup_worktree:
@@ -723,7 +785,11 @@ def main() -> int:
             lease.release()
     except (RuntimeError, json.JSONDecodeError) as exc:
         message = str(exc)
-        print(f"safe_merge: {message}", file=sys.stderr)
+        if args.sync_baseline:
+            remote_status = "confirmed" if args.confirmed_target else "not_checked"
+            print(f"safe_merge: remote_status={remote_status} baseline_status=blocked reason={message}", file=sys.stderr)
+        else:
+            print(f"safe_merge: {message}", file=sys.stderr)
         return EXIT_BUSY if message.startswith("merge queue busy:") else EXIT_PRECONDITION
 
 

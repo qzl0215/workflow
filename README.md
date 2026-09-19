@@ -5,7 +5,7 @@
 `workflow` 是一个可独立安装的中文 AI 工作协议。3.0 不再把模型固定在细密的七阶段流程里，而是守住结果、风险、授权和证据四类边界，让能力更强的模型自行选择研究方法、拆分粒度、并行方式与验证组合。
 
 作者：zhonglin · MIT License
-当前协议版本：`3.8.0`
+当前协议版本：`3.9.0`
 
 [打开完整可视化](docs/workflow-visual-map.html) · [查看正式协议](SKILL.md)
 
@@ -83,7 +83,8 @@ workflow 先把用户的意见、设想或原则整理成候选目标。需求�
 长期重复使用 workflow 时，日常路径只保留三件事：开始前取得新鲜基线，完成后安全集成，目标更新后走项目自己的发布入口。
 
 - 只读调研、代码阅读和一次性数据查询不创建 worktree；会写代码或污染项目现场时，复用一个宿主提供的隔离 worktree，不嵌套第二个交付 worktree。
-- 首次写入前，从项目真源读取远端与目标分支。干净且尚未开始的现场，以项目工作树为当前目录，通过 `python3 -B <已安装 workflow 根>/scripts/safe_merge.py --sync-baseline --remote <项目远端> --target <项目目标>` fast-forward 到服务器最新目标；已有本地工作时不自动 rebase。
+- 任务启动时，从项目真源读取远端、目标分支和本机开发基准。基准使用本机仓库配置 `git config --local workflow.developmentBaseline <开发基准绝对路径>` 或 `--baseline <开发基准绝对路径>` 显式指定；调用 `python3 -B <已安装 workflow 根>/scripts/safe_merge.py --sync-baseline --remote <项目远端> --target <项目目标>` 安全快进。未用 Git 或未配置基准时跳过，不以当前任务目录或生产目录代替基准。
+- 远端合入成功后，复用已确认提交和仓库互斥自动同步指定基准，覆盖首次成功、重试和已合入路径；其他机器或绕过 Workflow 的更新在下次任务启动时检查，不承诺即时感知。只更新同仓库已登记、未锁定且检出目标分支的基准；脏现场、分叉或进行中的 Git 操作保留并说明原因。远端交付与本机同步分别报告，细则见 [真实交付](references/deliver.md)。
 - 多线程候选默认保持自身提交不变，按最新目标逐个 target-first 合并并对确切集成 SHA 验证；GitHub/GitLab 的 PR、MR、合并队列以及项目明确的安全偏好优先。
 - 仓库地址、remote、目标分支、验证命令和发布/部署或 reconciler 都写在项目真源中。workflow 只提供平台中立的方法与机械护栏，不保存具体项目参数。
 
@@ -204,7 +205,7 @@ python3 scripts/install.py enable-auto-update --target "/path/to/agent/skills"
 错过 2.26 时，不要手工删除旧文件再把 ZIP 覆盖进去。建议使用临时克隆：
 
 ```bash
-git clone --depth 1 --branch 3.8.0 https://github.com/qzl0215/workflow.git workflow-3
+git clone --depth 1 --branch 3.9.0 https://github.com/qzl0215/workflow.git workflow-3
 cd workflow-3
 python3 scripts/install.py update --target "/path/to/agent/skills"
 python3 scripts/install.py check --target "/path/to/agent/skills"
