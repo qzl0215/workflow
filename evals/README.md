@@ -17,8 +17,12 @@
 使用宿主已登录的 Codex CLI，原始输出必须放在仓库外。以下命令会调用真实模型并消耗用量，不属于离线发布测试：
 
 ```bash
-python3 -B scripts/evaluate.py --codex <Codex可执行文件> --model gpt-6-astra --model gpt-5.6-sol --baseline 3.9.0 --repeat 2 --output <仓库外新目录>
-python3 -B scripts/evaluate.py --codex <Codex可执行文件> --model gpt-6-astra --model gpt-5.6-sol --baseline 3.9.0 --repeat 1 --mode tasks --output <另一个仓库外新目录>
+python3 -B scripts/evaluate.py --codex <Codex可执行文件> --model gpt-6-astra --model gpt-5.6-sol --baseline 4.0.0 --repeat 2 --output <仓库外新目录>
+python3 -B scripts/evaluate.py --codex <Codex可执行文件> --model gpt-6-astra --model gpt-5.6-sol --baseline 4.0.0 --repeat 1 --mode tasks --output <另一个仓库外新目录>
 ```
 
-默认模式是同一提示中的独立判断场景，固定注入根入口，不模拟自动选择 reference。实际任务模式在临时目录检查代码修复、既有文件保护，以及用户要求先方案时没有文件变化；reference 可按需读取。实际任务只覆盖小型本地场景，不能替代真实生产或复杂长任务评测。两种模式均保留每次原始响应与摘要，摘要中的动作匹配仍需语义复核。
+默认模式是同一提示中的独立判断场景，固定注入根入口，不模拟自动选择 reference。实际任务模式在临时目录检查代码修复、既有文件保护、先方案不修改、目标与方法冲突时的引导，以及确认后的项目记忆原位更新；reference 可按需读取。文件差异只能筛查改动边界，仍需检查回复和产物语义，不能把“没有修改文件”当成“正确引导”。实际任务只覆盖小型本地场景，不能替代真实生产或复杂长任务评测。
+
+可用 `--variant native --variant baseline` 在修改策略前记录旧行为，再用 `--variant candidate` 检查候选；同一轮比较需保持场景、模型、推理强度与工具权限相同。`--baseline` 取本轮开始时的正式版。用 `--task-case goal_conflict --task-case project_memory` 定向运行新增任务，默认运行全部四项；不要因支持多个模式而每次重跑所有组合。
+
+根入口与 reference 在每组运行开始时固定快照，记录内容身份；旧版 references 从旧版文件树读取，不借用候选拓扑。两种模式均保留每次原始响应与摘要，摘要中的动作匹配仍需语义复核。留出场景只用于候选定稿后的检查，不据此反复调优。

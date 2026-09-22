@@ -248,7 +248,7 @@ class PortabilityContractTest(unittest.TestCase):
             self.assertEqual(installed.returncode, 0, installed.stdout)
             active = target / "workflow"
             skill = active / "SKILL.md"
-            old_text = skill.read_text().replace("version: 4.0.0", "version: 3.9.0")
+            old_text = skill.read_text().replace(f"version: {self.package_version()}", "version: 3.9.0")
             skill.write_text(old_text)
             manifest_path = active / "workflow-package.json"
             manifest = json.loads(manifest_path.read_text())
