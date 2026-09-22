@@ -84,6 +84,16 @@ class EvaluationHarnessTest(unittest.TestCase):
             (directory / "user-notes.txt").write_text("overwritten")
             self.assertFalse(evaluate.check_task(directory, "plan_first", before)["passed"])
 
+    def test_demo_handoff_fixture_preserves_project_while_waiting_for_choice(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            prompt = evaluate.prepare_task(directory, "demo_handoff")
+            self.assertIn("直接作出下一步决定", prompt)
+            before = evaluate.snapshot(directory)
+            self.assertTrue(evaluate.check_task(directory, "demo_handoff", before)["passed"])
+            (directory / "demo-a.html").write_text("implemented without approval\n")
+            self.assertFalse(evaluate.check_task(directory, "demo_handoff", before)["passed"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,23 +1,23 @@
 {
   "schema": 1,
   "name": "workflow",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "entrypoint": "SKILL.md",
   "runtime": {
     "files": {
       "LICENSE": "sha256:6f56797263fb6d17252bfd325544640f0c173926558345975fed3973b1c7fc45",
       "NOTICE.md": "sha256:48bc250599b28c6d609e0c48210241155eb0c309396674afa9af60c912fe715a",
-      "SKILL.md": "sha256:b968465c950ed1287ed96ba44070f07b7e05fb65f7486f717f780ac919f0cdf1",
+      "SKILL.md": "sha256:84db3c599acfd017c014689c8134ddf4b2823ca60a5ff24411991f614d6a9b1a",
       "references/deliver.md": "sha256:7feb5508bda3f6b2d03c0fd7396d124164b08712f18c390c100635681f0793cc",
       "references/execute.md": "sha256:d46d45f86f4f0e903f73771fc42ca67842f1a54ef43b379451f2ad59f44db0a0",
-      "references/experience.md": "sha256:8ec9308d8d2e943e5794df4c283675eb84ba54653800e69cf9d0e976e175b95f",
+      "references/experience.md": "sha256:9a50be0cc1a633a412f2959a8de8769cf926686daa14e002d56066b98ed29b04",
       "references/frame.md": "sha256:697708288932541bacd7eabd249fe42674c4d9e2167c117cd4bac09ed84f9d5f",
       "references/grill.md": "sha256:e1acd15dc785bba437a7c7b814abb6105ab18035ce170d7102295e3b01d2c1b5",
       "references/initialize.md": "sha256:769635ca4dfc4e7fadd233ff05815fe80fa5ba9c8bcb6caa5fc378552257a436",
       "references/learn.md": "sha256:28be8770fc74abeb9f9bda359b3471927a660de1dd4ba3f8874f58177f650ae1",
       "references/orchestrate.md": "sha256:1bea71edbb758ecb6e6453238abdb8e86a8a125b59b1a81520002eaad50e778a",
-      "references/plan.md": "sha256:8c2104afe224653df38cf7400334c98ce6618badbf9611f1eed56611d9f49c75",
-      "references/prove.md": "sha256:926958e6907b984b6dd878c947c597ba759067b3af5fae6cd1050ddadd5a3890",
+      "references/plan.md": "sha256:1e0ef5ec3d0f32f7c727ac66990e504f282554248115f487ce83c9c70c6c85ca",
+      "references/prove.md": "sha256:86807923109006a441bd8b934ccfe411d8c1a1032e4584d2450ff075a3a57f24",
       "references/recover.md": "sha256:3c3d77b42aa8cf0d2a9c3f44c4472819f3272baa23a5a891ece4df47c43fe65c",
       "references/research.md": "sha256:9510792ee97b2dc319dfa4ba05986b2474b85c2cbcce2a969395ccbcf9cc9602",
       "scripts/install.py": "sha256:3209fcdc2921868cf8c61889cea686b459b900438a4741f6d69294c113271d8e",
@@ -25,7 +25,7 @@
       "scripts/safe_merge.py": "sha256:b6d3798f8b9e8dedf8f498061f723871342b80d5ca3f3942ffa6bdd721a64ffe",
       "scripts/work_context.py": "sha256:2ba866b0d59b8c6c02c85ea864c990125f47139056ff7e19a7d27791ae3a096f",
       "scripts/workflow_doctor.py": "sha256:f330ebd397d1041a931087199cefd3aef5cd1a8f449ca3e1cb1b401f0a81bc7f",
-      "templates/work.md": "sha256:1ea468c6d4ac5439931deacae88189a0251e46c2255af2bb954cb5978f373ef1"
+      "templates/work.md": "sha256:619ee7ddf3498ffd33ed9357b4b7d074476262f8476d414d2d49a6897ba33419"
     }
   },
   "source_only": [
@@ -38,6 +38,7 @@
     "docs/workflow-visual-map.html",
     "evals/4.0.0-results.md",
     "evals/4.1.0-results.md",
+    "evals/4.2.0-results.md",
     "evals/README.md",
     "evals/cases.json",
     "scripts/evaluate.py",
