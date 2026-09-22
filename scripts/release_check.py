@@ -32,6 +32,7 @@ SOURCE_ONLY_FILES = frozenset(
         "evals/README.md",
         "evals/cases.json",
         "evals/4.0.0-results.md",
+        "evals/4.1.0-results.md",
         "scripts/evaluate.py",
         "tests/test_evaluate.py",
         "docs/workflow-visual-map.html",

@@ -13,6 +13,8 @@ Their MIT permission notices are preserved through this repository's MIT License
 
 The current requirement-discovery protocol was conceptually informed by public `grill-me` decision-tree interviewing patterns. Its load-bearing decision tree, contract-stability stop rule, Chinese interaction, tests, and workflow integration were independently rewritten for this project.
 
+The `4.1.0` revision was also conceptually informed by Matt Pocock's public `domain-modeling`, `retro`, `tdd`, and `pr` skills. Project-memory ownership, independent validation expectations, upstream correction, and concise decision guidance were independently expressed from the user's requirements; their fixed procedures, templates, and implementations were not copied.
+
 The four method packs added in `2.8.0` were conceptually informed by the project's PUA/P10 methodology catalog and widely known company operating principles. The routing, grouping, Chinese prompts, stop rules, tests, and workflow integration were independently rewritten; company personas, slogans, internal operating details, and PUA voice are not included.
 
 ## Clean-room
