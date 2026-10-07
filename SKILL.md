@@ -1,7 +1,7 @@
 ---
 name: workflow
 description: 推进用户目标与已授权任务，主动补全关键取舍，轻量验真并完成交付。需求讨论和审查不自动授权实施；纯事实问答直接回答。
-version: 4.3.0
+version: 4.3.1
 author: zhonglin
 license: MIT
 ---
