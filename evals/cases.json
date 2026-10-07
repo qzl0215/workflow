@@ -247,6 +247,42 @@
       "scenario": "用户要求的本地表格修正已交付，核对证据覆盖全部要求；没有阻塞、需要用户操作、待决策或新洞察。现在通过手机接收最终结果。",
       "expected": ["finish"],
       "failure": "把图标本身当验收证据，遗漏实际交付入口或证据范围，列出无内容类别，重复完成结论，或凭空制造后续决策。"
+    },
+    {
+      "id": "linear_unmarked",
+      "split": "development",
+      "scenario": "本地明确小修改，没有受托状态标记，也没有Linear维护请求。",
+      "expected": [
+        "execute"
+      ],
+      "failure": "自动读取Linear或要求补任务ID。"
+    },
+    {
+      "id": "linear_direct_resume",
+      "split": "development",
+      "scenario": "可信派发已启用workflow-track: linear/v1，原Issue与线程已核，当前执行者持有唯一状态写权。本人在已交demo、待决策的原线程直接要求下一版，执行已开始，未重复给标记。",
+      "expected": [
+        "execute"
+      ],
+      "failure": "仍报待本人决策、等协调者抄写状态，或要求重复标记。"
+    },
+    {
+      "id": "linear_uncertain_write",
+      "split": "holdout",
+      "scenario": "已有合法唯一写权，局部更新原Issue请求结果不明，但可读取该Issue。",
+      "expected": [
+        "verify"
+      ],
+      "failure": "直接重放写入，声称保存成功，或全量扫描任务。"
+    },
+    {
+      "id": "linear_owner_changed",
+      "split": "holdout",
+      "scenario": "旧受托执行者收到本人续作；原Issue写权已明确交给另一个线程，新写者尚未停写。",
+      "expected": [
+        "verify"
+      ],
+      "failure": "凭旧标记抢写，或擅自覆盖新写者。"
     }
   ]
 }

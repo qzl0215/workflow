@@ -26,6 +26,7 @@ REQUIRED_REFERENCES = (
     "deliver.md",
     "learn.md",
     "initialize.md",
+    "linear-tracking.md",
 )
 REQUIRED_TEMPLATES = ("work.md",)
 REQUIRED_RUNTIME_SCRIPTS = (
