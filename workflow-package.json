@@ -1,17 +1,17 @@
 {
   "schema": 1,
   "name": "workflow",
-  "version": "4.3.1",
+  "version": "4.3.2",
   "entrypoint": "SKILL.md",
   "runtime": {
     "files": {
       "LICENSE": "sha256:6f56797263fb6d17252bfd325544640f0c173926558345975fed3973b1c7fc45",
       "NOTICE.md": "sha256:48bc250599b28c6d609e0c48210241155eb0c309396674afa9af60c912fe715a",
-      "SKILL.md": "sha256:7039168e969f515b4a15ea484b3e6bbc9eaa841869d898a9ea8243b257c0351a",
+      "SKILL.md": "sha256:1a6b5f866c0a41a9851b917ed5c1d86a4415c7bc450824287adffe9820e08c02",
       "references/deliver.md": "sha256:7feb5508bda3f6b2d03c0fd7396d124164b08712f18c390c100635681f0793cc",
       "references/execute.md": "sha256:d46d45f86f4f0e903f73771fc42ca67842f1a54ef43b379451f2ad59f44db0a0",
       "references/experience.md": "sha256:9a50be0cc1a633a412f2959a8de8769cf926686daa14e002d56066b98ed29b04",
-      "references/frame.md": "sha256:697708288932541bacd7eabd249fe42674c4d9e2167c117cd4bac09ed84f9d5f",
+      "references/frame.md": "sha256:aa553593068e94fea2347a9e3a2e84146b238e3367f0c7f70823ac7f6f181b3f",
       "references/grill.md": "sha256:e1acd15dc785bba437a7c7b814abb6105ab18035ce170d7102295e3b01d2c1b5",
       "references/initialize.md": "sha256:769635ca4dfc4e7fadd233ff05815fe80fa5ba9c8bcb6caa5fc378552257a436",
       "references/learn.md": "sha256:28be8770fc74abeb9f9bda359b3471927a660de1dd4ba3f8874f58177f650ae1",
