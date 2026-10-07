@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>workflow 4.3.0 · 工作规则</title>
+<title>workflow 4.3.1 · 工作规则</title>
 <style>
 :root{color-scheme:dark;--paper:#f0f1e9;--muted:#abb8b1;--mint:#a8edca;--line:#314039}
 *{box-sizing:border-box}body{margin:0;background:#101b16;color:var(--paper);font:16px/1.8 system-ui,-apple-system,sans-serif}
@@ -13,8 +13,8 @@ pre{padding:18px;background:#07110b;border:1px solid var(--line);overflow:auto}p
 details{border:1px solid var(--line);border-radius:10px;padding:18px 22px;margin:12px 0}summary{cursor:pointer;font-weight:700;font-size:19px}details[open]{background:#15251c}
 footer{margin-top:45px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 @media(max-width:600px){main{padding:28px 16px}details{padding:14px}th,td{padding:9px}body{font-size:15px}}
-</style></head><body><main data-source-digest="2832e57b7250">
-<header><p>workflow · 4.3.0</p><h1>目标明确，持续完成。</h1><a href="../README.md">安装与使用</a> · <a href="../evals/README.md">行为评测</a></header>
+</style></head><body><main data-source-digest="511f77859248">
+<header><p>workflow · 4.3.1</p><h1>目标明确，持续完成。</h1><a href="../README.md">安装与使用</a> · <a href="../evals/README.md">行为评测</a></header>
 <section><h2>工作流</h2>
 <p>以用户实际结果为责任边界。方法、拆分、工具和验证组合由模型决定，不要求固定阶段、全量读取或逐步确认。</p>
 <h3>执行原则</h3>
@@ -46,6 +46,8 @@ footer{margin-top:45px;padding-top:20px;border-top:1px solid var(--line);font-si
 <p>一轮内连续小变化合成一次有意义更新，在等待或交付前完成；不要等完整长报告。没有事实变化不写，不按调用次数、工具次数或每小时刷新时间。标记线程后续用户直接续作仍触发维护，无须本人再次携带标记。</p>
 <h3>原 Issue 的一份当前摘要</h3>
 <p>复用已有紧凑当前区块；首次没有时只新增一个，后续原位更新。可用 <code>&lt;!-- workflow-track: linear/v1 --&gt;</code> 与 <code>&lt;!-- /workflow-track --&gt;</code> 定位，服务可能格式化 Markdown，使用实际读回文本。只存会改变判断的内容：</p>
+<p>支持批量时报时，将一行 JSON 的 <code>&lt;!-- task-report:v1 --&gt;</code> 首摘要放在该区块最前，整个首摘要不超过420字符、结束标记在描述前460字符内。首摘要就是原当前状态的紧凑入口，后部保留必要依据，不另建第二状态账本。字段为 <code>zone</code>（decision/followup/future/dot/recover/done）、<code>phase</code>、<code>next</code>、<code>owner</code>（本人=user）、已核 <code>thread</code> 和 <code>writer</code>、<code>progress_at</code>、<code>observed_at</code>、<code>running</code>、<code>paused</code>，可补宿主 <code>host</code> 与证据 <code>evidence</code>。未知身份/时间为null；没有实际执行证据running=false，明确暂停paused=true且归future。过长时缩短阶段与下一动作，不裁剪身份/时间，不把阶段终态写done。列表描述可能截断，首摘要必须带完整结束标记；有截断或缺字段由读取者定向取详情，不据残文推断。</p>
+<p>首摘要随原有效事件由唯一写者原位更新，普通检查不刷新进展。旧任务在下一次真实变化时自然迁移，不要求全库重写；紧凑入口之外的当前说明应与之一致，旧状态只标历史。批量可读性不能提供写权或免除原结果验收。</p>
 <p class="rule">映射和写者：原 Issue、协调/执行线程入口、当前写者；运行轮次已知则附 turn ID。</p>
 <p class="rule">当前事实：原生状态、当前阶段/动作；有既定汇报分区时沿用它。</p>
 <p class="rule">接续：下一动作与责任者；等待时给原因和恢复条件，暂停/取消给本人决定依据。</p>
@@ -181,5 +183,5 @@ footer{margin-top:45px;padding-top:20px;border-top:1px solid var(--line);font-si
 <p class="rule">输入与可写范围：&lt;必要边界；继承内容不重复&gt;</p>
 <p class="rule">完成条件：&lt;产物和验证&gt;</p>
 <p>需要 <code>work_context.py</code> 时保留上述任务层级与状态；普通恢复记录不要求任务编号、确认凭证或哈希。脚本的可派发状态不代表授权检查。任务返回结果先经主责任者核对，才进入已完成事实。</p></details></section>
-<footer>由 SKILL.md、其参考与工作模板生成。页面不定义额外规则。source sha256 2832e57b7250</footer>
+<footer>由 SKILL.md、其参考与工作模板生成。页面不定义额外规则。source sha256 511f77859248</footer>
 </main></body></html>
