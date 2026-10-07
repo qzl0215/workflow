@@ -27,6 +27,7 @@ REFERENCES = {
     "deliver.md",
     "learn.md",
     "initialize.md",
+    "linear-tracking.md",
 }
 RUNTIME_FILES = {
     "SKILL.md",
@@ -127,7 +128,7 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
         self.assertEqual(set(value), {"schema", "name", "version", "entrypoint", "runtime", "source_only"})
         self.assertEqual(value["schema"], 1)
         self.assertEqual(value["name"], "workflow")
-        self.assertEqual(value["version"], "4.2.1")
+        self.assertEqual(value["version"], "4.3.0")
         self.assertEqual(value["entrypoint"], "SKILL.md")
         self.assertEqual(set(value["runtime"]), {"files"})
         files = value["runtime"]["files"]
