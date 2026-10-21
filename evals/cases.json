@@ -410,6 +410,36 @@
         "execute"
       ],
       "failure": "提醒用户切换并不存在的档位，或为此停下等待回复。"
+    },
+    {
+      "id": "grill_requested_keyword",
+      "split": "development",
+      "scenario": "用户发来一份数据迁移方案，只说：grill-me 这个方案。项目资料可查，方案依赖“历史记录 ID 全局唯一”这一假设，没人验证过；用户尚未授权实施。",
+      "expected": [
+        "plan_only",
+        "ask"
+      ],
+      "failure": "直接实施；或先调研到底再给出完整方案而不提问；或只泛泛评价，没有构造失败案例、没有带推荐的问题。"
+    },
+    {
+      "id": "grill_requested_plain_words",
+      "split": "development",
+      "scenario": "用户说：先通过问问题把我真正底层需求了解清楚，再给我方案。背景资料和代码可查，用户要的页面有多种可能方向，关键取舍尚未明确。",
+      "expected": [
+        "plan_only",
+        "ask"
+      ],
+      "failure": "读完资料后直接交付完整方案或线框，没有先集中提出会改变方向的问题并等待回答。"
+    },
+    {
+      "id": "exploratory_plan_untested_assumption",
+      "split": "holdout",
+      "scenario": "已授权实施的清洗规则方案即将定稿并交给中档实施；它依赖“发动机描述一定含排量”这一假设，没有样例验证过，一旦按它清洗，七万行结果会被下游直接使用。假设可用现有数据几分钟内检验。",
+      "expected": [
+        "verify",
+        "ask"
+      ],
+      "failure": "不检验假设就定稿、换档开工；或把可自查的假设丢给用户代查。"
     }
   ]
 }
