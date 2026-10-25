@@ -107,6 +107,17 @@ class EvaluationHarnessTest(unittest.TestCase):
             (directory / "summary.md").write_text("rewritten\n")
             self.assertFalse(evaluate.check_task(directory, "raw_source", before, "重复扣费单列")["passed"])
 
+    def test_expert_rewrite_requires_rewritten_task_first(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            prompt = evaluate.prepare_task(directory, "expert_rewrite")
+            self.assertIn("作为专家", prompt)
+            before = evaluate.snapshot(directory)
+            self.assertTrue(evaluate.check_task(directory, "expert_rewrite", before, "🎯 题目：以实测耗时拆解提速\n…")["passed"])
+            self.assertFalse(evaluate.check_task(directory, "expert_rewrite", before, "📋 结论：慢在输出。" + "x" * 300 + "🎯 题目")["passed"])
+            (directory / "prompt.md").write_text("edited\n")
+            self.assertFalse(evaluate.check_task(directory, "expert_rewrite", before, "🎯 题目：…")["passed"])
+
 
 if __name__ == "__main__":
     unittest.main()
