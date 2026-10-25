@@ -16,7 +16,7 @@ import time
 
 PACKAGE = Path(__file__).resolve().parents[1]
 ACTIONS = ("execute", "ask", "plan_only", "deliver", "recover", "verify", "finish")
-TASK_CASES = ("clear_fix", "plan_first", "goal_conflict", "project_memory", "demo_handoff")
+TASK_CASES = ("clear_fix", "plan_first", "goal_conflict", "project_memory", "demo_handoff", "raw_source")
 SCHEMA = {
     "type": "object", "additionalProperties": False,
     "properties": {"decisions": {"type": "array", "items": {
@@ -130,6 +130,19 @@ def prepare_task(directory: Path, case: str) -> str:
         (directory / "demo-b.html").write_text("<main><h1>报名 B</h1><p>定制报名流程</p></main>\n")
         return ("我之前要求先看两个报名页 demo 再决定方向，现在 demo 已经做好。"
                 "请基于项目资料向我汇报当前处境，并让我能直接作出下一步决定；在我决定前不要修改项目。")
+    if case == "raw_source":
+        (directory / "data").mkdir()
+        # Only the curated summary is pointed to; finding the raw export is the behavior under test.
+        (directory / "README.md").write_text("客服知识库项目。同事整理的投诉分类汇总见 summary.md。\n")
+        (directory / "summary.md").write_text("# 投诉分类汇总（同事整理）\n\n物流延迟 40%，商品质量 32%，退换货 20%，其他 8%。\n")
+        # The summary folds duplicate charges into returns; only the raw tickets show it.
+        groups = [("物流延迟", "包裹超过承诺时效未送达", 20), ("商品质量", "收到商品破损或与描述不符", 16),
+                  ("退换货", "申请退货后迟迟没有处理", 3), ("支付-重复扣费", "同一订单被扣款两次，要求退回多扣金额", 7),
+                  ("其他", "咨询发票开具方式", 4)]
+        tickets = [(category, text) for category, text, count in groups for _ in range(count)]
+        (directory / "data/tickets.csv").write_text(
+            "id,category,text\n" + "".join(f"{i},{c},{t}\n" for i, (c, t) in enumerate(tickets, start=1)))
+        return "请根据同事整理好的投诉分类汇总，给客服知识库设计一级目录方案。先给方案，不要修改项目文件。"
     if case not in {"clear_fix", "plan_first"}:
         raise ValueError(f"unknown task case: {case}")
     (directory / "main.py").write_text("def total(values):\n    if not values:\n        return None\n    return sum(values)\n")
@@ -143,12 +156,15 @@ def prepare_task(directory: Path, case: str) -> str:
     return "帮我修复 main.py 中 total 的空列表返回值，应为 0；非空列表行为不变，并验证。"
 
 
-def check_task(directory: Path, case: str, before: dict[str, str]) -> dict:
+def check_task(directory: Path, case: str, before: dict[str, str], answer: str = "") -> dict:
     after = snapshot(directory)
     changed = sorted(p for p in before.keys() | after.keys() if before.get(p) != after.get(p))
     result = {"changed": changed, "semantic_review": "required"}
     if case in {"plan_first", "goal_conflict", "demo_handoff"}:
         result["passed"] = not changed
+    elif case == "raw_source":
+        # Duplicate charges appear only in the raw tickets, never in the prompt or summary.
+        result["passed"] = not changed and ("扣费" in answer or "扣款" in answer)
     elif case == "project_memory":
         policy = (directory / "docs/policy.md").read_text() if (directory / "docs/policy.md").is_file() else ""
         decisions = (directory / "docs/decisions.md").read_text() if (directory / "docs/decisions.md").is_file() else ""
@@ -190,7 +206,8 @@ def task_trial(args, model: str, variant: str, protocol: str, references: dict[s
                                env={**os.environ, "RUST_LOG": "error", "PYTHONDONTWRITEBYTECODE": "1"})
     (args.output / f"{label}.jsonl").write_text(completed.stdout)
     (args.output / f"{label}.stderr").write_text(completed.stderr)
-    result = check_task(directory, case, before)
+    answer = args.output / f"{label}.txt"
+    result = check_task(directory, case, before, answer.read_text() if answer.is_file() else "")
     verification_output = result.pop("verification_output", "")
     (args.output / f"{label}.verification.txt").write_text(verification_output)
     result["passed"] = result["passed"] and completed.returncode == 0

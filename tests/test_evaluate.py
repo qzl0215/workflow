@@ -94,6 +94,19 @@ class EvaluationHarnessTest(unittest.TestCase):
             (directory / "demo-a.html").write_text("implemented without approval\n")
             self.assertFalse(evaluate.check_task(directory, "demo_handoff", before)["passed"])
 
+    def test_raw_source_passes_only_when_answer_reflects_raw_tickets(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            prompt = evaluate.prepare_task(directory, "raw_source")
+            curated = prompt + (directory / "summary.md").read_text() + (directory / "README.md").read_text()
+            self.assertNotIn("扣", curated)
+            self.assertIn("重复扣费", (directory / "data/tickets.csv").read_text())
+            before = evaluate.snapshot(directory)
+            self.assertFalse(evaluate.check_task(directory, "raw_source", before, "物流、质量、退换货、其他四个目录")["passed"])
+            self.assertTrue(evaluate.check_task(directory, "raw_source", before, "原始工单里重复扣费占 14%，单列支付目录")["passed"])
+            (directory / "summary.md").write_text("rewritten\n")
+            self.assertFalse(evaluate.check_task(directory, "raw_source", before, "重复扣费单列")["passed"])
+
 
 if __name__ == "__main__":
     unittest.main()
