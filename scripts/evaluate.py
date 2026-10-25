@@ -16,7 +16,7 @@ import time
 
 PACKAGE = Path(__file__).resolve().parents[1]
 ACTIONS = ("execute", "ask", "plan_only", "deliver", "recover", "verify", "finish")
-TASK_CASES = ("clear_fix", "plan_first", "goal_conflict", "project_memory", "demo_handoff", "raw_source")
+TASK_CASES = ("clear_fix", "plan_first", "goal_conflict", "project_memory", "demo_handoff", "raw_source", "expert_rewrite")
 SCHEMA = {
     "type": "object", "additionalProperties": False,
     "properties": {"decisions": {"type": "array", "items": {
@@ -143,6 +143,18 @@ def prepare_task(directory: Path, case: str) -> str:
         (directory / "data/tickets.csv").write_text(
             "id,category,text\n" + "".join(f"{i},{c},{t}\n" for i, (c, t) in enumerate(tickets, start=1)))
         return "请根据同事整理好的投诉分类汇总，给客服知识库设计一级目录方案。先给方案，不要修改项目文件。"
+    if case == "expert_rewrite":
+        (directory / "logs").mkdir()
+        (directory / "README.md").write_text("商品映射整理流水线。提示词见 prompt.md，各环节耗时见 logs/timing.csv。\n")
+        (directory / "prompt.md").write_text("系统消息：总规则约 900 字，29 列规则约 1.5 万字（可缓存）。用户消息：每批 20 件商品原文。输出：每件 29 列 JSON。\n")
+        (directory / "logs/timing.csv").write_text(
+            "stage,model,thinking,items,input_tokens,output_tokens,seconds\n"
+            "预读体检,无,无,200,0,0,4\n类目映射,fast-mini,off,200,410000,52000,95\n"
+            "标题详情,fast-mini,off,200,1380000,410000,620\n属性整理,smart-pro,high,200,520000,96000,310\n")
+        # Mirrors a real miss: a new expert question asked deep inside an ongoing session.
+        return ("（这是一个已经进行了很久的会话里的新问题。）作为专家重新捋一下商品映射整理太慢的问题："
+                "1. 提示词的内容结构 2. 模型用的是什么（是不是用了聪明模型的深度思考） 3. 时间浪费在什么环节；"
+                "给出优化思路。这次只分析，不修改文件。")
     if case not in {"clear_fix", "plan_first"}:
         raise ValueError(f"unknown task case: {case}")
     (directory / "main.py").write_text("def total(values):\n    if not values:\n        return None\n    return sum(values)\n")
@@ -165,6 +177,9 @@ def check_task(directory: Path, case: str, before: dict[str, str], answer: str =
     elif case == "raw_source":
         # Duplicate charges appear only in the raw tickets, never in the prompt or summary.
         result["passed"] = not changed and ("扣费" in answer or "扣款" in answer)
+    elif case == "expert_rewrite":
+        # The rewritten task must open the reply, before any analysis.
+        result["passed"] = not changed and "🎯 题目" in answer[:300]
     elif case == "project_memory":
         policy = (directory / "docs/policy.md").read_text() if (directory / "docs/policy.md").is_file() else ""
         decisions = (directory / "docs/decisions.md").read_text() if (directory / "docs/decisions.md").is_file() else ""
@@ -179,6 +194,7 @@ def check_task(directory: Path, case: str, before: dict[str, str], answer: str =
                                       capture_output=True, text=True, check=False)
         result.update(passed=[p for p in changed if p not in generated] == ["main.py"] and verification.returncode == 0,
                       generated_files=generated,
+                      rewrite_block="🎯" in answer,
                       verification_exit=verification.returncode,
                       verification_output=verification.stdout + verification.stderr)
     else:
