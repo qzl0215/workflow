@@ -168,7 +168,22 @@ def prepare_task(directory: Path, case: str) -> str:
     return "帮我修复 main.py 中 total 的空列表返回值，应为 0；非空列表行为不变，并验证。"
 
 
-def check_task(directory: Path, case: str, before: dict[str, str], answer: str = "") -> dict:
+def opening_message(events: str) -> str | None:
+    """Text of the first agent message if it comes before any command, else None."""
+    for line in events.splitlines():
+        try:
+            item = json.loads(line).get("item") or {}
+        except ValueError:
+            continue
+        if item.get("type") == "command_execution":
+            return None
+        if item.get("type") == "agent_message":
+            return item.get("text", "")
+    return None
+
+
+def check_task(directory: Path, case: str, before: dict[str, str], answer: str = "",
+               opening: str | None = None) -> dict:
     after = snapshot(directory)
     changed = sorted(p for p in before.keys() | after.keys() if before.get(p) != after.get(p))
     result = {"changed": changed, "semantic_review": "required"}
@@ -178,8 +193,9 @@ def check_task(directory: Path, case: str, before: dict[str, str], answer: str =
         # Duplicate charges appear only in the raw tickets, never in the prompt or summary.
         result["passed"] = not changed and ("扣费" in answer or "扣款" in answer)
     elif case == "expert_rewrite":
-        # The rewritten task must open the reply, before any analysis.
-        result["passed"] = not changed and "🎯 题目" in answer[:300]
+        # The rewritten task must be written before the first command; the closing
+        # reconciliation of raw materials and proof still needs semantic review.
+        result["passed"] = not changed and opening is not None and "🎯 题目" in opening
     elif case == "project_memory":
         policy = (directory / "docs/policy.md").read_text() if (directory / "docs/policy.md").is_file() else ""
         decisions = (directory / "docs/decisions.md").read_text() if (directory / "docs/decisions.md").is_file() else ""
@@ -194,7 +210,7 @@ def check_task(directory: Path, case: str, before: dict[str, str], answer: str =
                                       capture_output=True, text=True, check=False)
         result.update(passed=[p for p in changed if p not in generated] == ["main.py"] and verification.returncode == 0,
                       generated_files=generated,
-                      rewrite_block="🎯" in answer,
+                      rewrite_block="🎯" in answer or "🎯" in (opening or ""),
                       verification_exit=verification.returncode,
                       verification_output=verification.stdout + verification.stderr)
     else:
@@ -223,7 +239,8 @@ def task_trial(args, model: str, variant: str, protocol: str, references: dict[s
     (args.output / f"{label}.jsonl").write_text(completed.stdout)
     (args.output / f"{label}.stderr").write_text(completed.stderr)
     answer = args.output / f"{label}.txt"
-    result = check_task(directory, case, before, answer.read_text() if answer.is_file() else "")
+    result = check_task(directory, case, before, answer.read_text() if answer.is_file() else "",
+                        opening_message(completed.stdout))
     verification_output = result.pop("verification_output", "")
     (args.output / f"{label}.verification.txt").write_text(verification_output)
     result["passed"] = result["passed"] and completed.returncode == 0
