@@ -113,13 +113,13 @@ class EvaluationHarnessTest(unittest.TestCase):
             prompt = evaluate.prepare_task(directory, "expert_rewrite")
             self.assertIn("作为专家", prompt)
             before = evaluate.snapshot(directory)
-            opening = '{"type":"item.completed","item":{"type":"agent_message","text":"🎯 题目：拆耗时"}}'
+            opening = '{"type":"item.completed","item":{"type":"agent_message","text":"先按阶段拆耗时，再用原始调用记录核对"}}'
             command = '{"type":"item.started","item":{"type":"command_execution","command":"cat README.md"}}'
             first = evaluate.opening_message(opening + "\n" + command)
-            self.assertEqual(first, "🎯 题目：拆耗时")
+            self.assertEqual(first, "先按阶段拆耗时，再用原始调用记录核对")
             self.assertIsNone(evaluate.opening_message(command + "\n" + opening))
             self.assertTrue(evaluate.check_task(directory, "expert_rewrite", before, "📋 结论", first)["passed"])
-            self.assertFalse(evaluate.check_task(directory, "expert_rewrite", before, "🎯 题目：后补", None)["passed"])
+            self.assertFalse(evaluate.check_task(directory, "expert_rewrite", before, "结论后补", None)["passed"])
             (directory / "prompt.md").write_text("edited\n")
             self.assertFalse(evaluate.check_task(directory, "expert_rewrite", before, "📋 结论", first)["passed"])
 

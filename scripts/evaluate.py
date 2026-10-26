@@ -193,9 +193,9 @@ def check_task(directory: Path, case: str, before: dict[str, str], answer: str =
         # Duplicate charges appear only in the raw tickets, never in the prompt or summary.
         result["passed"] = not changed and ("扣费" in answer or "扣款" in answer)
     elif case == "expert_rewrite":
-        # The rewritten task must be written before the first command; the closing
-        # reconciliation of raw materials and proof still needs semantic review.
-        result["passed"] = not changed and opening is not None and "🎯 题目" in opening
+        # A plan for going deeper must reach the user before the first command;
+        # whether it is specific, and the closing evidence, need semantic review.
+        result.update(passed=not changed and bool((opening or "").strip()), opening=(opening or "")[:400])
     elif case == "project_memory":
         policy = (directory / "docs/policy.md").read_text() if (directory / "docs/policy.md").is_file() else ""
         decisions = (directory / "docs/decisions.md").read_text() if (directory / "docs/decisions.md").is_file() else ""
@@ -210,7 +210,7 @@ def check_task(directory: Path, case: str, before: dict[str, str], answer: str =
                                       capture_output=True, text=True, check=False)
         result.update(passed=[p for p in changed if p not in generated] == ["main.py"] and verification.returncode == 0,
                       generated_files=generated,
-                      rewrite_block="🎯" in answer or "🎯" in (opening or ""),
+                      opening=(opening or "")[:400],
                       verification_exit=verification.returncode,
                       verification_output=verification.stdout + verification.stderr)
     else:
