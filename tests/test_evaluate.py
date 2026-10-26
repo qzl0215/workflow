@@ -113,10 +113,15 @@ class EvaluationHarnessTest(unittest.TestCase):
             prompt = evaluate.prepare_task(directory, "expert_rewrite")
             self.assertIn("作为专家", prompt)
             before = evaluate.snapshot(directory)
-            self.assertTrue(evaluate.check_task(directory, "expert_rewrite", before, "🎯 题目：以实测耗时拆解提速\n…")["passed"])
-            self.assertFalse(evaluate.check_task(directory, "expert_rewrite", before, "📋 结论：慢在输出。" + "x" * 300 + "🎯 题目")["passed"])
+            opening = '{"type":"item.completed","item":{"type":"agent_message","text":"🎯 题目：拆耗时"}}'
+            command = '{"type":"item.started","item":{"type":"command_execution","command":"cat README.md"}}'
+            first = evaluate.opening_message(opening + "\n" + command)
+            self.assertEqual(first, "🎯 题目：拆耗时")
+            self.assertIsNone(evaluate.opening_message(command + "\n" + opening))
+            self.assertTrue(evaluate.check_task(directory, "expert_rewrite", before, "📋 结论", first)["passed"])
+            self.assertFalse(evaluate.check_task(directory, "expert_rewrite", before, "🎯 题目：后补", None)["passed"])
             (directory / "prompt.md").write_text("edited\n")
-            self.assertFalse(evaluate.check_task(directory, "expert_rewrite", before, "🎯 题目：…")["passed"])
+            self.assertFalse(evaluate.check_task(directory, "expert_rewrite", before, "📋 结论", first)["passed"])
 
 
 if __name__ == "__main__":
