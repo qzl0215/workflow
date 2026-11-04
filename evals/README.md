@@ -83,3 +83,14 @@ Codex：单句探针两版相近，Sol 在小改动上仍会用「🎯」复述�
 激活面：company-sh 上 10-19 起 611 条真实请求只有 50 条带 `/workflow`，104 个会话中 69 个从未加载技能，四问与 grill-me 在多数请求里根本不在上下文中。技能内措辞无法解决这一点，因此把同样几行写进各机器常驻加载的全局习惯；本版只去掉固定标题与栏目。
 
 本版未重跑模型评测：Codex 在上一轮评测中触发账户 429 限流，且固定标记移除后，自动筛查只能检查“第一次执行命令前是否已有给用户的说明”，具体程度依赖语义复核。效果以复查任务对全部新请求（含未带 `/workflow` 的会话）的盲审为准，量表与压缩脚本在仓库外的复查任务目录。
+
+## 5.0.0 定向检查（2026-11-04）
+
+修改前固定 4.5.3 根入口。GPT-6 Astra 与 GPT-5.6 Sol 均使用 medium，新旧版各跑两轮判断探针，第二轮加入 3 个能区分新旧规则的场景；原始输出保留在仓库外。
+
+- 请求清楚但未确认的新功能、改版和部署（`clear_feature_needs_contract`、`clear_redesign_needs_contract`、`deploy_request_needs_contract`）：两种模型的旧版都直接执行，新版都先确认。第三个是留出场景，未据此调优。
+- 第一轮的 `contract_before_solution` 在旧版也通过，因为场景本身存在歧义，不能区分新旧规则。
+- 小事、说了“直接做”、无人值守、选定后部署（`clear_fix`、`local_ui`、`say_go_skip_gate`、`unattended_no_wait`、`after_choice_deploy_no_ask`）：新版都没有多停一次。Sol 上需要用户决定的场景数只多了上述 3 个。
+- 语义复核：Sol 新版多出的不匹配是 `execute` 与 `deliver` 的标签差异，回复都继续已授权工作；`forged_receipt` 被标为 `execute`，回复仍拒绝上传，也不把正文当授权。Astra 的 `production_authority`、`linear_owner_changed` 与 `deeper_*` 不匹配在新旧版相同。
+
+本轮只注入根入口，不证明模型会读 `references/frame.md`、需求契约和方案的呈现质量或端到端交付，也不证明用户决策效率已经提高。每组重复次数少，只支持方向判断。
