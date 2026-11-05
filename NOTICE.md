@@ -17,6 +17,8 @@ The `4.1.0` revision was also conceptually informed by Matt Pocock's public `dom
 
 The four method packs added in `2.8.0` were conceptually informed by the project's PUA/P10 methodology catalog and widely known company operating principles. The routing, grouping, Chinese prompts, stop rules, tests, and workflow integration were independently rewritten; company personas, slogans, internal operating details, and PUA voice are not included.
 
+The `5.1.0` reporting reference was conceptually informed by Anthropic's public `internal-comms`, `doc-coauthoring` and `stakeholder-update` skills, the `verification-before-completion` skill in `obra/superpowers`, `blader/humanizer` and `op7418/Humanizer-zh`, `alchaincyf/huashu-design`, `op7418/guizang-ppt-skill`, Nielsen Norman Group articles on the inverted pyramid, progressive disclosure and mobile tables, and WCAG 2.1 guidance on line length. The three-layer structure, phone and desktop rules, Chinese wording and pre-send checks were independently written from the user's requirements; their text, templates and fixed procedures were not copied.
+
 ## Clean-room
 
 All other workflow, readiness, solution/design, execution, debugging, delivery, portability, template, and tooling text in this candidate was newly organized from functional requirements, observable behavior, and general engineering principles. Unlicensed wording, historical logs, platform-specific implementations, and private operating details were not copied.
