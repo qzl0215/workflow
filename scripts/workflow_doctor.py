@@ -24,6 +24,7 @@ REQUIRED_REFERENCES = (
     "recover.md",
     "prove.md",
     "deliver.md",
+    "report.md",
     "learn.md",
     "initialize.md",
     "linear-tracking.md",

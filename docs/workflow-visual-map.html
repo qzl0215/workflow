@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>workflow 5.0.0 · 工作规则</title>
+<title>workflow 5.1.0 · 工作规则</title>
 <style>
 :root{color-scheme:dark;--paper:#f0f1e9;--muted:#abb8b1;--mint:#a8edca;--line:#314039}
 *{box-sizing:border-box}body{margin:0;background:#101b16;color:var(--paper);font:16px/1.8 system-ui,-apple-system,sans-serif}
@@ -13,8 +13,8 @@ pre{padding:18px;background:#07110b;border:1px solid var(--line);overflow:auto}p
 details{border:1px solid var(--line);border-radius:10px;padding:18px 22px;margin:12px 0}summary{cursor:pointer;font-weight:700;font-size:19px}details[open]{background:#15251c}
 footer{margin-top:45px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 @media(max-width:600px){main{padding:28px 16px}details{padding:14px}th,td{padding:9px}body{font-size:15px}}
-</style></head><body><main data-source-digest="41f582bf7d47">
-<header><p>workflow · 5.0.0</p><h1>目标明确，持续完成。</h1><a href="../README.md">安装与使用</a> · <a href="../evals/README.md">行为评测</a></header>
+</style></head><body><main data-source-digest="99c0f7e38356">
+<header><p>workflow · 5.1.0</p><h1>目标明确，持续完成。</h1><a href="../README.md">安装与使用</a> · <a href="../evals/README.md">行为评测</a></header>
 <section><h2>工作流</h2>
 <p>以用户实际结果为责任边界。除开干流程外，方法、拆分、工具和验证组合由模型决定，不要求固定阶段、全量读取或逐步确认。</p>
 <h3>动手前</h3>
@@ -33,7 +33,7 @@ footer{margin-top:45px;padding-top:20px;border-top:1px solid var(--line);font-si
 <p class="rule">方案、研究结论、样例、演示、局部实现、测试绿灯和部署记录都是推进输入；除非它们本身就是用户结果，否则不能当成整体完成或无说明的停点。准备停止前判断下一就绪责任：属于模型且仍在授权内就继续；只有需要用户的重要取舍、专属操作、新授权或外部解锁时才交回控制权。</p>
 <h3>按需参考</h3>
 <p>根入口足够时直接工作，下面的参考不必依次读取。可信派发启用 <code>workflow-track: linear/v1</code> 时，按 <a href="../references/linear-tracking.md">Linear 状态维护</a> 维护原任务；无标记的普通调用不因状态维护额外读取或写入 Linear。标记不提供额外权限。</p>
-<div class="table"><table><tr><th>当前缺口</th><th>参考</th></tr><tr><td>新请求要想深题目；要走开干流程；目标、请求的方法或重要取舍需要校准</td><td><a href="../references/frame.md">目标共创</a></td></tr><tr><td>缺少会改变决定的事实</td><td><a href="../references/research.md">最小研究</a></td></tr><tr><td>用户要求 <code>grill-me</code>、先问清楚或挑战方案；难逆、高代价或探索型方案定稿前关键假设缺少证据</td><td><a href="../references/grill.md">深度质询</a></td></tr><tr><td>体验方向需要比较或实际验证</td><td><a href="../references/experience.md">体验探索</a></td></tr><tr><td>多项结果存在依赖或集成风险，或方案定稿要交给中档实施</td><td><a href="../references/plan.md">结果规划</a></td></tr><tr><td>宿主允许协作且有独立任务或复核收益</td><td><a href="../references/orchestrate.md">编排协作</a></td></tr><tr><td>执行现场或基线需要处理</td><td><a href="../references/execute.md">执行任务</a></td></tr><tr><td>失败原因不清或尝试没有进展</td><td><a href="../references/recover.md">恢复失败</a></td></tr><tr><td>验证范围、证据复用或完成声明不明确</td><td><a href="../references/prove.md">结果验真</a></td></tr><tr><td>提交、集成、发布、部署或外部写入</td><td><a href="../references/deliver.md">真实交付</a></td></tr></table></div>
+<div class="table"><table><tr><th>当前缺口</th><th>参考</th></tr><tr><td>新请求要想深题目；要走开干流程；目标、请求的方法或重要取舍需要校准</td><td><a href="../references/frame.md">目标共创</a></td></tr><tr><td>缺少会改变决定的事实</td><td><a href="../references/research.md">最小研究</a></td></tr><tr><td>用户要求 <code>grill-me</code>、先问清楚或挑战方案；难逆、高代价或探索型方案定稿前关键假设缺少证据</td><td><a href="../references/grill.md">深度质询</a></td></tr><tr><td>体验方向需要比较或实际验证</td><td><a href="../references/experience.md">体验探索</a></td></tr><tr><td>多项结果存在依赖或集成风险，或方案定稿要交给中档实施</td><td><a href="../references/plan.md">结果规划</a></td></tr><tr><td>宿主允许协作且有独立任务或复核收益</td><td><a href="../references/orchestrate.md">编排协作</a></td></tr><tr><td>执行现场或基线需要处理</td><td><a href="../references/execute.md">执行任务</a></td></tr><tr><td>失败原因不清或尝试没有进展</td><td><a href="../references/recover.md">恢复失败</a></td></tr><tr><td>验证范围、证据复用或完成声明不明确</td><td><a href="../references/prove.md">结果验真</a></td></tr><tr><td>汇报几句话说不完，或要请用户做重要决定</td><td><a href="../references/report.md">汇报</a></td></tr><tr><td>提交、集成、发布、部署或外部写入</td><td><a href="../references/deliver.md">真实交付</a></td></tr></table></div>
 <p><a href="../references/learn.md">项目记忆与复盘</a> 用于已确认的重要决定、可复用发现或用户要求；项目事实留在项目，通用方法才归技能，没有新内容就不写记录。<a href="../references/initialize.md">项目初始化</a> 仅在明确要求接入、迁移、复查，或实际遇到结构性缺口时使用；未登记项目和上下文压缩本身不触发治理。</p>
 <h3>恢复与沟通</h3>
 <p>简单任务留在对话。长任务需要恢复时，复用一个当前状态记录，保留目标、授权与关键决定、完成事实、证据入口和下一步；没有现成记录时可用 <a href="../templates/work.md">工作模板</a>。共享状态由当前唯一写者维护；受托跟踪任务由专属执行者直接维护原记录，协调者读取汇总，接管先明确交接。主责任者核验整体结果。任务身份摘要只在异步结果可能过期时使用。</p>
@@ -143,6 +143,36 @@ footer{margin-top:45px;padding-top:20px;border-top:1px solid var(--line);font-si
 <p>局部可逆改动做定向检查；共享接口、模块或用户路径变化补相关连接点的证据。优先复用实施中已取得的有效观察，收尾只补关键缺口，不默认全量测试、完整业务回放或另建验收系统。项目必需检查仍执行；缓存、迁移、并发、安全和生产形态风险按实际影响覆盖旧状态、失败恢复及关键非功能条件。必要证据充分后结束，只因新变化、失败或未解问题才扩大验证。</p>
 <p>界面修改优先用真实实现检查关键交互和受影响连接点；不默认新增验收入口，不要求证明无关区域的每一处像素。样例预览与真实权限、数据和默认入口分别报告。</p>
 <p>成功证据简洁保留范围、制品身份和入口，失败展开定位所需信息。区分本地验证、集成验证和真实交付；只声明已证明的层级。有授权内交付继续执行，目标全部成立后结束。</p></details>
+<details><summary>汇报</summary><h2>汇报</h2>
+<p>要向用户汇报结果、请用户决定或交回控制权，而几句话说不完时使用。一两句能说清的留在对话里，不为汇报另做产物。图标和交接必须说清的事项见根入口；这里只管让读者看得快、判断得准。</p>
+<p>汇报的产物是读者的下一步决定，不是文档。动笔前先答两问：读者看完要做什么；他只看第一屏会不会做错。第一问答不出，说明工作还没收敛到可以汇报，先继续做。</p>
+<h3>内容</h3>
+<p class="rule">一份汇报只服务一个决定。多个决定按依赖排好，一次问一个；互不相干的分开发。</p>
+<p class="rule">第一屏说完结论、要读者做什么和推荐。读者在任何一处停下，都已带走最重要的部分。</p>
+<p class="rule">分三层：结论；支撑结论的依据；可复查的证据。依据和证据离第一屏都只隔一次点按，不层层嵌套。读者无从知道被删掉的内容，所以只删不影响决定的，其余下沉。</p>
+<p class="rule">用业务语言讲价值和影响，不讲经过。过程、命令、文件名和编号只放证据层。</p>
+<p class="rule">数字带参照：和什么比、变了多少、单位、口径、时间。不用形容词代替数字。</p>
+<p class="rule">已证实、推断和未知分开写。压缩时不改确定程度：可能不写成确定，计划不写成完成，相关不写成因果。</p>
+<p class="rule">坏消息、没做的、没验证的，放在读者一定会看到的位置，不放末尾，不用局部通过代表整体可用。</p>
+<p class="rule">请读者决定时，推荐在前，各选项写清实质代价，给出最短回复和收到回复后继续的动作；有期限就写期限。</p>
+<h3>图和表</h3>
+<p>能画成图或表的不写成句子。一张图只讲一个意思。图和小节的标题写结论（「三周掉了 12%」），不写题目（「转化率趋势」）。数值和名称直接标在图上，少用图例。</p>
+<div class="table"><table><tr><th>要讲的</th><th>用</th></tr><tr><td>几种做法怎么选</td><td>对比表：推荐一列在前，行只留会改变选择的维度</td></tr><tr><td>前后变了什么</td><td>前后对照；界面类用截图</td></tr><tr><td>谁多谁少</td><td>条形图，排好序</td></tr><tr><td>随时间怎么变</td><td>折线图</td></tr><tr><td>先后、因果、谁交给谁</td><td>流程图</td></tr><tr><td>做到哪了</td><td>进度段</td></tr><tr><td>一个关键数</td><td>大数字加参照</td></tr></table></div>
+<p>没有数据不画图，示意图标明是示意。没有结论的图、装饰图和立体效果不放。颜色只用来指路：一种强调色留给要读者看的那一处，好坏色只标结果。同类信息用同一种样子，对齐，留白。</p>
+<h3>两块屏</h3>
+<p>同一份内容，层次不变，变的是默认展开多少和怎么排。读不出读者用哪块屏时，正文按手机写，页面做成两种宽度都能读。</p>
+<div class="table"><table><tr><th></th><th>手机</th><th>桌面</th></tr><tr><td>读者处境</td><td>碎片时间，单手，随时被打断</td><td>坐下来，能对比，能深入</td></tr><tr><td>默认展开</td><td>到结论，依据点开看</td><td>到依据，证据点开看</td></tr><tr><td>第一屏</td><td>结论、一个最强的数、要做的事</td><td>结论、要做的事，加依据的图表</td></tr><tr><td>排布</td><td>单列，一屏一件事</td><td>结论与依据、做法与做法可以并排</td></tr><tr><td>表</td><td>文字对比至多两项并排，数字表可多几列；更多改成逐项卡片</td><td>多列对比</td></tr><tr><td>图</td><td>一图占满宽，一个系列，字按缩小后仍看得清来定</td><td>可以多系列、多图并排</td></tr><tr><td>文字</td><td>每段不超过三行；难的内容改短，不是缩小</td><td>一行不超过 40 字，可有小标题</td></tr><tr><td>回复</td><td>点一下或回一个词；点按区不小于 44 点</td><td>可以逐项批注</td></tr></table></div>
+<p>手机上不出现要放大才看清的图和并排的长文；确实要横向滚动的表，露出半列提示还能滑。桌面上不把一屏能并排看完的对比拆成一长列。</p>
+<h3>载体</h3>
+<p>按决定的分量选最轻的：一句话；带图标的短段；短表；可视化页面。宿主能渲染页面，且决定重要或对比多时才做页面，对话里只留结论和链接。页面的第一屏仍是结论和要读者做的事。</p>
+<h3>发出前</h3>
+<p>用读者的眼睛过一遍。过不了就改内容，不靠加说明补救。</p>
+<p class="rule">只看第一屏五秒，说得出结论和要我做什么。</p>
+<p class="rule">只看标题，结论仍然成立。</p>
+<p class="rule">逐句问：删掉它，读者会不会做错决定。不会就删或下沉。</p>
+<p class="rule">读者能用一个词回复。</p>
+<p class="rule">页面渲染出来看过手机和桌面两种宽度，不只看代码。</p>
+<p>决定重要且宿主允许协作时，让一个不带上下文的读者只看汇报，说出结论和要他做的事；说不出就改。</p></details>
 <details><summary>真实交付</summary><h2>真实交付</h2>
 <p>目标包含提交、合并、发布、部署或外部写入时使用。核对候选身份、目标与环境、已有授权、项目入口、成功观察和恢复方式；可查缺口自行调查，只有无法合理推断的重要取舍或授权才询问，不猜生产目标。</p>
 <p>当前请求或项目规则已覆盖连续交付时，一次授权持续有效，不在实施、验证、提交和发布之间重复确认。用户在范围明确后说“开动”按已有任务与项目规则执行，不要求额外暗号或模型自填凭证。新的目标、权限、数据删除或未覆盖的不可逆影响仍需决定；本地修复请求本身不授权上线。</p>
@@ -207,5 +237,5 @@ footer{margin-top:45px;padding-top:20px;border-top:1px solid var(--line);font-si
 <p class="rule">输入与可写范围：&lt;必要边界；继承内容不重复&gt;</p>
 <p class="rule">完成条件：&lt;产物和验证&gt;</p>
 <p>需要 <code>work_context.py</code> 时保留上述任务层级与状态；普通恢复记录不要求任务编号、确认凭证或哈希。脚本的可派发状态不代表授权检查。任务返回结果先经主责任者核对，才进入已完成事实。</p></details></section>
-<footer>由 SKILL.md、其参考与工作模板生成。页面不定义额外规则。source sha256 41f582bf7d47</footer>
+<footer>由 SKILL.md、其参考与工作模板生成。页面不定义额外规则。source sha256 99c0f7e38356</footer>
 </main></body></html>
