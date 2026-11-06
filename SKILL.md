@@ -1,7 +1,7 @@
 ---
 name: workflow
 description: 推进用户目标与已授权任务：新功能、改版、部署到生产或方向不清的任务，开干前先澄清、确认需求契约、再让用户选方案；小事和已确认的工作直接做，轻量验真并完成交付。用户说 grill-me、要求先问清楚或挑战方案时先做深度质询。需求讨论和审查不自动授权实施；纯事实问答直接回答。
-version: 5.1.0
+version: 5.1.1
 author: zhonglin
 license: MIT
 ---
@@ -42,7 +42,7 @@ license: MIT
 | 执行现场或基线需要处理 | [执行任务](references/execute.md) |
 | 失败原因不清或尝试没有进展 | [恢复失败](references/recover.md) |
 | 验证范围、证据复用或完成声明不明确 | [结果验真](references/prove.md) |
-| 汇报几句话说不完，或要请用户做重要决定 | [汇报](references/report.md) |
+| 汇报几句话说不完，或要请用户做重要决定 | [汇报](references/report.md)；读者在手机或聊天软件里看时加读[小屏汇报](references/report-mobile.md) |
 | 提交、集成、发布、部署或外部写入 | [真实交付](references/deliver.md) |
 
 [项目记忆与复盘](references/learn.md) 用于已确认的重要决定、可复用发现或用户要求；项目事实留在项目，通用方法才归技能，没有新内容就不写记录。[项目初始化](references/initialize.md) 仅在明确要求接入、迁移、复查，或实际遇到结构性缺口时使用；未登记项目和上下文压缩本身不触发治理。
