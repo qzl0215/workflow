@@ -26,6 +26,7 @@ REFERENCES = {
     "prove.md",
     "deliver.md",
     "report.md",
+    "report-mobile.md",
     "learn.md",
     "initialize.md",
     "linear-tracking.md",
@@ -129,7 +130,7 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
         self.assertEqual(set(value), {"schema", "name", "version", "entrypoint", "runtime", "source_only"})
         self.assertEqual(value["schema"], 1)
         self.assertEqual(value["name"], "workflow")
-        self.assertEqual(value["version"], "5.1.0")
+        self.assertEqual(value["version"], "5.1.1")
         self.assertEqual(value["entrypoint"], "SKILL.md")
         self.assertEqual(set(value["runtime"]), {"files"})
         files = value["runtime"]["files"]

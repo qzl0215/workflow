@@ -25,6 +25,7 @@ REQUIRED_REFERENCES = (
     "prove.md",
     "deliver.md",
     "report.md",
+    "report-mobile.md",
     "learn.md",
     "initialize.md",
     "linear-tracking.md",
