@@ -57,6 +57,8 @@ SOURCE_ONLY_FILES = {
     "evals/4.2.0-results.md",
     "scripts/evaluate.py",
     "tests/test_evaluate.py",
+    "scripts/observe.py",
+    "tests/test_observe.py",
     "docs/workflow-visual-map.html",
     "docs/assets/diff2html/diff2html.min.js",
     "docs/assets/diff2html/diff2html.min.css",
