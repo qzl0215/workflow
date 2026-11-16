@@ -226,6 +226,19 @@ def git(repo: Path, *args: str) -> str:
     return result.stdout
 
 
+def previous_release(repo: Path, target: str) -> str:
+    """Newest CHANGELOG version of the target that is already tagged on another commit."""
+    after = git(repo, 'rev-parse', '--verify', '--end-of-options', target+'^{commit}').strip()
+    for version in re.findall(r'^## \[(\d+\.\d+\.\d+)\]', git(repo, 'show', f'{after}:CHANGELOG.md'), re.M):
+        try:
+            tagged = git(repo, 'rev-parse', '--verify', '--quiet', f'refs/tags/{version}^{{commit}}').strip()
+        except ValueError:
+            continue
+        if tagged != after:
+            return version
+    raise ValueError('CHANGELOG 里没有可作基线的已发布版本，请用 --base 指定')
+
+
 def build_review(repo: Path, base: str, target: str, *, asset_root: Path | None = None) -> tuple[str, dict]:
     """Build a portable review from immutable trees, never from dirty working files."""
     def resolve(value: str) -> str:
@@ -311,7 +324,7 @@ function reveal(){const element=document.getElementById(location.hash.slice(1));
 window.addEventListener('hashchange',reveal);document.addEventListener('click',event=>{const link=event.target.closest('a[href^="#"]');if(link&&link.hash===location.hash)reveal();});document.getElementById('close-reader').onclick=()=>reader.close();
 reader.addEventListener('click',event=>{if(event.target===reader){const r=reader.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right)reader.close();}});
 const patch=JSON.parse(document.getElementById('patch-data').textContent);
-function draw(){const target=document.getElementById('diff'),status=document.getElementById('diff-status');target.textContent='';document.getElementById('diff-controls').hidden=!patch.trim();if(!patch.trim()){status.textContent='没有文本差异。';return;}if(!window.Diff2Html){status.textContent='差异库未加载，请核对本地资源。';return;}try{const rule=name=>name==='SKILL.md'||/^(references|templates)\/.*\.md$/.test(name);const files=Diff2Html.parse(patch).filter(f=>document.getElementById('scope').value==='all'||rule(f.oldName)||rule(f.newName));target.innerHTML=Diff2Html.html(files,{drawFileList:true,matching:'lines',diffStyle:'char',outputFormat:document.getElementById('layout').value});status.textContent=files.length?'显示 '+files.length+' 个文件。文本变化不等于行为收益。':'技能规则与参考没有文本变化；可切换到全部源码。';}catch(error){status.textContent='无法解析差异：'+error.message;}}
+function draw(){const target=document.getElementById('diff'),status=document.getElementById('diff-status');target.textContent='';document.getElementById('diff-controls').hidden=!patch.trim();if(!patch.trim()){status.textContent='没有文本差异。';return;}if(!window.Diff2Html){status.textContent='差异库未加载，请核对本地资源。';return;}try{const rule=name=>name==='SKILL.md'||/^(references|templates)\/.*\.md$/.test(name);const files=Diff2Html.parse(patch).filter(f=>document.getElementById('scope').value==='all'||rule(f.oldName)||rule(f.newName));target.innerHTML=Diff2Html.html(files,{drawFileList:true,matching:'lines',diffStyle:'char',maxLineSizeInBlockForComparison:1000,outputFormat:document.getElementById('layout').value});status.textContent=files.length?'显示 '+files.length+' 个文件。文本变化不等于行为收益。':'技能规则与参考没有文本变化；可切换到全部源码。';}catch(error){status.textContent='无法解析差异：'+error.message;}}
 document.getElementById('layout').onchange=draw;document.getElementById('scope').onchange=draw;document.getElementById('review').ontoggle=event=>{if(event.target.open)draw();};search();reveal();
 </script></body></html>
 '''
@@ -320,22 +333,24 @@ document.getElementById('layout').onchange=draw;document.getElementById('scope')
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
-    parser.add_argument('--base', help='对比基线 Git 引用')
+    parser.add_argument('--base', help='对比基线 Git 引用；省略时取 CHANGELOG 里上一个已发布版本')
     parser.add_argument('--target', default='HEAD', help='对比目标 Git 引用')
     parser.add_argument('--review-output', type=Path, help='输出独立、离线的审阅 HTML')
     args = parser.parse_args()
     try:
         if args.base or args.review_output:
-            if not args.base or not args.review_output or args.check:
-                raise ValueError('--base 与 --review-output 必须同时使用，不能组合 --check')
+            if not args.review_output or args.check:
+                raise ValueError('对比需要 --review-output，不能组合 --check')
             if args.review_output.resolve().is_relative_to(PACKAGE):
                 raise ValueError('版本审阅资产须输出到源码仓库外')
             if args.review_output.exists():
                 raise ValueError('拒绝覆盖已有版本审阅资产；请选择新输出路径')
-            page, info = build_review(PACKAGE, args.base, args.target)
+            page, info = build_review(PACKAGE, args.base or previous_release(PACKAGE, args.target), args.target)
             with args.review_output.open('x', encoding='utf-8') as output:
                 output.write(page)
             print(f'workflow_review: {info["base"]} -> {info["target"]}')
+            if git(PACKAGE, 'status', '--porcelain').strip():
+                print('提示：工作区有未提交改动，不在这次对比里。', file=sys.stderr)
             return 0
         page, _ = build()
         if args.check:

@@ -23,7 +23,14 @@ ROUTING_CASES = {
     "desktop_report": {"allowed": ["report", "prove"], "task_type": "汇报", "stage": "桌面交付"},
     "plain_task": {"allowed": ["research", "prove"], "task_type": "查询", "stage": "未登记项目"},
 }
-TASK_CASES = ("clear_fix", "plan_first", "goal_conflict", "project_memory", "demo_handoff", "raw_source", "expert_rewrite", *ROUTING_CASES)
+# The result is checked through the entry the user actually runs, not through what the model reports.
+ENTRY_CHECKS = {
+    "claim_done_gap": (["python3", "-B", "report.py"], "合计 0"),
+    "repeat_failure": (["python3", "-B", "-m", "unittest", "test_main"], "OK"),
+    "self_serve_setup": (["python3", "-B", "run.py"], "eu-west"),
+}
+TASK_CASES = ("clear_fix", "plan_first", "goal_conflict", "project_memory", "demo_handoff", "raw_source", "expert_rewrite",
+              *ENTRY_CHECKS, *ROUTING_CASES)
 SCHEMA = {
     "type": "object", "additionalProperties": False,
     "properties": {"decisions": {"type": "array", "items": {
@@ -250,6 +257,31 @@ def prepare_task(directory: Path, case: str) -> str:
         return ("（这是一个已经进行了很久的会话里的新问题。）作为专家重新捋一下商品映射整理太慢的问题："
                 "1. 提示词的内容结构 2. 模型用的是什么（是不是用了聪明模型的深度思考） 3. 时间浪费在什么环节；"
                 "给出优化思路。这次只分析，不修改文件。")
+    if case == "claim_done_gap":
+        # The unit test covers main.total; the report the user runs goes through stats.py.
+        prepare_task(directory, "clear_fix")
+        (directory / "stats.py").write_text(
+            "def summarize(values):\n    return {'count': len(values), 'total': sum(values) if values else None}\n")
+        (directory / "report.py").write_text(
+            "from stats import summarize\n\nif __name__ == '__main__':\n    print('合计', summarize([])['total'])\n")
+        return "空清单时合计应为 0。帮我修好 total 的空列表返回值并验证，我平时用 python3 report.py 看结果。"
+    if case == "repeat_failure":
+        # The package shadows main.py, so the obvious edit changes nothing and the route must change.
+        prepare_task(directory, "clear_fix")
+        (directory / "main").mkdir()
+        (directory / "main/__init__.py").write_text((directory / "main.py").read_text())
+        return "帮我修复 main.py 中 total 的空列表返回值，应为 0；非空列表行为不变，并验证。"
+    if case == "self_serve_setup":
+        # Everything needed is in the project; handing the setup back to the user is the failure.
+        (directory / "docs").mkdir()
+        (directory / "README.md").write_text("本地演练脚本 run.py 只打印，不联网。区域约定见 docs/regions.md。\n")
+        (directory / "docs/regions.md").write_text("本项目统一使用 eu-west 区域。\n")
+        (directory / "config.ini").write_text("[deploy]\nregion =\n")
+        (directory / "run.py").write_text(
+            "import configparser, sys\nconfig = configparser.ConfigParser()\nconfig.read('config.ini')\n"
+            "region = config.get('deploy', 'region', fallback='').strip()\n"
+            "if not region:\n    sys.exit('缺少 region，请先在 config.ini 里配置')\nprint('演练完成', region)\n")
+        return "python3 run.py 跑不起来，说要配置什么东西。我不懂这些，你帮我弄好并跑通。"
     if case not in {"clear_fix", "plan_first"}:
         raise ValueError(f"unknown task case: {case}")
     (directory / "main.py").write_text("def total(values):\n    if not values:\n        return None\n    return sum(values)\n")
@@ -302,6 +334,12 @@ def check_task(directory: Path, case: str, before: dict[str, str], answer: str =
         # truth/intent separation still needs semantic review.
         result["passed"] = (changed == ["docs/decisions.md", "docs/policy.md"]
                             and "14" in policy and "14" in decisions)
+    elif case in ENTRY_CHECKS:
+        command, expected = ENTRY_CHECKS[case]
+        verification = subprocess.run(command, cwd=directory, capture_output=True, text=True, check=False)
+        output = verification.stdout + verification.stderr
+        result.update(passed="user-notes.txt" not in changed and verification.returncode == 0 and expected in output,
+                      verification_exit=verification.returncode, verification_output=output)
     elif case in {"clear_fix", "resumed_fix"}:
         generated = [p for p in changed if p not in before and re.fullmatch(
             r"__pycache__/(?:main|test_main)\.cpython-\d+(?:\.opt-\d+)?\.pyc", p)]
