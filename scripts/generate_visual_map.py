@@ -102,35 +102,31 @@ def document(text: str, relative: str, sources: dict[str, str]) -> str:
     return render(LINK.sub(replace, text))
 
 
-def page_from_sources(sources: dict[str, str]) -> tuple[str, str]:
+def page_from_sources(sources: dict[str, str], changelog: str = '') -> tuple[str, str]:
     text = sources['SKILL.md']
     match = re.search(r"^version:\s*(\S+)$", text, re.M)
     if not match:
         raise ValueError("SKILL.md 缺少版本")
     version = match.group(1)
-    # Source documents and their links are the only authored navigation.
+    notes = re.search(r'^## \[' + re.escape(version) + r'\][^\n]*\n(.*?)(?=^## \[|\Z)', changelog, re.M | re.S)
+    changes = notes[1].strip() if notes else '此版本未提供变更说明；请查看版本差异。'
+    # Navigation and release notes reuse existing sources, with no second inventory.
     digest = hashlib.sha256()
-    cards, navigation, edges = [], [], []
+    digest.update(changes.encode() + b'\0')
+    cards, navigation = [], []
     for relative, contents in sources.items():
         digest.update(relative.encode() + b"\0" + contents.encode() + b"\0")
-        for label, target in LINK.findall(contents):
-            linked = posixpath.normpath(posixpath.join(posixpath.dirname(relative), target.split('#')[0]))
-            if linked in sources:
-                edges.append(f'<li><a href="#{anchor(relative)}">{html.escape(relative)}</a> → '
-                             f'<a href="#{anchor(linked)}">{html.escape(label)}</a></li>')
-        if relative != 'SKILL.md':
-            title = re.search(r"^# (.+)$", contents, re.M)
-            if not title:
-                raise ValueError(f"缺少标题：{relative}")
-            navigation.append(f'<a href="#{anchor(relative)}">{html.escape(title.group(1))}</a>')
-            cards.append(f'<details class="reference" id="{anchor(relative)}" data-path="{html.escape(relative)}">'
-                         + "<summary>" + html.escape(title.group(1)) + "</summary>"
-                         + f'<small>{html.escape(relative)}</small>' + document(contents, relative, sources) + "</details>")
+        title = re.search(r"^# (.+)$", contents, re.M)
+        if not title:
+            raise ValueError(f"缺少标题：{relative}")
+        navigation.append(f'<a href="#{anchor(relative)}">{html.escape(title.group(1))}</a>')
+        cards.append(f'<details class="reference" id="{anchor(relative)}" data-path="{html.escape(relative)}">'
+                     + "<summary>" + html.escape(title.group(1)) + "</summary>"
+                     + f'<small>{html.escape(relative)}</small>' + document(contents, relative, sources) + "</details>")
     identity = digest.hexdigest()[:12]
     page = TEMPLATE.replace("__VERSION__", html.escape(version)).replace("__DIGEST__", identity)
-    page = page.replace("__ROOT_ID__", anchor('SKILL.md'))
-    page = page.replace("__ROOT__", document(text, 'SKILL.md', sources)).replace("__REFERENCES__", "\n".join(cards))
-    page = page.replace('__NAV__', ' · '.join(navigation)).replace('__EDGES__', ''.join(edges))
+    page = fill(page, {'__CHANGES__': render(changes), '__REFERENCES__': '\n'.join(cards),
+                       '__NAV__': ' · '.join(navigation)})
     return page, identity
 
 
@@ -138,10 +134,11 @@ def build() -> tuple[str, str]:
     paths = ['SKILL.md', *sorted(p.relative_to(PACKAGE).as_posix() for p in (PACKAGE/'references').glob('*.md'))]
     if (PACKAGE/'templates/work.md').is_file():
         paths.append('templates/work.md')
-    page, identity = page_from_sources({p: (PACKAGE/p).read_text(encoding='utf-8') for p in paths})
-    return fill(page, {'__REVIEW_INFO__': '选择正式 Release 的 workflow-review.html 查看对应版本差异；也可载入本地 Git diff。',
-                       '__PATCH__': '""', '__CSS__': '<link rel="stylesheet" href="assets/diff2html/diff2html.min.css">',
-                       '__LIBRARY__': '<script src="assets/diff2html/diff2html.min.js"></script>'}), identity
+    changelog = PACKAGE/'CHANGELOG.md'
+    page, identity = page_from_sources({p: (PACKAGE/p).read_text(encoding='utf-8') for p in paths},
+                                      changelog.read_text(encoding='utf-8') if changelog.is_file() else '')
+    return fill(page, {'__REVIEW_INFO__': '下载 <a href="https://github.com/qzl0215/workflow/releases/latest">正式 Release</a> 的 workflow-review.html 查看版本差异。',
+                       '__PATCH__': '""', '__CSS__': '', '__LIBRARY__': ''}), identity
 
 
 def git(repo: Path, *args: str) -> str:
@@ -162,7 +159,8 @@ def build_review(repo: Path, base: str, target: str, *, asset_root: Path | None 
     paths = ['SKILL.md', *sorted(p for p in names if p.startswith('references/') and p.endswith('.md'))]
     if 'templates/work.md' in names:
         paths.append('templates/work.md')
-    page, digest = page_from_sources({p: git(repo, 'show', f'{after}:{p}') for p in paths})
+    page, digest = page_from_sources({p: git(repo, 'show', f'{after}:{p}') for p in paths},
+                                    git(repo, 'show', f'{after}:CHANGELOG.md') if 'CHANGELOG.md' in names else '')
     excluded = ['docs/workflow-visual-map.html', 'docs/assets/diff2html/diff2html.min.js',
                 'docs/assets/diff2html/diff2html.min.css', 'docs/assets/diff2html/LICENSE.md']
     patch = git(repo, '-c', 'core.quotePath=false', 'diff', '--no-ext-diff', '--no-textconv', '--no-color',
@@ -192,12 +190,12 @@ def build_review(repo: Path, base: str, target: str, *, asset_root: Path | None 
 
 TEMPLATE = '''<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>workflow __VERSION__ · 工作规则</title>
+<title>workflow __VERSION__ · 变化与规则</title>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 __CSS__
 <style>
 :root{color-scheme:dark;--paper:#f0f1e9;--muted:#abb8b1;--mint:#a8edca;--line:#314039}
-*{box-sizing:border-box}body{margin:0;background:#101b16;color:var(--paper);font:16px/1.8 system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:#101b16;color:var(--paper);font:16px/1.8 system-ui,-apple-system,sans-serif}
 main{max-width:1000px;margin:auto;padding:60px 24px}header{padding-bottom:36px;border-bottom:1px solid var(--line)}
 header p{color:var(--mint);letter-spacing:.1em}h1{font-size:clamp(38px,7vw,64px);line-height:1.2;margin:18px 0}h2{font-size:28px;margin-top:36px}h3{font-size:21px}
 p{max-width:85ch}a{color:var(--mint);text-underline-offset:4px}a:hover{color:#fff}a:focus-visible,summary:focus-visible{outline:2px solid var(--mint);outline-offset:5px}
@@ -209,21 +207,32 @@ footer{margin-top:45px;padding-top:20px;border-top:1px solid var(--line);font-si
 input,button,select{font:inherit;padding:8px;border:1px solid var(--line);border-radius:6px}button,summary{cursor:pointer}.toolbar{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0}.toolbar input[type=search]{flex:1;min-width:180px}.reference{scroll-margin-top:20px}small{color:var(--muted)}#navigation{margin:20px 0}.d2h-wrapper{background:white;color:#222;padding:12px;border-radius:8px}.d2h-code-line-ctn{white-space:pre-wrap;overflow-wrap:anywhere}.d2h-code-side-line{width:100%}.d2h-wrapper a{color:#12614e}.d2h-wrapper table{table-layout:auto}.d2h-wrapper td{padding:0}.d2h-wrapper th{color:#222}#diff:empty{display:none}
 @media(max-width:600px){main{padding:28px 16px}details{padding:14px}th,td{padding:9px}body{font-size:15px}}
 </style></head><body><main data-source-digest="__DIGEST__">
-<header><p>workflow · __VERSION__</p><h1>目标明确，持续完成。</h1><a href="../README.md">安装与使用</a> · <a href="../evals/README.md">行为评测</a></header>
-<section id="__ROOT_ID__">__ROOT__</section>
-<details><summary>调用关系（链接不表示固定前置）</summary><ul>__EDGES__</ul></details>
-<section aria-label="按需展开参考"><h2>参考全文</h2><nav id="navigation">__NAV__</nav><div class="toolbar"><input id="search" type="search" aria-label="搜索参考全文" placeholder="搜索名称、路径或正文"><button id="expand">展开结果</button><button id="collapse">全部折叠</button><span id="count"></span></div>__REFERENCES__</section>
-<section><h2>版本高亮对比</h2><p>__REVIEW_INFO__</p><div class="toolbar"><label>布局 <select id="layout"><option value="side-by-side">并排</option><option value="line-by-line">逐行</option></select></label><label>本地 diff <input id="patch-file" type="file" accept=".diff,.patch,text/plain"></label></div><p id="diff-status" role="status"></p><div id="diff"></div></section>
-<footer>由 SKILL.md、其参考与工作模板生成。页面不定义额外规则。source sha256 __DIGEST__</footer>
+<header><p>workflow · __VERSION__</p><h1>这次改了什么</h1><a href="../README.md">安装与使用</a> · <a href="#documents">查阅规则</a></header>
+<section id="changes"><h2>本版变化</h2>__CHANGES__</section>
+<details id="review"><summary>查看版本高亮对比</summary><p>上方说明来自目标版本的 CHANGELOG；跨版本的完整变化以这里的差异为准。</p><div>__REVIEW_INFO__</div><div class="toolbar" id="diff-controls"><label>内容 <select id="scope"><option value="rules">技能规则与参考</option><option value="all">全部源码（含维护工具）</option></select></label><label>布局 <select id="layout"><option value="side-by-side">并排</option><option value="line-by-line">逐行</option></select></label></div><p id="diff-status" role="status"></p><div id="diff"></div></details>
+<section id="documents" aria-label="按需展开规则"><h2>查阅完整规则</h2><nav id="navigation">__NAV__</nav><div class="toolbar"><input id="search" type="search" aria-label="搜索规则全文" placeholder="搜索名称、路径或正文"><button id="expand">展开结果</button><button id="collapse">全部折叠</button><span id="count"></span></div>__REFERENCES__</section>
+<footer>由 CHANGELOG、SKILL.md、其参考与工作模板生成。页面不定义额外规则。source sha256 __DIGEST__</footer>
 </main>__LIBRARY__<script id="patch-data" type="application/json">__PATCH__</script><script>
 const docs=[...document.querySelectorAll('.reference')];
 function search(){const query=document.getElementById('search').value.toLowerCase();docs.forEach(d=>d.hidden=!d.textContent.toLowerCase().includes(query));document.getElementById('count').textContent=docs.filter(d=>!d.hidden).length+' / '+docs.length;}
 document.getElementById('search').oninput=search;document.getElementById('expand').onclick=()=>docs.filter(d=>!d.hidden).forEach(d=>d.open=true);document.getElementById('collapse').onclick=()=>docs.forEach(d=>d.open=false);
 function reveal(){const element=document.getElementById(location.hash.slice(1));if(element&&element.classList.contains('reference')){document.getElementById('search').value='';search();element.open=true;element.scrollIntoView();}}
 window.addEventListener('hashchange',reveal);
-let patch=JSON.parse(document.getElementById('patch-data').textContent);
-function draw(){const target=document.getElementById('diff'),status=document.getElementById('diff-status');target.textContent='';if(!patch.trim()){status.textContent='没有文本差异；可选择本地 .diff 文件。';return;}if(!window.Diff2Html){status.textContent='差异库未加载，请核对本地资源。';return;}try{target.innerHTML=Diff2Html.html(patch,{drawFileList:true,matching:'lines',diffStyle:'char',outputFormat:document.getElementById('layout').value});status.textContent='文本变化不等于行为收益；请结合评测证据审阅。';}catch(error){status.textContent='无法解析差异：'+error.message;}}
-document.getElementById('layout').onchange=draw;document.getElementById('patch-file').onchange=async event=>{const file=event.target.files[0];if(!file)return;if(file.size>5000000){document.getElementById('diff-status').textContent='文件超过 5 MB，请缩小对比范围。';return;}patch=await file.text();draw();};search();reveal();draw();
+const patch=JSON.parse(document.getElementById('patch-data').textContent);
+function draw(){
+ const target=document.getElementById('diff'),status=document.getElementById('diff-status');target.textContent='';
+ document.getElementById('diff-controls').hidden=!patch.trim();
+ if(!patch.trim()){status.textContent='没有文本差异。';return;}
+ if(!window.Diff2Html){status.textContent='差异库未加载，请核对本地资源。';return;}
+ try{
+  const rule=name=>name==='SKILL.md'||/^(references|templates)\\/.*\\.md$/.test(name);
+  const files=Diff2Html.parse(patch).filter(f=>document.getElementById('scope').value==='all'||rule(f.oldName)||rule(f.newName));
+  target.innerHTML=Diff2Html.html(files,{drawFileList:true,matching:'lines',diffStyle:'char',outputFormat:document.getElementById('layout').value});
+  status.textContent=files.length?'显示 '+files.length+' 个文件。文本变化不等于行为收益；验证结果见本版说明。':'技能规则与参考没有文本变化；可切换到全部源码查看维护改动。';
+ }catch(error){status.textContent='无法解析差异：'+error.message;}
+}
+document.getElementById('layout').onchange=draw;document.getElementById('scope').onchange=draw;
+document.getElementById('review').ontoggle=event=>{if(event.target.open)draw();};search();reveal();
 </script></body></html>
 '''
 
