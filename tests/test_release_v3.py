@@ -135,7 +135,7 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
         self.assertEqual(set(value), {"schema", "name", "version", "entrypoint", "runtime", "source_only"})
         self.assertEqual(value["schema"], 1)
         self.assertEqual(value["name"], "workflow")
-        self.assertEqual(value["version"], "5.2.0")
+        self.assertIn(f'version: {value["version"]}', (PACKAGE / "SKILL.md").read_text().splitlines())
         self.assertEqual(value["entrypoint"], "SKILL.md")
         self.assertEqual(set(value["runtime"]), {"files"})
         files = value["runtime"]["files"]
