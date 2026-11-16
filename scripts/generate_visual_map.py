@@ -107,32 +107,64 @@ def opening(text: str) -> str:
     return paragraph[1].strip() if paragraph else ''
 
 
-def routing(sources: dict[str, str]) -> str:
-    """Visualize authored conditions; never maintain a second routing catalog."""
-    cards, covered = [], set()
-    for line in sources['SKILL.md'].splitlines():
+def section(text: str, title: str) -> str:
+    match = re.search(r'^## ' + re.escape(title) + r'\n(.*?)(?=^## |\Z)', text, re.M | re.S)
+    return match[1].strip() if match else ''
+
+
+def table_rows(text: str, columns: int) -> list[list[str]]:
+    rows, first = [], True
+    for line in text.splitlines():
         if not line.startswith('|'):
+            first = True
             continue
         cells = [cell.strip() for cell in line.strip('|').split('|')]
-        if len(cells) != 2:
+        if first:
+            first = False
             continue
-        targets = {target.split('#')[0] for _, target in LINK.findall(cells[1])
-                   if target.split('#')[0] in sources and target.startswith('references/')}
-        if targets:
-            covered.update(targets)
-            cards.append('<article class="route-card" role="listitem"><div class="condition">'
-                         + inline(cells[0]) + '</div><span class="route-arrow" aria-hidden="true">↓</span>'
-                         + '<div class="destination">' + document(cells[1], 'SKILL.md', sources) + '</div></article>')
-    extra = []
+        if len(cells) == columns and not all(re.fullmatch(r':?-+:?', cell) for cell in cells):
+            rows.append(cells)
+    return rows
+
+
+def route_groups(sources: dict[str, str]) -> dict[str, list[list[str]]]:
+    groups, group = {}, '按需参考'
+    for block in re.split(r'(^### .+$)', sources['SKILL.md'], flags=re.M):
+        if block.startswith('### '):
+            group = block[4:].strip()
+        else:
+            for condition, target in table_rows(block, 2):
+                if any(path.split('#')[0] in sources and path.startswith('references/') for _, path in LINK.findall(target)):
+                    groups.setdefault(group, []).append([condition, target])
+    covered = {path.split('#')[0] for rows in groups.values() for _, target in rows for _, path in LINK.findall(target)}
     for path, contents in sources.items():
         if path.startswith('references/') and path not in covered:
             title = re.search(r'^# (.+)$', contents, re.M)[1]
-            extra.append('<article class="route-card" role="listitem"><h3><a href="#'
-                         + anchor(path) + '">' + html.escape(title) + '</a></h3>'
-                         + document(opening(contents), path, sources) + '</article>')
-    return ('<div class="route-grid" role="list">' + ''.join(cards) + '</div>'
-            + ('<h3>其他按需参考</h3><div class="route-grid supplemental" role="list">'
-               + ''.join(extra) + '</div>' if extra else ''))
+            groups.setdefault('其他按需参考', []).append([opening(contents), f'[{title}]({path})'])
+    return groups
+
+
+def routing(sources: dict[str, str]) -> str:
+    return ''.join('<section class="capability-group"><h3>' + html.escape(group) + '</h3><div class="module-list">'
+                   + ''.join('<div class="module-row">' + document(target, 'SKILL.md', sources)
+                             + '<span class="module-condition">' + inline(condition) + '</span></div>'
+                             for condition, target in rows) + '</div></section>'
+                   for group, rows in route_groups(sources).items())
+
+
+def decisions(text: str) -> str:
+    rows = table_rows(section(text, '判断当前请求'), 3)
+    return ''.join('<details class="decision"><summary><span class="branch-number">' + str(i + 1).zfill(2)
+                   + '</span>' + inline(condition) + '</summary><div class="branch-body"><span class="label">本轮动作</span>'
+                   + '<div class="action-path">' + '<span class="arrow" aria-hidden="true">→</span>'.join('<span>' + inline(step) + '</span>' for step in action.split(' → '))
+                   + '</div><p><span class="label">结束或交接点</span>' + inline(stop) + '</p></div></details>'
+                   for i, (condition, action, stop) in enumerate(rows))
+
+
+def outcomes(text: str) -> str:
+    return '<div class="outcome-list">' + ''.join('<div class="outcome"><div>' + inline(state)
+                   + '</div><span class="arrow" aria-hidden="true">→</span><p>' + inline(action) + '</p></div>'
+                   for state, action in table_rows(section(text, '推进与停止'), 2)) + '</div>'
 
 
 def page_from_sources(sources: dict[str, str], changelog: str = '') -> tuple[str, str]:
@@ -147,19 +179,28 @@ def page_from_sources(sources: dict[str, str], changelog: str = '') -> tuple[str
     digest = hashlib.sha256()
     digest.update(changes.encode() + b'\0')
     cards = []
+    conditions = {}
+    for rows in route_groups(sources).values():
+        for condition, target in rows:
+            for _, path in LINK.findall(target):
+                conditions[path] = condition + ' → ' + target
     for relative, contents in sources.items():
         digest.update(relative.encode() + b"\0" + contents.encode() + b"\0")
         title = re.search(r"^# (.+)$", contents, re.M)
         if not title:
             raise ValueError(f"缺少标题：{relative}")
-        cards.append(f'<details class="reference" id="{anchor(relative)}" data-path="{html.escape(relative)}">'
+        context = document(conditions[relative], 'SKILL.md', sources) if relative in conditions else ''
+        cards.append(f'<details class="reference" id="{anchor(relative)}" data-path="{html.escape(relative)}" hidden>'
                      + "<summary>" + html.escape(title.group(1)) + "</summary>"
-                     + f'<small>{html.escape(relative)}</small>' + document(contents, relative, sources) + "</details>")
+                     + '<div class="reference-context"><span class="label">何时调用</span>' + context + '</div>'
+                     + '<details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre>' + html.escape(contents) + '</pre></details>'
+                     + '<div class="reading-body">' + document(contents, relative, sources) + '</div></details>')
     identity = digest.hexdigest()[:12]
     page = TEMPLATE.replace("__VERSION__", html.escape(version)).replace("__DIGEST__", identity)
     page = fill(page, {'__CHANGES__': render(changes), '__REFERENCES__': '\n'.join(cards),
                        '__INTRO__': document(opening(text), 'SKILL.md', sources),
-                       '__ROUTING__': routing(sources), '__ROOT_LINK__': '#' + anchor('SKILL.md')})
+                       '__ROUTING__': routing(sources), '__DECISIONS__': decisions(text), '__OUTCOMES__': outcomes(text),
+                       '__ROOT_LINK__': '#' + anchor('SKILL.md')})
     return page, identity
 
 
@@ -221,63 +262,53 @@ def build_review(repo: Path, base: str, target: str, *, asset_root: Path | None 
     return page, info
 
 
-TEMPLATE = '''<!doctype html>
+TEMPLATE = r'''<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>workflow __VERSION__ · 人类阅读版</title>
+<title>workflow __VERSION__ · 工作地图</title>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 __CSS__
 <style>
-:root{color-scheme:light;--paper:#233b36;--muted:#526b64;--mint:#176b58;--line:#ccdcd4}
-*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:#f6f7f2;color:var(--paper);font:16px/1.8 system-ui,-apple-system,sans-serif}
-main{max-width:1180px;margin:auto;padding:40px 28px}header{padding-bottom:34px;border-bottom:1px solid var(--line)}
-header .eyebrow{color:var(--mint);letter-spacing:.12em;font-size:13px;font-weight:700}h1{font-size:clamp(34px,5vw,52px);line-height:1.25;margin:18px 0}h2{font-size:28px;margin:36px 0 12px}h3{font-size:20px}
-p{max-width:85ch}a{color:var(--mint);text-underline-offset:4px}a:hover{color:#094432}a:focus-visible,summary:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--mint);outline-offset:4px}
-.rule{padding-left:16px;border-left:3px solid var(--mint)}code{font: .9em/1.7 ui-monospace,monospace;background:#e5eee7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}
-pre{padding:18px;background:#edf2ec;border:1px solid var(--line);overflow:auto}pre code{padding:0;background:none;white-space:pre}
-.table{overflow:auto}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line)}th{color:var(--mint)}
-details{border:1px solid var(--line);border-radius:10px;padding:18px 22px;margin:12px 0;background:#fff}summary{cursor:pointer;font-weight:700;font-size:19px}details[open]{background:#fff}
-footer{margin-top:45px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
-input,button,select{font:inherit;padding:8px;border:1px solid var(--line);border-radius:6px}button,summary{cursor:pointer}.toolbar{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0}.toolbar input[type=search]{flex:1;min-width:180px}.reference{scroll-margin-top:20px}small{color:var(--muted)}#navigation{margin:20px 0}.d2h-wrapper{background:white;color:#222;padding:12px;border-radius:8px}.d2h-code-line-ctn{white-space:pre-wrap;overflow-wrap:anywhere}.d2h-code-side-line{width:100%}.d2h-wrapper a{color:#12614e}.d2h-wrapper table{table-layout:auto}.d2h-wrapper td{padding:0}.d2h-wrapper th{color:#222}#diff:empty{display:none}
-.hero{display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:center}.hero p{max-width:36em}.reading-map{margin:0}.reading-map svg{display:block;width:100%;height:auto}.reading-map figcaption{font-size:13px;text-align:center;color:var(--muted)}
-.jump-links{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 0}.jump-links a{padding:5px 13px;border:1px solid var(--line);border-radius:24px;text-decoration:none;background:#fff}
-.section-intro{color:var(--muted);margin-top:0}.route-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.route-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;min-width:0}.condition{flex:1}.route-arrow{color:var(--mint);font-size:24px;line-height:1.5}.destination{border-top:1px solid var(--line);padding-top:10px}.destination p{margin:0}.destination a{font-weight:700}.supplemental .route-card{background:#eef3ec}.route-card h3{margin:0}.route-card p{font-size:15px}.reference>h2{font-size:24px}.reference>h3{border-bottom:1px solid var(--line);padding-bottom:6px}section,details{scroll-margin-top:20px}#changes{border-top:1px solid var(--line);margin-top:36px}#diff{overflow-x:auto}
-@media(max-width:850px){.hero{grid-template-columns:1fr}.reading-map{max-width:520px}.route-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:600px){main{padding:24px 16px}details{padding:14px}th,td{padding:9px}body{font-size:15px}.route-grid{grid-template-columns:1fr}.hero{gap:16px}}
-</style></head><body><main data-source-digest="__DIGEST__">
-<header id="overview"><p class="eyebrow">WORKFLOW · __VERSION__ · 人类阅读版</p>
-<div class="hero"><div><h1>一个入口，<br>按需调用。</h1>__INTRO__<p><a href="__ROOT_LINK__">展开 AI 使用的精简入口 ↗</a></p></div>
-<figure class="reading-map"><svg viewBox="0 0 520 250" role="img" aria-labelledby="map-title map-description"><title id="map-title">一份内容，两种阅读方式</title><desc id="map-description">AI 直接读取 Markdown 入口和参考，人类阅读由它们生成的图文页面，规则只维护一份。</desc>
-<rect x="4" y="26" width="214" height="190" rx="18" fill="#e8f0e8" stroke="#ccdcd4"/><rect x="302" y="26" width="214" height="190" rx="18" fill="#fff" stroke="#ccdcd4"/>
-<g fill="none" stroke="#176b58" stroke-width="2.5"><path d="M86 59h35l16 16v47H86z M121 59v16h16 M97 89l-6 6 6 6 M122 89l6 6-6 6 M112 86l-7 19"/><rect x="371" y="62" width="76" height="57" rx="5"/><path d="M371 76h76 M381 88h21v21h-21z M411 88h25 M411 98h25 M411 108h17 M230 120h59 M280 112l9 8-9 8"/></g>
-<g fill="#233b36" text-anchor="middle" font-family="system-ui,sans-serif"><text x="111" y="153" font-size="23" font-weight="700">AI 读精简文本</text><text x="111" y="185" font-size="14">入口 + 按需参考</text><text x="409" y="153" font-size="23" font-weight="700">人读图文结构</text><text x="409" y="185" font-size="14">总览 + 导航 + 版本对比</text><text x="260" y="103" font-size="12" fill="#176b58">生成</text></g></svg><figcaption>内容只维护一份，图文页随发布更新。</figcaption></figure></div>
-<nav class="jump-links" aria-label="阅读导航"><a href="#routing">按情况找参考</a><a href="#documents">查阅全文</a><a href="#changes">本版变化</a><a href="#review">版本对比</a><a href="../README.md">安装与使用</a></nav></header>
-<section id="routing"><h2>遇到什么情况，读取哪份参考</h2><p class="section-intro">按当前缺口定位，点击参考名称展开原文。箭头表示条件与参考的对应关系，不是依次执行的步骤。</p>__ROUTING__</section>
-<section id="documents" aria-label="按需展开规则"><h2>查阅完整规则</h2><p class="section-intro">标题、正文和链接来自 AI 使用的同一份 Markdown。搜索后可只展开相关内容。</p><div class="toolbar"><input id="search" type="search" aria-label="搜索规则全文" placeholder="搜索名称、路径或正文"><button id="expand">展开结果</button><button id="collapse">全部折叠</button><span id="count"></span></div>__REFERENCES__</section>
-<section id="changes"><h2>本版变化</h2>__CHANGES__</section>
-<details id="review"><summary>查看版本高亮对比</summary><p>上方说明来自目标版本的 CHANGELOG；跨版本的完整变化以这里的差异为准。</p><div>__REVIEW_INFO__</div><div class="toolbar" id="diff-controls"><label>内容 <select id="scope"><option value="rules">技能规则与参考</option><option value="all">全部源码（含维护工具）</option></select></label><label>布局 <select id="layout"><option value="side-by-side">并排</option><option value="line-by-line">逐行</option></select></label></div><p id="diff-status" role="status"></p><div id="diff"></div></details>
-<footer>由 CHANGELOG、SKILL.md、其参考与工作模板生成。页面不定义额外规则。source sha256 __DIGEST__</footer>
-</main>__LIBRARY__<script id="patch-data" type="application/json">__PATCH__</script><script>
-const docs=[...document.querySelectorAll('.reference')];
-function search(){const query=document.getElementById('search').value.toLowerCase();docs.forEach(d=>d.hidden=!d.textContent.toLowerCase().includes(query));document.getElementById('count').textContent=docs.filter(d=>!d.hidden).length+' / '+docs.length;}
-document.getElementById('search').oninput=search;document.getElementById('expand').onclick=()=>docs.filter(d=>!d.hidden).forEach(d=>d.open=true);document.getElementById('collapse').onclick=()=>docs.forEach(d=>d.open=false);
-function reveal(){const element=document.getElementById(location.hash.slice(1));if(element&&element.tagName==='DETAILS'){if(element.classList.contains('reference')){document.getElementById('search').value='';search();}element.open=true;element.scrollIntoView();}}
-window.addEventListener('hashchange',reveal);
-document.addEventListener('click',event=>{const link=event.target.closest('a[href^="#"]');if(link&&link.hash===location.hash)reveal();});
+:root{color-scheme:light;--ink:#182c30;--muted:#56666a;--accent:#086a70;--line:#d4dcd9;--paper:#f7f8f5;--soft:#eaf2ef}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;color:var(--ink);background:var(--paper);font:16px/1.75 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+a{color:var(--accent);text-underline-offset:4px}button,input,select{font:inherit;color:inherit}button,a,summary,input,select{touch-action:manipulation}button,summary{cursor:pointer}:focus-visible{outline:3px solid #d0872d;outline-offset:4px}button{background:transparent}p{margin:12px 0}h1,h2,h3{line-height:1.35}h1{font-size:46px;letter-spacing:-.035em;margin:18px 0}h2{font-size:27px;margin:0 0 14px}h3{font-size:19px}code{font:.9em/1.6 ui-monospace,monospace;overflow-wrap:anywhere;background:var(--soft);padding:2px 5px;border-radius:3px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--paper);padding:16px;border:1px solid var(--line);font:13px/1.7 ui-monospace,monospace;overflow:auto}.table{overflow:auto}table{border-collapse:collapse;width:100%}th,td{padding:12px;text-align:left;border-bottom:1px solid var(--line)}td{vertical-align:top}th{color:var(--accent)}
+.topbar{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:22px 32px;border-bottom:1px solid var(--line);font-size:13px}.brand{font-weight:800;letter-spacing:.13em}.topbar nav{display:flex;gap:22px}.topbar nav a{text-decoration:none;color:var(--muted)}main{max-width:1200px;margin:auto;padding:40px 32px 70px}.hero{display:grid;grid-template-columns:1.5fr 1fr;gap:50px;align-items:end;margin-bottom:32px}.eyebrow,.label{font:700 11px/1.6 ui-monospace,-apple-system,sans-serif;letter-spacing:.08em;color:var(--accent);text-transform:uppercase}.hero h1 span{color:var(--accent)}.hero p{max-width:32em;color:var(--muted)}.hero-note{border-left:2px solid var(--accent);padding-left:22px;font-size:15px}.hero-note p{margin:4px 0 12px}.hero-note a{font-size:13px}
+.flow{position:relative;margin:0;background:white;border:1px solid var(--line);padding:28px 26px 64px;border-radius:4px}.flow-grid{position:relative;z-index:1;display:grid;grid-template-columns:1fr 50px 1fr 50px 1fr;align-items:center}.flow-node{border:1px solid var(--line);padding:22px 18px;text-align:left;background:var(--paper);min-width:0;min-height:133px;border-radius:3px}.flow-node[aria-selected=true]{background:var(--accent);border-color:var(--accent);color:white}.flow-node small{font:12px ui-monospace,monospace;display:block;opacity:.75}.flow-node strong{display:block;font-size:23px;margin:10px 0 4px}.flow-node span{font-size:13px;opacity:.85}.connector{color:var(--accent);font-size:28px;text-align:center}.return-line{position:absolute;bottom:20px;left:50%;width:34%;height:38px;border:1px solid var(--accent);border-top:0;border-radius:0 0 8px 8px;pointer-events:none}.return-line:before{content:'↑';position:absolute;left:-7px;top:0;color:var(--accent);background:#fff;line-height:1}.return-line span{position:absolute;bottom:-12px;left:10%;white-space:nowrap;background:#fff;padding:0 12px;font-size:12px;color:var(--accent)}.figure-note{display:flex;justify-content:space-between;gap:20px;color:var(--muted);font-size:12px;margin:10px 0 30px}
+.workbench{display:grid;grid-template-columns:225px minmax(0,1fr);gap:36px;padding:28px 0 40px;border-top:1px solid var(--line)}.panel-intro h2{font-size:24px;margin-top:8px}.panel-intro p{font-size:14px;color:var(--muted)}.panel-intro a{font-size:13px}.decision{border-bottom:1px solid var(--line);background:white}.decision summary{display:flex;align-items:center;gap:18px;list-style:none;padding:17px 20px;font-size:15px}.decision summary::-webkit-details-marker{display:none}.decision summary:after{content:'+';margin-left:auto;font-size:22px;color:var(--accent)}.decision[open] summary:after{content:'−'}.branch-number{font:13px ui-monospace,monospace;color:var(--accent);flex:none}.branch-body{padding:0 22px 18px 57px;font-size:14px}.branch-body .label{display:block}.action-path{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 12px}.action-path>span:not(.arrow){border:1px solid var(--line);padding:5px 10px;background:var(--soft)}.arrow{color:var(--accent);font-size:20px}.branch-body p{margin-bottom:0}.capability-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 34px}.capability-group h3{font-size:13px;letter-spacing:.06em;color:var(--muted);border-bottom:2px solid var(--accent);padding-bottom:8px;margin:0}.module-row{border-bottom:1px solid var(--line);padding:10px 0}.module-row p{margin:0;font-size:15px}.module-row a{font-weight:650;text-decoration:none}.module-row a:after{content:' ↗';font-size:11px}.module-condition{display:block;color:var(--muted);font-size:12px;line-height:1.6;margin-top:3px}.outcome{display:grid;grid-template-columns:minmax(0,1fr) 22px minmax(0,1.5fr);gap:14px;align-items:center;padding:17px 0;border-bottom:1px solid var(--line);font-size:14px}.outcome>div{font-weight:650}.outcome p{margin:0}.outcome:last-child>div{color:var(--accent)}.searchline{display:flex;gap:12px;margin-bottom:18px;align-items:center}.searchline input{width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;padding:10px 0;min-width:0}.searchline span{font-size:12px;color:var(--muted);white-space:nowrap}.no-result{font-size:14px;color:var(--muted)}
+#changes{border-top:1px solid var(--line);padding-top:32px;margin-top:10px}.change-layout{max-width:74ch;font-size:15px}.change-layout .rule{padding-left:16px;border-left:2px solid var(--accent);margin:14px 0}.review{margin-top:24px;border:1px solid var(--line);padding:18px 22px;background:white}.review>summary{font-size:16px;font-weight:650}.review small{color:var(--muted)}.toolbar{display:flex;gap:16px;flex-wrap:wrap;margin:20px 0}.toolbar select{background:var(--paper);padding:6px;border:1px solid var(--line)}#diff{overflow-x:auto}.d2h-wrapper{background:white;color:#222}.d2h-code-line-ctn{white-space:pre-wrap;overflow-wrap:anywhere}.d2h-code-side-line{width:100%}.d2h-wrapper td{padding:0}.d2h-wrapper a{color:var(--accent)}#diff-status{font-size:13px;color:var(--muted)}footer{font-size:12px;color:var(--muted);margin-top:35px}
+.reader{position:fixed;inset:0 0 0 auto;margin:0;border:0;border-left:1px solid var(--line);width:min(720px,100vw);max-width:100vw;height:100dvh;max-height:100dvh;background:#fff;color:var(--ink);padding:0}.reader::backdrop{background:#12292e70}.reader-bar{position:sticky;top:0;z-index:2;background:#fff;display:flex;justify-content:space-between;align-items:center;padding:16px 28px;border-bottom:1px solid var(--line)}.reader-bar span{font-size:12px;color:var(--muted)}.reader-bar button{border:1px solid var(--line);padding:5px 14px;border-radius:3px}.reference{padding:26px 32px 50px;max-width:100%}.reference>summary{list-style:none;font-size:30px;font-weight:700;pointer-events:none}.reference>summary::-webkit-details-marker{display:none}.reference-context{border-left:3px solid var(--accent);padding:10px 16px;background:var(--soft);margin:20px 0;font-size:14px}.reference-context p{margin:4px 0}.reference-context:has(>.label:only-child){display:none}.raw-source{margin:20px 0;font-size:13px;color:var(--muted)}.reading-body{max-width:40em;line-height:1.95;font-size:16px}.reading-body>h2:first-child{display:none}.reading-body h3{font-size:21px;border-top:1px solid var(--line);padding-top:25px;margin-top:30px}.reading-body p{margin:18px 0}.reading-body .rule{padding:8px 0 8px 15px;border-left:2px solid var(--line);margin:12px 0}.reading-body table{font-size:14px}
+@media(max-width:900px){.hero{grid-template-columns:1fr;gap:15px}.hero-note{max-width:40em}.workbench{grid-template-columns:1fr;gap:18px}.panel-intro p{margin:6px 0}.flow-node strong{font-size:19px}.flow-node{padding:18px 12px}.flow-grid{grid-template-columns:1fr 28px 1fr 28px 1fr}}
+@media(max-width:600px){main{padding:25px 18px 45px}.topbar{padding:16px 18px}.topbar nav{gap:12px;font-size:12px}h1{font-size:34px}.hero{margin-bottom:25px}.hero-note{font-size:14px}.flow{padding:14px 12px 52px}.flow-grid{grid-template-columns:1fr 18px 1fr 18px 1fr}.flow-node{padding:14px 7px;min-height:116px}.flow-node strong{font-size:16px}.flow-node span{font-size:11px}.connector{font-size:18px}.return-line{left:18%;width:65%;bottom:18px}.return-line span{font-size:10px;left:5%;padding:0 5px}.figure-note{display:block;font-size:11px}.capability-grid{grid-template-columns:1fr}.decision summary{padding:14px 10px;gap:12px}.branch-body{padding:0 15px 15px 35px}.reference{padding:22px 20px}.reader-bar{padding:14px 20px}.outcome{gap:8px;font-size:13px}.reading-body{font-size:15px}.toolbar{font-size:13px}.review{padding:15px}.topbar .brand{letter-spacing:.05em}}
+@media(max-width:600px){.flow{padding:16px}.flow-grid{grid-template-columns:1fr}.flow-node{min-height:0;padding:13px 16px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:4px 10px}.flow-node small{grid-column:1;font-size:11px}.flow-node strong{grid-column:1;grid-row:2;margin:0;font-size:18px}.flow-node span{grid-column:2;grid-row:1/3;text-align:right;font-size:12px}.connector{transform:rotate(90deg);font-size:22px;height:26px;line-height:26px}.return-line{position:static;border:0;width:auto;height:auto;margin-top:14px}.return-line:before{display:none}.return-line span{position:static;background:transparent;display:block;text-align:center;font-size:12px;white-space:normal}.return-line span:before{content:'↩ ';font-size:16px}}
+</style></head><body>
+<div class="topbar"><a class="brand" href="#overview">WORKFLOW / __VERSION__</a><nav aria-label="页面导航"><a href="#changes">本版变化</a><a href="#review">版本对比</a><a href="../README.md">使用说明</a></nav></div>
+<main data-source-digest="__DIGEST__">
+<header id="overview" class="hero"><div><span class="eyebrow">工作地图 / 按需运行</span><h1>先分清任务，<br><span>再把结果做实。</span></h1><p>先看工作路径，点节点查判断条件。<br>每项能力的使用条件、做法和完整原文都可直接查看。</p></div><div class="hero-note"><p><b>AI 读得省</b>：精简入口，缺什么才读什么。</p><p><b>人读得懂</b>：先看关系，细节随时展开。</p><a href="__ROOT_LINK__">查看 AI 入口与完整规则 ↗</a></div></header>
+<figure class="flow" aria-label="工作闭环示意图：判断请求，按需补齐能力，验证结果；仍有就绪工作则继续。">
+<div class="flow-grid" role="tablist" aria-label="选择要了解的环节">
+<button class="flow-node" id="tab-request" role="tab" aria-selected="true" aria-controls="panel-request" tabindex="0"><small>请求边界</small><strong>这次能做什么</strong><span>范围 · 确认 · 已有授权</span></button><span class="connector" aria-hidden="true">↔</span>
+<button class="flow-node" id="tab-capabilities" role="tab" aria-selected="false" aria-controls="panel-capabilities" tabindex="-1"><small>当前缺口</small><strong>现在缺什么</strong><span>按需调用 · 补齐即返回</span></button><span class="connector" aria-hidden="true">↔</span>
+<button class="flow-node" id="tab-outcomes" role="tab" aria-selected="false" aria-controls="panel-outcomes" tabindex="-1"><small>结果证据</small><strong>何时才算完成</strong><span>继续 · 恢复 · 交接 · 结束</span></button></div>
+<div class="return-line"><span>未完成，继续当前工作</span></div></figure>
+<div class="figure-note"><span>三个判断问题，按当前情况使用；不是必须走完的三个阶段。</span><span>根入口足够时，可以零参考。</span></div>
+<section class="workbench" role="tabpanel" id="panel-request" aria-labelledby="tab-request"><div class="panel-intro"><span class="label">先识别本轮边界</span><h2>同一个请求，<br>先分清走哪条路。</h2><p>展开符合当前情况的一项，查看本轮动作与停止位置。</p><a href="__ROOT_LINK__">核对完整判断规则 ↗</a></div><div>__DECISIONS__</div></section>
+<section class="workbench" role="tabpanel" id="panel-capabilities" aria-labelledby="tab-capabilities" hidden><div class="panel-intro"><span class="label">缺口驱动调用</span><h2>能力可以组合，<br>不用整套加载。</h2><p>这些分组用于定位问题，不是四个必经阶段。点击名称查看条件、方法与原文。</p><a href="__ROOT_LINK__">核对路由与例外 ↗</a></div><div><div class="searchline"><input id="search" type="search" placeholder="搜索能力或技能正文" aria-label="搜索能力或技能全文"><span id="count" role="status"></span></div><div id="routing" class="capability-grid">__ROUTING__</div><p class="no-result" id="no-result" hidden>没有匹配内容。换一个词，或查看完整入口。</p></div></section>
+<section class="workbench" role="tabpanel" id="panel-outcomes" aria-labelledby="tab-outcomes" hidden><div class="panel-intro"><span class="label">闭环而非跑完步骤</span><h2>进度不等于结果，<br>证据决定下一步。</h2><p>对照当前状态，继续、恢复或交接。只有范围内的目标与交付都成立，才结束。</p><a href="__ROOT_LINK__">核对执行边界 ↗</a></div><div>__OUTCOMES__</div></section>
+<section id="changes"><span class="label">版本记录 / 直接来自 CHANGELOG</span><h2>这次具体改了什么</h2><div class="change-layout">__CHANGES__</div></section>
+<details id="review" class="review"><summary>查看版本高亮对比</summary><p>上方说明来自目标版本的 CHANGELOG。这里保留可复查的源码差异。</p><div>__REVIEW_INFO__</div><div class="toolbar" id="diff-controls"><label>内容 <select id="scope"><option value="rules">技能规则与参考</option><option value="all">全部源码（含维护工具）</option></select></label><label>布局 <select id="layout"><option value="side-by-side">并排</option><option value="line-by-line">逐行</option></select></label></div><p id="diff-status" role="status"></p><div id="diff"></div></details>
+<footer>判断条件、能力分组与正文取自同一份技能源码。图只解释关系，不提供额外授权。source sha256 __DIGEST__</footer></main>
+<dialog class="reader" id="reader" aria-label="技能详细阅读"><div class="reader-bar"><span>技能细节 / 与 AI 使用的正文一致</span><button id="close-reader" autofocus>关闭 ×</button></div>__REFERENCES__</dialog>
+__LIBRARY__<script id="patch-data" type="application/json">__PATCH__</script><script>
+const docs=[...document.querySelectorAll('.reference')],reader=document.getElementById('reader'),tabs=[...document.querySelectorAll('[role=tab]')];
+function selectTab(tab){tabs.forEach(t=>{const active=t===tab;t.setAttribute('aria-selected',active);t.tabIndex=active?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!active;});}
+tabs.forEach((tab,i)=>{tab.onclick=()=>selectTab(tab);tab.onkeydown=event=>{let next;if(event.key==='ArrowRight')next=(i+1)%tabs.length;if(event.key==='ArrowLeft')next=(i+tabs.length-1)%tabs.length;if(event.key==='Home')next=0;if(event.key==='End')next=tabs.length-1;if(next!==undefined){event.preventDefault();selectTab(tabs[next]);tabs[next].focus();}};});
+function search(){const query=document.getElementById('search').value.toLowerCase();let count=0;document.querySelectorAll('.module-row').forEach(row=>{const linked=[...row.querySelectorAll('a[href^="#"]')].map(a=>document.getElementById(a.hash.slice(1)));row.hidden=!(row.textContent+' '+linked.map(d=>d?.textContent||'').join(' ')).toLowerCase().includes(query);if(!row.hidden)count++;});document.querySelectorAll('.capability-group').forEach(g=>g.hidden=![...g.querySelectorAll('.module-row')].some(r=>!r.hidden));document.getElementById('count').textContent=count+' 项';document.getElementById('no-result').hidden=count!==0;}
+document.getElementById('search').oninput=search;
+function reveal(){const element=document.getElementById(location.hash.slice(1));if(!element)return;if(element.classList.contains('reference')){docs.forEach(d=>{d.hidden=d!==element;d.open=d===element;});if(!reader.open)reader.showModal();reader.scrollTop=0;}else if(element.tagName==='DETAILS'){element.open=true;element.scrollIntoView();}}
+window.addEventListener('hashchange',reveal);document.addEventListener('click',event=>{const link=event.target.closest('a[href^="#"]');if(link&&link.hash===location.hash)reveal();});document.getElementById('close-reader').onclick=()=>reader.close();
+reader.addEventListener('click',event=>{if(event.target===reader){const r=reader.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right)reader.close();}});
 const patch=JSON.parse(document.getElementById('patch-data').textContent);
-function draw(){
- const target=document.getElementById('diff'),status=document.getElementById('diff-status');target.textContent='';
- document.getElementById('diff-controls').hidden=!patch.trim();
- if(!patch.trim()){status.textContent='没有文本差异。';return;}
- if(!window.Diff2Html){status.textContent='差异库未加载，请核对本地资源。';return;}
- try{
-  const rule=name=>name==='SKILL.md'||/^(references|templates)\\/.*\\.md$/.test(name);
-  const files=Diff2Html.parse(patch).filter(f=>document.getElementById('scope').value==='all'||rule(f.oldName)||rule(f.newName));
-  target.innerHTML=Diff2Html.html(files,{drawFileList:true,matching:'lines',diffStyle:'char',outputFormat:document.getElementById('layout').value});
-  status.textContent=files.length?'显示 '+files.length+' 个文件。文本变化不等于行为收益；验证结果见本版说明。':'技能规则与参考没有文本变化；可切换到全部源码查看维护改动。';
- }catch(error){status.textContent='无法解析差异：'+error.message;}
-}
-document.getElementById('layout').onchange=draw;document.getElementById('scope').onchange=draw;
-document.getElementById('review').ontoggle=event=>{if(event.target.open)draw();};search();reveal();
+function draw(){const target=document.getElementById('diff'),status=document.getElementById('diff-status');target.textContent='';document.getElementById('diff-controls').hidden=!patch.trim();if(!patch.trim()){status.textContent='没有文本差异。';return;}if(!window.Diff2Html){status.textContent='差异库未加载，请核对本地资源。';return;}try{const rule=name=>name==='SKILL.md'||/^(references|templates)\/.*\.md$/.test(name);const files=Diff2Html.parse(patch).filter(f=>document.getElementById('scope').value==='all'||rule(f.oldName)||rule(f.newName));target.innerHTML=Diff2Html.html(files,{drawFileList:true,matching:'lines',diffStyle:'char',outputFormat:document.getElementById('layout').value});status.textContent=files.length?'显示 '+files.length+' 个文件。文本变化不等于行为收益。':'技能规则与参考没有文本变化；可切换到全部源码。';}catch(error){status.textContent='无法解析差异：'+error.message;}}
+document.getElementById('layout').onchange=draw;document.getElementById('scope').onchange=draw;document.getElementById('review').ontoggle=event=>{if(event.target.open)draw();};search();reveal();
 </script></body></html>
 '''
 
