@@ -73,6 +73,10 @@ class SkillStructureTest(unittest.TestCase):
             self.assertIn('没有文本差异', empty)
             with self.assertRaises(ValueError):
                 visual.build_review(repo, '--all', target, asset_root=PACKAGE/'docs/assets/diff2html')
+            git('tag','9.0.0',base)
+            self.assertEqual(visual.previous_release(repo, target), '9.0.0')
+            with self.assertRaises(ValueError):
+                visual.previous_release(repo, base)
 
     def test_runtime_references_are_reachable_from_entrypoint(self):
         seen, queue = set(), [PACKAGE / "SKILL.md"]

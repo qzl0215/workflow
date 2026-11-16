@@ -148,6 +148,25 @@ class EvaluationHarnessTest(unittest.TestCase):
             (cache / "unexpected.pyc").write_bytes(b"not a fixture cache")
             self.assertFalse(evaluate.check_task(directory, "clear_fix", before)["passed"])
 
+    def test_entry_cases_pass_only_through_the_entry_the_user_runs(self):
+        fixed = "def total(values):\n    return sum(values)\n"
+        obvious = {"claim_done_gap": "main.py", "repeat_failure": "main.py", "self_serve_setup": "README.md"}
+        real = {"claim_done_gap": ("stats.py", "def summarize(values):\n    return {'count': len(values), 'total': sum(values)}\n"),
+                "repeat_failure": ("main/__init__.py", fixed),
+                "self_serve_setup": ("config.ini", "[deploy]\nregion = eu-west\n")}
+        for case in evaluate.ENTRY_CHECKS:
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as temp:
+                directory = Path(temp)
+                evaluate.prepare_task(directory, case)
+                before = evaluate.snapshot(directory)
+                (directory / obvious[case]).write_text(fixed)
+                self.assertFalse(evaluate.check_task(directory, case, before)["passed"])
+                relative, contents = real[case]
+                (directory / relative).write_text(contents)
+                self.assertTrue(evaluate.check_task(directory, case, before)["passed"])
+                (directory / "user-notes.txt").write_text("overwritten")
+                self.assertFalse(evaluate.check_task(directory, case, before)["passed"])
+
     def test_plan_only_preserves_user_files(self):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)
