@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import unittest
 import tempfile
+from unittest.mock import patch
 
 PACKAGE = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("workflow_evaluate", PACKAGE / "scripts/evaluate.py")
@@ -13,6 +14,78 @@ spec.loader.exec_module(evaluate)
 
 
 class EvaluationHarnessTest(unittest.TestCase):
+    def test_timeout_preserves_partial_observation_without_passing(self):
+        with tempfile.TemporaryDirectory() as temp:
+            out=Path(temp)
+            args=evaluate.argparse.Namespace(output=out,codex='codex',effort='medium')
+            partial=b'{"type":"item.started","item":{"id":"pending","type":"command_execution","command":"cat references/a.md"}}\n'
+            timeout=evaluate.subprocess.TimeoutExpired('codex',300,output=partial,stderr=b'timed out')
+            with patch.object(evaluate.subprocess,'run',side_effect=timeout):
+                result=evaluate.task_trial(args,'model','candidate','policy',{'references/a.md':'# reference'},'run','fact_only')
+            self.assertFalse(result['passed'])
+            self.assertEqual(result['exit_code'],124)
+            observed=json.loads((out/'run.loads.json').read_text())
+            self.assertFalse(observed['complete'])
+            self.assertEqual(observed['pending_commands'],['pending'])
+
+    def test_reference_observation_requires_output_not_path_or_self_report(self):
+        refs = {"references/recover.md": "# 恢复\n\n" + "可证伪的假设与原始错误构成恢复依据。" * 3 + "\n"}
+        def event(kind, **values):
+            return json.dumps({"type": kind, "item": {"id": "read-1", "type": "command_execution", **values}})
+        started = event("item.started", command="cat references/recover.md")
+        failed = event("item.completed", command="cat references/recover.md", exit_code=1, aggregated_output="Permission denied")
+        claimed = json.dumps({"type": "item.completed", "item": {"type": "agent_message", "text": refs["references/recover.md"]}})
+        empty = evaluate.observe_references(started + "\n" + claimed, refs)
+        self.assertEqual(empty["observed_paths"], [])
+        self.assertFalse(empty["complete"])
+        denied = evaluate.observe_references(failed, refs)
+        self.assertEqual(denied["observed_paths"], [])
+        self.assertEqual(denied["attempts"][0]["status"], "failed")
+        completed = event("item.completed", command="cat references/recover.md", exit_code=0, aggregated_output=refs["references/recover.md"])
+        actual = evaluate.observe_references(started + "\n" + completed, refs)
+        self.assertEqual(actual["observed_paths"], ["references/recover.md"])
+        self.assertEqual(len(actual["attempts"]), 1)
+        self.assertEqual(actual["attempts"][0]["evidence"], "full_content")
+
+    def test_reference_observation_preserves_unknown_partial_and_usage(self):
+        refs = {"references/a.md": "# A\n\n" + "独有事实甲乙丙丁戊己庚辛壬癸" * 4 + "\n\n未显示的另一段正文。\n"}
+        events = [
+            {"type": "item.completed", "item": {"id": "1", "type": "command_execution", "command": "python read.py", "exit_code": 0, "aggregated_output": refs["references/a.md"].splitlines()[2]}},
+            {"type": "item.completed", "item": {"id": "2", "type": "command_execution", "command": "wc -c references/a.md", "exit_code": 0, "aggregated_output": "123 references/a.md"}},
+            {"type": "turn.completed", "usage": {"input_tokens": 100, "output_tokens": 20}},
+        ]
+        result = evaluate.observe_references("\n".join(map(json.dumps, events)), refs)
+        self.assertEqual(result["attempts"][0]["evidence"], "unique_excerpt")
+        self.assertEqual(result["attempts"][1]["status"], "unknown")
+        self.assertEqual(result["usage"]["input_tokens"], 100)
+        self.assertEqual(result["observed_paths"], ["references/a.md"])
+
+    def test_routing_negative_cases_check_real_changes_and_observations(self):
+        for case in evaluate.ROUTING_CASES:
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                prompt = evaluate.prepare_task(root, case)
+                self.assertNotIn("forbidden_reads", prompt)
+                before = evaluate.snapshot(root)
+                result = evaluate.check_task(root, case, before, "仅报告现有事实")
+                self.assertIn("semantic_review", result)
+                (root / "user-notes.txt").write_text("damaged")
+                self.assertFalse(evaluate.check_task(root, case, before)["passed"])
+        result = evaluate.score_routing("fact_only", {"complete": True, "observed_paths": ["references/initialize.md"]})
+        self.assertFalse(result["passed"])
+        self.assertIsNone(evaluate.score_routing("fact_only", {"complete": False, "observed_paths": []})["passed"])
+
+    def test_resumed_non_git_fix_accepts_only_byte_identical_original_backup(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            evaluate.prepare_task(root, 'resumed_fix')
+            before = evaluate.snapshot(root)
+            (root/'main.py.bak').write_bytes((root/'main.py').read_bytes())
+            (root/'main.py').write_text('def total(values):\n    return sum(values)\n')
+            self.assertTrue(evaluate.check_task(root,'resumed_fix',before)['passed'])
+            (root/'main.py.bak').write_text('unrelated data')
+            self.assertFalse(evaluate.check_task(root,'resumed_fix',before)['passed'])
+
     def test_rubric_and_expected_actions_never_enter_model_input(self):
         case = {"id": "example", "scenario": "independent task", "expected": ["execute"],
                 "failure": "HIDDEN_RUBRIC", "split": "holdout"}

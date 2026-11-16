@@ -20,6 +20,7 @@ REMOTE = "origin"
 TARGET = "main"
 REPOSITORY = "qzl0215/workflow"
 ASSET_NAME = "workflow.zip"
+REVIEW_NAME = "workflow-review.html"
 VERSION = re.compile(r"(?:[3-9]|[1-9][0-9]+)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\Z")
 FULL_GATE = (
     f"{sys.executable} -B -m unittest discover -s tests -p 'test_*.py' && "
@@ -101,6 +102,7 @@ def release_commands(version: str, integration_sha: str, asset: Path) -> list[li
             version,
             "--generate-notes",
             str(asset),
+            str(asset.with_name(REVIEW_NAME)),
         ],
         [
             sys.executable,
@@ -179,7 +181,7 @@ def release_state(version: str) -> dict[str, object] | None:
         "--repo",
         REPOSITORY,
         "--json",
-        "tagName,isDraft,isPrerelease,assets,url",
+        "tagName,isDraft,isPrerelease,isImmutable,assets,url",
         capture=True,
     )
     if result.returncode == 0:
@@ -200,38 +202,44 @@ def verify_release(version: str, expected_asset: Path, directory: Path) -> str:
     state = release_state(version)
     if state is None:
         raise PublishError("GitHub Release was not created")
-    if state.get("tagName") != version or state.get("isDraft") or state.get("isPrerelease"):
+    if state.get("tagName") != version or state.get("isDraft") or state.get("isPrerelease") or state.get('isImmutable') is not True:
         raise PublishError("GitHub Release identity or immutability state is incorrect")
     assets = state.get("assets")
     names = {item.get("name") for item in assets if isinstance(item, dict)} if isinstance(assets, list) else set()
-    if names != {ASSET_NAME}:
-        raise PublishError(f"GitHub Release assets are not exactly {{{ASSET_NAME}}}")
-    checked(
-        "gh",
-        "release",
-        "download",
-        version,
-        "--repo",
-        REPOSITORY,
-        "--pattern",
-        ASSET_NAME,
-        "--dir",
-        str(directory),
-    )
-    downloaded = directory / ASSET_NAME
-    if not downloaded.is_file():
-        raise PublishError("downloaded GitHub Release asset is missing")
-    expected = hashlib.sha256(expected_asset.read_bytes()).hexdigest()
-    actual = hashlib.sha256(downloaded.read_bytes()).hexdigest()
-    if actual != expected:
-        raise PublishError("GitHub Release asset SHA-256 does not match the built artifact")
+    expected_names = {ASSET_NAME, REVIEW_NAME}
+    if names != expected_names or len(assets) != len(expected_names):
+        raise PublishError(f"GitHub Release assets are not exactly {sorted(expected_names)}")
+    for name in sorted(expected_names):
+        checked('gh', 'release', 'download', version, '--repo', REPOSITORY,
+                '--pattern', name, '--dir', str(directory))
+        downloaded = directory / name
+        if not downloaded.is_file():
+            raise PublishError(f'downloaded GitHub Release asset is missing: {name}')
+        expected = hashlib.sha256(expected_asset.with_name(name).read_bytes()).hexdigest()
+        actual = hashlib.sha256(downloaded.read_bytes()).hexdigest()
+        if actual != expected:
+            raise PublishError(f'GitHub Release asset SHA-256 does not match: {name}')
     url = state.get("url")
     return str(url) if isinstance(url, str) else ""
+
+
+def comparison_base(version: str, candidate_sha: str) -> str:
+    result = subprocess.run(['git', 'show', f'{candidate_sha}:CHANGELOG.md'], cwd=PACKAGE,
+                            capture_output=True, text=True, check=False)
+    if result.returncode:
+        raise PublishError('could not read candidate CHANGELOG')
+    versions = re.findall(r'^## \[(\d+\.\d+\.\d+)\]', result.stdout, re.M)
+    if len(versions) < 2 or versions[0] != version:
+        raise PublishError('CHANGELOG must identify this and the preceding release')
+    base = output('git', 'rev-parse', '--verify', f'refs/tags/{versions[1]}^{{commit}}')
+    checked('git', 'merge-base', '--is-ancestor', base, candidate_sha)
+    return base
 
 
 def publish(version: str) -> None:
     validate_source_version(version)
     branch, candidate_sha = validate_candidate()
+    base = comparison_base(version, candidate_sha)
     checked("git", "push", "--set-upstream", REMOTE, f"HEAD:refs/heads/{branch}")
     with tempfile.TemporaryDirectory(prefix=f"workflow-{version}-release-") as raw_temp:
         temp = Path(raw_temp)
@@ -240,6 +248,13 @@ def publish(version: str) -> None:
         integration_sha = integration_for(version, candidate_sha, commands[0])
         build = release_commands(version, integration_sha, asset)[1]
         checked(*build)
+        # The prior changelog version pins the comparison on retries; never use
+        # a moving latest tag or dirty worktree to rebuild immutable assets.
+        if comparison_base(version, integration_sha) != base:
+            raise PublishError('integration changed the release comparison baseline')
+        checked('git', 'merge-base', '--is-ancestor', base, integration_sha)
+        checked(sys.executable, '-B', str(PACKAGE/'scripts/generate_visual_map.py'),
+                '--base', base, '--target', integration_sha, '--review-output', str(temp/REVIEW_NAME))
         if release_state(version) is None:
             create = release_commands(version, integration_sha, asset)[2]
             checked(*create)

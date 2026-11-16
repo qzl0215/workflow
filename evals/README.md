@@ -14,6 +14,20 @@
 
 ## 运行
 
+### 5.2：实际加载观测与路由负例
+
+实际任务模式额外保存每次 `.loads.json`，基于该组冻结的 reference 正文匹配 Codex `command_execution` 的工具输出。全文匹配记 `full_content`；仅该文件独有、至少 24 字符的正文行匹配记 `unique_excerpt`。路径提及但无正文只记尝试/未知，失败保留退出码；模型自述不计。命令事件用 ID 去重，保留事件行号；同一工具批次中的列表顺序不证明文件实际读取顺序。
+
+这证明“正文出现在可见工具输出”，不证明模型理解、采用或读到了全文；文件列表、`wc`、静默读取、缺失/截断输出和未知工具无法据此补全。根入口由夹具注入，故不测试宿主技能发现。`complete` 只指日志正常结束、命令有回执且无未知事件类型，不代表完整观察所有隐藏读取。普通日常任务不会自动采集遥测。
+
+五个新场景覆盖事实查询、只研究迁移、已授权续作、桌面汇报和未登记普通项目。允许路径是集合，零 reference 可正确；非必要模块内容出现时标出，不把特定顺序写成唯一正确流程。路由筛查和任务产物检查分别报告，`null` 表示无法判定；不得用进程退出 0 或机械 `passed` 代替语义复核。外部应用在夹具中禁用，不能据此证明生产 Linear 权限或真实发布安全。
+
+```bash
+python3 -B scripts/evaluate.py --model gpt-6-astra --model gpt-5.6-sol --baseline 5.1.2 --repeat 1 --mode tasks --variant baseline --variant candidate --task-case fact_only --task-case migration_research --task-case resumed_fix --task-case desktop_report --task-case plain_task --output /tmp/workflow-routing-new-run
+```
+
+评审时还需核对：事实来自夹具、只读任务没有写文件、续作确实修复并验证、不重新索取已给的授权、不凭关键词启动发布/初始化/状态维护。`resumed_fix` 是非 Git 夹具，允许安全备份仅当新 `main.py.bak` 与原文件 SHA-256 完全相同；其他新增文件仍不通过。用量直接保留 `turn.completed.usage`，不把字符数换算成实际 token，不根据小样本宣称提升率。结果见 [5.2 记录](5.2.0-results.md)。
+
 使用宿主已登录的 Codex CLI，原始输出必须放在仓库外。以下命令会调用真实模型并消耗用量，不属于离线发布测试：
 
 ```bash

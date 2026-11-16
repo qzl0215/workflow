@@ -16,7 +16,14 @@ import time
 
 PACKAGE = Path(__file__).resolve().parents[1]
 ACTIONS = ("execute", "ask", "plan_only", "deliver", "recover", "verify", "finish")
-TASK_CASES = ("clear_fix", "plan_first", "goal_conflict", "project_memory", "demo_handoff", "raw_source", "expert_rewrite")
+ROUTING_CASES = {
+    "fact_only": {"allowed": ["research", "prove"], "task_type": "事实查询", "stage": "查证"},
+    "migration_research": {"allowed": ["research", "frame", "grill", "prove", "report"], "task_type": "研究", "stage": "方案前"},
+    "resumed_fix": {"allowed": ["execute", "prove", "recover"], "task_type": "修复", "stage": "已授权续作"},
+    "desktop_report": {"allowed": ["report", "prove"], "task_type": "汇报", "stage": "桌面交付"},
+    "plain_task": {"allowed": ["research", "prove"], "task_type": "查询", "stage": "未登记项目"},
+}
+TASK_CASES = ("clear_fix", "plan_first", "goal_conflict", "project_memory", "demo_handoff", "raw_source", "expert_rewrite", *ROUTING_CASES)
 SCHEMA = {
     "type": "object", "additionalProperties": False,
     "properties": {"decisions": {"type": "array", "items": {
@@ -105,8 +112,96 @@ def content_hash(files: dict[str, str]) -> str:
     return hashlib.sha256(json.dumps(files, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
 
+def observe_references(events: str, references: dict[str, str]) -> dict:
+    """Observe tool-visible source content, not self-reported reads or semantic adoption.
+
+    Opaque commands and missing/truncated output remain unknown. Unique excerpts
+    are compared to the frozen reference snapshot, not to paths in a command.
+    This covers Codex command_execution output; other tool types are disclosed.
+    """
+    attempts, observed, pending, completed, unsupported = [], [], set(), set(), set()
+    usage, finished, malformed = None, False, 0
+    excerpts = {}
+    for path, source in references.items():
+        excerpts[path] = [line.strip() for line in source.splitlines()
+                          if len(line.strip()) >= 24 and not line.startswith(('#', '```'))
+                          and not any(line.strip() in other for p, other in references.items() if p != path)]
+    for number, line in enumerate(events.splitlines(), 1):
+        try:
+            event = json.loads(line)
+            if not isinstance(event, dict):
+                raise ValueError("not an event object")
+        except ValueError:
+            malformed += 1
+            continue
+        if event.get("type") == "turn.completed":
+            usage, finished = event.get("usage"), True
+        item = event.get("item") or {}
+        if not isinstance(item, dict):
+            malformed += 1
+            continue
+        kind = item.get("type", "")
+        if kind not in {"command_execution", "agent_message", "reasoning", "todo_list", "", "file_change"}:
+            unsupported.add(kind)
+        if kind != "command_execution":
+            continue
+        identity = item.get("id", f"line-{number}")
+        if event.get("type") == "item.started":
+            pending.add(identity)
+            continue
+        if event.get("type") != "item.completed" or identity in completed:
+            continue
+        pending.discard(identity)
+        completed.add(identity)
+        command = item.get("command", "")
+        output = item.get("aggregated_output")
+        output = output if isinstance(output, str) else ""
+        for path, source in references.items():
+            evidence = ("full_content" if source.strip() and source.strip() in output else
+                        "unique_excerpt" if any(part in output for part in excerpts[path]) else None)
+            # Path mentions only identify attempts; a successful wc/ls/echo is not a read.
+            if not evidence and path not in command:
+                continue
+            status = "observed" if evidence else "failed" if item.get("exit_code") not in (None, 0) else "unknown"
+            attempts.append({"event_line": number, "command_id": identity, "path": path,
+                             "status": status, "evidence": evidence, "exit_code": item.get("exit_code"),
+                             "output_sha256": hashlib.sha256(output.encode()).hexdigest() if output else None})
+            if evidence and path not in observed:
+                observed.append(path)
+    return {"schema": 1, "root_delivery": "injected; discovery not tested", "observed_paths": observed,
+            "attempts": attempts, "usage": usage, "complete": finished and not pending and not malformed and not unsupported,
+            "pending_commands": sorted(pending), "malformed_lines": malformed,
+            "unsupported_item_types": sorted(unsupported),
+            "scope": "reference content visible in command output; semantic adoption and hidden reads unknown"}
+
+
+def score_routing(case: str, observation: dict) -> dict:
+    if case not in ROUTING_CASES:
+        return {"passed": None, "reason": "no routing rubric", "semantic_review": "required"}
+    allowed = {f"references/{name}.md" for name in ROUTING_CASES[case]["allowed"]}
+    unexpected = sorted(set(observation["observed_paths"]) - allowed)
+    # Unknown reads cannot pass merely because no unrelated content was observed.
+    unknown = any(a["status"] != "observed" for a in observation.get("attempts", []))
+    passed = False if unexpected else True if observation["complete"] and not unknown else None
+    return {"passed": passed, "unexpected_content": unexpected, "semantic_review": "required",
+            "scope": "negative-route screening, not task success or proof of no hidden reads"}
+
+
 def prepare_task(directory: Path, case: str) -> str:
     (directory / "user-notes.txt").write_text("USER OWNED: preserve this unfinished note.\n")
+    if case in {"fact_only", "plain_task"}:
+        (directory / "facts.md").write_text("# 当前事实\n\n仓库盘点共有 17 台演示设备。数值来自本次盘点，不是历史计划。\n")
+        return ("只根据 facts.md 告诉我本次盘点有几台演示设备，不改文件。" +
+                ("这是普通查询；这个项目未登记，没有受托状态跟踪标记。" if case == "plain_task" else ""))
+    if case == "migration_research":
+        (directory / "facts.md").write_text("当前数据库每月 30 元，备选每月 90 元；两者都满足现有容量。当前没有停机预算。\n")
+        return "依据 facts.md 比较数据库迁移是否值得，只研究并给推荐，不执行迁移、不创建交付物文件。"
+    if case == "desktop_report":
+        (directory / "facts.md").write_text("# 已验证结果\n\n导入 17 条成功，3 条因必填邮箱缺失拒绝。明天再提供补全文件；本次不重试。\n")
+        return "根据 facts.md 给我一份电脑上阅读的简短结果汇报，保留成功与未完成边界，不改文件。"
+    if case == "resumed_fix":
+        prepare_task(directory, "clear_fix")
+        return "继续已确认的小修复：main.py 的 total 空列表返回 0，其他行为不变；已授权实现并验证。仅本地交付，不发布，不重新讨论方案。"
     if case == "goal_conflict":
         (directory / "docs").mkdir()
         (directory / "README.md").write_text("业务目标见 docs/product.md，实际流失观察见 docs/funnel.md。\n")
@@ -187,7 +282,11 @@ def check_task(directory: Path, case: str, before: dict[str, str], answer: str =
     after = snapshot(directory)
     changed = sorted(p for p in before.keys() | after.keys() if before.get(p) != after.get(p))
     result = {"changed": changed, "semantic_review": "required"}
-    if case in {"plan_first", "goal_conflict", "demo_handoff"}:
+    if case in {"fact_only", "plain_task"}:
+        result["passed"] = not changed and "17" in answer
+    elif case in {"migration_research", "desktop_report"}:
+        result["passed"] = not changed and bool(answer.strip())
+    elif case in {"plan_first", "goal_conflict", "demo_handoff"}:
         result["passed"] = not changed
     elif case == "raw_source":
         # Duplicate charges appear only in the raw tickets, never in the prompt or summary.
@@ -203,12 +302,18 @@ def check_task(directory: Path, case: str, before: dict[str, str], answer: str =
         # truth/intent separation still needs semantic review.
         result["passed"] = (changed == ["docs/decisions.md", "docs/policy.md"]
                             and "14" in policy and "14" in decisions)
-    elif case == "clear_fix":
+    elif case in {"clear_fix", "resumed_fix"}:
         generated = [p for p in changed if p not in before and re.fullmatch(
             r"__pycache__/(?:main|test_main)\.cpython-\d+(?:\.opt-\d+)?\.pyc", p)]
+        # Non-Git fixtures may legitimately preserve the original before an
+        # atomic edit. Only this exact original backup is accepted, never an
+        # arbitrary extra artifact or a damaged user's note.
+        preserved = [p for p in changed if case == 'resumed_fix' and p == 'main.py.bak'
+                     and p not in before and after[p] == before['main.py']]
         verification = subprocess.run(["python3", "-B", "-m", "unittest", "test_main"], cwd=directory,
                                       capture_output=True, text=True, check=False)
-        result.update(passed=[p for p in changed if p not in generated] == ["main.py"] and verification.returncode == 0,
+        result.update(passed=[p for p in changed if p not in generated + preserved] == ["main.py"] and verification.returncode == 0,
+                      preserved_backups=preserved,
                       generated_files=generated,
                       opening=(opening or "")[:400],
                       verification_exit=verification.returncode,
@@ -234,8 +339,13 @@ def task_trial(args, model: str, variant: str, protocol: str, references: dict[s
     command = cli_base(args.codex, model, args.effort, directory, writable=True)
     command += ["-o", str(args.output / f"{label}.txt"), "-"]
     start = time.monotonic()
-    completed = subprocess.run(command, input=prompt, text=True, capture_output=True, timeout=300,
-                               env={**os.environ, "RUST_LOG": "error", "PYTHONDONTWRITEBYTECODE": "1"})
+    try:
+        completed = subprocess.run(command, input=prompt, text=True, capture_output=True, timeout=300,
+                                   env={**os.environ, "RUST_LOG": "error", "PYTHONDONTWRITEBYTECODE": "1"})
+    except subprocess.TimeoutExpired as exc:
+        def decode(value):
+            return value.decode('utf-8', errors='replace') if isinstance(value, bytes) else value or ''
+        completed = subprocess.CompletedProcess(command, 124, decode(exc.stdout), decode(exc.stderr)+'\nmodel timeout\n')
     (args.output / f"{label}.jsonl").write_text(completed.stdout)
     (args.output / f"{label}.stderr").write_text(completed.stderr)
     answer = args.output / f"{label}.txt"
@@ -244,6 +354,10 @@ def task_trial(args, model: str, variant: str, protocol: str, references: dict[s
     verification_output = result.pop("verification_output", "")
     (args.output / f"{label}.verification.txt").write_text(verification_output)
     result["passed"] = result["passed"] and completed.returncode == 0
+    observation = observe_references(completed.stdout, references)
+    (args.output / f"{label}.loads.json").write_text(json.dumps(observation, ensure_ascii=False, indent=2) + "\n")
+    result["reference_observation"] = {k: observation[k] for k in ("observed_paths", "complete", "usage")}
+    result["routing"] = score_routing(case, observation) if variant != "native" else {"passed": None, "reason": "native has no references"}
     return {"model": model, "variant": variant, "case": case, "exit_code": completed.returncode,
             "elapsed_seconds": round(time.monotonic() - start, 2), **result}
 
@@ -289,6 +403,7 @@ def main() -> int:
                 "baseline": args.baseline, "effort": args.effort,
                 "cases_hash": content_hash({"cases.json": (PACKAGE / "evals/cases.json").read_text()}),
                 "task_cases": args.task_case or list(TASK_CASES),
+                "routing_rubric_hash": content_hash({"routing": json.dumps(ROUTING_CASES, sort_keys=True)}),
                 "reference_hashes": {k: content_hash(v) for k, v in reference_sets.items()},
                 "protocol_hashes": {k: hashlib.sha256(v.encode()).hexdigest() for k, v in variants.items()}}
     (args.output / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")

@@ -5,9 +5,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import html
+import json
+import posixpath
 from pathlib import Path
 import re
 import sys
+import subprocess
 
 PACKAGE = Path(__file__).resolve().parents[1]
 OUTPUT = PACKAGE / "docs/workflow-visual-map.html"
@@ -79,40 +82,119 @@ def render(text: str) -> str:
     return "\n".join(output)
 
 
-def build() -> tuple[str, str]:
-    skill = PACKAGE / "SKILL.md"
-    text = skill.read_text(encoding="utf-8")
+def anchor(path: str) -> str:
+    return "doc-" + path.encode().hex()
+
+
+def fill(page: str, values: dict[str, str]) -> str:
+    # Replace only original template tokens, never tokens carried in a diff.
+    return re.sub('|'.join(re.escape(key) for key in values), lambda match: values[match[0]], page)
+
+
+def document(text: str, relative: str, sources: dict[str, str]) -> str:
+    def replace(match: re.Match) -> str:
+        label, target = match.groups()
+        if ':' not in target and not target.startswith('#'):
+            path = posixpath.normpath(posixpath.join(posixpath.dirname(relative), target.split('#')[0]))
+            if path in sources:
+                return f'[{label}](#{anchor(path)})'
+        return match[0]
+    return render(LINK.sub(replace, text))
+
+
+def page_from_sources(sources: dict[str, str]) -> tuple[str, str]:
+    text = sources['SKILL.md']
     match = re.search(r"^version:\s*(\S+)$", text, re.M)
     if not match:
         raise ValueError("SKILL.md 缺少版本")
     version = match.group(1)
-    # The route table is the sole reference index. No fixed stage names or
-    # confirmation wording is required by this renderer.
-    references = list(dict.fromkeys(raw for _, raw in LINK.findall(text) if raw.startswith("references/")))
-    paths = [skill, *(PACKAGE / raw for raw in references), PACKAGE / "templates/work.md"]
+    # Source documents and their links are the only authored navigation.
     digest = hashlib.sha256()
-    cards = []
-    for path in paths:
-        contents = path.read_text(encoding="utf-8")
-        relative = path.relative_to(PACKAGE).as_posix()
+    cards, navigation, edges = [], [], []
+    for relative, contents in sources.items():
         digest.update(relative.encode() + b"\0" + contents.encode() + b"\0")
-        if path != skill:
+        for label, target in LINK.findall(contents):
+            linked = posixpath.normpath(posixpath.join(posixpath.dirname(relative), target.split('#')[0]))
+            if linked in sources:
+                edges.append(f'<li><a href="#{anchor(relative)}">{html.escape(relative)}</a> → '
+                             f'<a href="#{anchor(linked)}">{html.escape(label)}</a></li>')
+        if relative != 'SKILL.md':
             title = re.search(r"^# (.+)$", contents, re.M)
             if not title:
                 raise ValueError(f"缺少标题：{relative}")
-            # References link to siblings; normalize those links for docs/.
-            if relative.startswith("references/"):
-                contents = LINK.sub(lambda m: f"[{m[1]}]({m[2] if ':' in m[2] or m[2].startswith('#') else 'references/' + m[2]})", contents)
-            cards.append("<details><summary>" + html.escape(title.group(1)) + "</summary>" + render(contents) + "</details>")
+            navigation.append(f'<a href="#{anchor(relative)}">{html.escape(title.group(1))}</a>')
+            cards.append(f'<details class="reference" id="{anchor(relative)}" data-path="{html.escape(relative)}">'
+                         + "<summary>" + html.escape(title.group(1)) + "</summary>"
+                         + f'<small>{html.escape(relative)}</small>' + document(contents, relative, sources) + "</details>")
     identity = digest.hexdigest()[:12]
     page = TEMPLATE.replace("__VERSION__", html.escape(version)).replace("__DIGEST__", identity)
-    page = page.replace("__ROOT__", render(text)).replace("__REFERENCES__", "\n".join(cards))
+    page = page.replace("__ROOT_ID__", anchor('SKILL.md'))
+    page = page.replace("__ROOT__", document(text, 'SKILL.md', sources)).replace("__REFERENCES__", "\n".join(cards))
+    page = page.replace('__NAV__', ' · '.join(navigation)).replace('__EDGES__', ''.join(edges))
     return page, identity
+
+
+def build() -> tuple[str, str]:
+    paths = ['SKILL.md', *sorted(p.relative_to(PACKAGE).as_posix() for p in (PACKAGE/'references').glob('*.md'))]
+    if (PACKAGE/'templates/work.md').is_file():
+        paths.append('templates/work.md')
+    page, identity = page_from_sources({p: (PACKAGE/p).read_text(encoding='utf-8') for p in paths})
+    return fill(page, {'__REVIEW_INFO__': '选择正式 Release 的 workflow-review.html 查看对应版本差异；也可载入本地 Git diff。',
+                       '__PATCH__': '""', '__CSS__': '<link rel="stylesheet" href="assets/diff2html/diff2html.min.css">',
+                       '__LIBRARY__': '<script src="assets/diff2html/diff2html.min.js"></script>'}), identity
+
+
+def git(repo: Path, *args: str) -> str:
+    result = subprocess.run(['git', *args], cwd=repo, capture_output=True, text=True, encoding='utf-8')
+    if result.returncode:
+        raise ValueError(result.stderr.strip() or 'Git 读取失败')
+    return result.stdout
+
+
+def build_review(repo: Path, base: str, target: str, *, asset_root: Path | None = None) -> tuple[str, dict]:
+    """Build a portable review from immutable trees, never from dirty working files."""
+    def resolve(value: str) -> str:
+        if value.startswith('-'):
+            raise ValueError('无效版本引用')
+        return git(repo, 'rev-parse', '--verify', '--end-of-options', value+'^{commit}').strip()
+    before, after = resolve(base), resolve(target)
+    names = git(repo, 'ls-tree', '-r', '--name-only', after).splitlines()
+    paths = ['SKILL.md', *sorted(p for p in names if p.startswith('references/') and p.endswith('.md'))]
+    if 'templates/work.md' in names:
+        paths.append('templates/work.md')
+    page, digest = page_from_sources({p: git(repo, 'show', f'{after}:{p}') for p in paths})
+    excluded = ['docs/workflow-visual-map.html', 'docs/assets/diff2html/diff2html.min.js',
+                'docs/assets/diff2html/diff2html.min.css', 'docs/assets/diff2html/LICENSE.md']
+    patch = git(repo, '-c', 'core.quotePath=false', 'diff', '--no-ext-diff', '--no-textconv', '--no-color',
+                '--find-renames', before, after, '--', '.', *(':(exclude)'+p for p in excluded))
+    info = {'base': before, 'target': after, 'source_digest': digest, 'patch': patch, 'excluded': excluded}
+    if asset_root is None:
+        asset = lambda name: git(repo, 'show', f'{after}:docs/assets/diff2html/{name}')
+    else:
+        asset = lambda name: (asset_root/name).read_text(encoding='utf-8')
+    provenance = json.loads(asset('provenance.json'))
+    for record in provenance['files']:
+        if hashlib.sha256(asset(record['file']).encode()).hexdigest() != record['sha256']:
+            raise ValueError('diff2html 静态资源身份不匹配')
+    css, js, license_text = asset('diff2html.min.css'), asset('diff2html.min.js'), asset('LICENSE.md')
+    if '</script' in js.lower() or '</style' in css.lower():
+        raise ValueError('静态资源不能安全内联')
+    description = (f'基线 <code>{before}</code> → 目标 <code>{after}</code><br>'
+                   f'diff2html {html.escape(provenance["version"])}；全文取自目标提交。差异不包含生成 HTML 与库文件：'
+                   + html.escape(', '.join(excluded)) + '。二进制差异仅显示 Git 标记。'
+                   + '<details><summary>开源许可证</summary><pre>'+html.escape(license_text)+'</pre></details>')
+    page = fill(page, {'__REVIEW_INFO__': description, '__PATCH__': json.dumps(patch, ensure_ascii=True).replace('<','\\u003c'),
+                       '__CSS__': '<style>'+css+'</style>', '__LIBRARY__': '<script>'+js+'</script>'})
+    # The standalone release must not depend on sibling repository documents.
+    page = page.replace('href="../', f'href="https://github.com/qzl0215/workflow/blob/{after}/')
+    return page, info
 
 
 TEMPLATE = '''<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>workflow __VERSION__ · 工作规则</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+__CSS__
 <style>
 :root{color-scheme:dark;--paper:#f0f1e9;--muted:#abb8b1;--mint:#a8edca;--line:#314039}
 *{box-sizing:border-box}body{margin:0;background:#101b16;color:var(--paper);font:16px/1.8 system-ui,-apple-system,sans-serif}
@@ -124,22 +206,55 @@ pre{padding:18px;background:#07110b;border:1px solid var(--line);overflow:auto}p
 .table{overflow:auto}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line)}th{color:var(--mint)}
 details{border:1px solid var(--line);border-radius:10px;padding:18px 22px;margin:12px 0}summary{cursor:pointer;font-weight:700;font-size:19px}details[open]{background:#15251c}
 footer{margin-top:45px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+input,button,select{font:inherit;padding:8px;border:1px solid var(--line);border-radius:6px}button,summary{cursor:pointer}.toolbar{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0}.toolbar input[type=search]{flex:1;min-width:180px}.reference{scroll-margin-top:20px}small{color:var(--muted)}#navigation{margin:20px 0}.d2h-wrapper{background:white;color:#222;padding:12px;border-radius:8px}.d2h-code-line-ctn{white-space:pre-wrap;overflow-wrap:anywhere}.d2h-code-side-line{width:100%}.d2h-wrapper a{color:#12614e}.d2h-wrapper table{table-layout:auto}.d2h-wrapper td{padding:0}.d2h-wrapper th{color:#222}#diff:empty{display:none}
 @media(max-width:600px){main{padding:28px 16px}details{padding:14px}th,td{padding:9px}body{font-size:15px}}
 </style></head><body><main data-source-digest="__DIGEST__">
 <header><p>workflow · __VERSION__</p><h1>目标明确，持续完成。</h1><a href="../README.md">安装与使用</a> · <a href="../evals/README.md">行为评测</a></header>
-<section>__ROOT__</section><section aria-label="按需展开参考">__REFERENCES__</section>
+<section id="__ROOT_ID__">__ROOT__</section>
+<details><summary>调用关系（链接不表示固定前置）</summary><ul>__EDGES__</ul></details>
+<section aria-label="按需展开参考"><h2>参考全文</h2><nav id="navigation">__NAV__</nav><div class="toolbar"><input id="search" type="search" aria-label="搜索参考全文" placeholder="搜索名称、路径或正文"><button id="expand">展开结果</button><button id="collapse">全部折叠</button><span id="count"></span></div>__REFERENCES__</section>
+<section><h2>版本高亮对比</h2><p>__REVIEW_INFO__</p><div class="toolbar"><label>布局 <select id="layout"><option value="side-by-side">并排</option><option value="line-by-line">逐行</option></select></label><label>本地 diff <input id="patch-file" type="file" accept=".diff,.patch,text/plain"></label></div><p id="diff-status" role="status"></p><div id="diff"></div></section>
 <footer>由 SKILL.md、其参考与工作模板生成。页面不定义额外规则。source sha256 __DIGEST__</footer>
-</main></body></html>
+</main>__LIBRARY__<script id="patch-data" type="application/json">__PATCH__</script><script>
+const docs=[...document.querySelectorAll('.reference')];
+function search(){const query=document.getElementById('search').value.toLowerCase();docs.forEach(d=>d.hidden=!d.textContent.toLowerCase().includes(query));document.getElementById('count').textContent=docs.filter(d=>!d.hidden).length+' / '+docs.length;}
+document.getElementById('search').oninput=search;document.getElementById('expand').onclick=()=>docs.filter(d=>!d.hidden).forEach(d=>d.open=true);document.getElementById('collapse').onclick=()=>docs.forEach(d=>d.open=false);
+function reveal(){const element=document.getElementById(location.hash.slice(1));if(element&&element.classList.contains('reference')){document.getElementById('search').value='';search();element.open=true;element.scrollIntoView();}}
+window.addEventListener('hashchange',reveal);
+let patch=JSON.parse(document.getElementById('patch-data').textContent);
+function draw(){const target=document.getElementById('diff'),status=document.getElementById('diff-status');target.textContent='';if(!patch.trim()){status.textContent='没有文本差异；可选择本地 .diff 文件。';return;}if(!window.Diff2Html){status.textContent='差异库未加载，请核对本地资源。';return;}try{target.innerHTML=Diff2Html.html(patch,{drawFileList:true,matching:'lines',diffStyle:'char',outputFormat:document.getElementById('layout').value});status.textContent='文本变化不等于行为收益；请结合评测证据审阅。';}catch(error){status.textContent='无法解析差异：'+error.message;}}
+document.getElementById('layout').onchange=draw;document.getElementById('patch-file').onchange=async event=>{const file=event.target.files[0];if(!file)return;if(file.size>5000000){document.getElementById('diff-status').textContent='文件超过 5 MB，请缩小对比范围。';return;}patch=await file.text();draw();};search();reveal();draw();
+</script></body></html>
 '''
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
+    parser.add_argument('--base', help='对比基线 Git 引用')
+    parser.add_argument('--target', default='HEAD', help='对比目标 Git 引用')
+    parser.add_argument('--review-output', type=Path, help='输出独立、离线的审阅 HTML')
     args = parser.parse_args()
     try:
+        if args.base or args.review_output:
+            if not args.base or not args.review_output or args.check:
+                raise ValueError('--base 与 --review-output 必须同时使用，不能组合 --check')
+            if args.review_output.resolve().is_relative_to(PACKAGE):
+                raise ValueError('版本审阅资产须输出到源码仓库外')
+            if args.review_output.exists():
+                raise ValueError('拒绝覆盖已有版本审阅资产；请选择新输出路径')
+            page, info = build_review(PACKAGE, args.base, args.target)
+            with args.review_output.open('x', encoding='utf-8') as output:
+                output.write(page)
+            print(f'workflow_review: {info["base"]} -> {info["target"]}')
+            return 0
         page, _ = build()
         if args.check:
+            assets = PACKAGE/'docs/assets/diff2html'
+            provenance = json.loads((assets/'provenance.json').read_text(encoding='utf-8'))
+            for entry in provenance['files']:
+                if hashlib.sha256((assets/entry['file']).read_bytes()).hexdigest() != entry['sha256']:
+                    raise ValueError('diff2html 静态资源身份不匹配')
             if not OUTPUT.is_file() or OUTPUT.read_text(encoding="utf-8") != page:
                 print("视觉图已过期", file=sys.stderr)
                 return 1

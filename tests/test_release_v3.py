@@ -58,6 +58,11 @@ SOURCE_ONLY_FILES = {
     "scripts/evaluate.py",
     "tests/test_evaluate.py",
     "docs/workflow-visual-map.html",
+    "docs/assets/diff2html/diff2html.min.js",
+    "docs/assets/diff2html/diff2html.min.css",
+    "docs/assets/diff2html/LICENSE.md",
+    "docs/assets/diff2html/provenance.json",
+    "evals/5.2.0-results.md",
     "scripts/generate_visual_map.py",
     "scripts/publish.py",
     "scripts/release_check.py",
@@ -130,7 +135,7 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
         self.assertEqual(set(value), {"schema", "name", "version", "entrypoint", "runtime", "source_only"})
         self.assertEqual(value["schema"], 1)
         self.assertEqual(value["name"], "workflow")
-        self.assertEqual(value["version"], "5.1.2")
+        self.assertEqual(value["version"], "5.2.0")
         self.assertEqual(value["entrypoint"], "SKILL.md")
         self.assertEqual(set(value["runtime"]), {"files"})
         files = value["runtime"]["files"]

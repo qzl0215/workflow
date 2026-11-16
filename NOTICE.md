@@ -21,6 +21,10 @@ The `5.1.0` reporting reference was conceptually informed by Anthropic's public 
 
 ## Clean-room
 
+The source-only documentation viewer includes diff2html 3.4.56 (MIT), from the published npm package. Its license is preserved at `docs/assets/diff2html/LICENSE.md`; package integrity and per-file SHA-256 are recorded in `provenance.json` alongside the assets. These assets are excluded from the installed skill runtime. Standalone release review pages embed the license with the library.
+
+The 5.2 routing clarification was informed by an observed unrelated reference load and the conditional-pointer principle in Matt Pocock's public `writing-for-agents` skill. The observation harness, negative fixtures, and integration were independently implemented; no external skill text or user work logs were copied.
+
 All other workflow, readiness, solution/design, execution, debugging, delivery, portability, template, and tooling text in this candidate was newly organized from functional requirements, observable behavior, and general engineering principles. Unlicensed wording, historical logs, platform-specific implementations, and private operating details were not copied.
 
 ## Excluded

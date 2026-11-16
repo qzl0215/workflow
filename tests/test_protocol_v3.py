@@ -7,6 +7,9 @@ import re
 import unittest
 from unittest.mock import patch
 import tempfile
+import subprocess
+import json
+from html.parser import HTMLParser
 
 PACKAGE = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("workflow_visual", PACKAGE / "scripts/generate_visual_map.py")
@@ -15,6 +18,54 @@ spec.loader.exec_module(visual)
 
 
 class SkillStructureTest(unittest.TestCase):
+    def test_fulltext_search_navigation_and_links_share_source(self):
+        page, _ = visual.build()
+        class Links(HTMLParser):
+            def __init__(self):
+                super().__init__(); self.ids = []; self.links = []; self.refs = []
+            def handle_starttag(self, tag, attributes):
+                attrs = dict(attributes)
+                if 'id' in attrs: self.ids.append(attrs['id'])
+                if attrs.get('href', '').startswith('#'): self.links.append(attrs['href'][1:])
+                if attrs.get('data-path', '').startswith('references/'): self.refs.append(attrs['data-path'])
+        parsed = Links(); parsed.feed(page)
+        self.assertEqual(len(parsed.ids), len(set(parsed.ids)))
+        self.assertFalse(set(parsed.links) - set(parsed.ids))
+        self.assertEqual(set(parsed.refs), {p.relative_to(PACKAGE).as_posix() for p in (PACKAGE/'references').glob('*.md')})
+        self.assertIn('id="search"', page)
+
+    def test_review_uses_frozen_git_trees_and_handles_renames_deletes_empty(self):
+        with tempfile.TemporaryDirectory() as temp:
+            repo = Path(temp)
+            def git(*args):
+                return subprocess.check_output(['git',*args],cwd=repo,text=True).strip()
+            git('init','-q'); git('config','user.name','Test'); git('config','user.email','test@example.invalid')
+            (repo/'references').mkdir(); (repo/'templates').mkdir()
+            (repo/'SKILL.md').write_text('---\nversion: 9.0.0\n---\n# 入口\n[旧](references/old.md)\n')
+            (repo/'references/old.md').write_text('# 参考\n\n中文长行与特殊字符 <script>不执行</script>\n')
+            (repo/'templates/work.md').write_text('# 模板\n')
+            git('add','.'); git('commit','-qm','base'); base=git('rev-parse','HEAD')
+            git('mv','references/old.md','references/new.md')
+            (repo/'SKILL.md').write_text('---\nversion: 9.1.0\n---\n# 入口\n[新](references/new.md)\n')
+            (repo/'changed.txt').write_text('__CSS__ __LIBRARY__ __PATCH__ <script>not executable</script>\n')
+            (repo/'templates/work.md').unlink()
+            git('add','.'); git('commit','-qm','target'); target=git('rev-parse','HEAD')
+            (repo/'SKILL.md').write_text('UNCOMMITTED SECRET MUST NOT APPEAR')
+            document, info = visual.build_review(repo, base, target, asset_root=PACKAGE/'docs/assets/diff2html')
+            self.assertIn(base, document); self.assertIn(target, document)
+            self.assertIn('rename from references/old.md', info['patch'])
+            self.assertIn('deleted file mode', info['patch'])
+            self.assertNotIn('UNCOMMITTED SECRET', document)
+            self.assertNotIn('<script>不执行</script>', document)
+            self.assertIn('Diff2Html', document)
+            embedded = re.search(r'<script id="patch-data" type="application/json">(.*?)</script>',document,re.S)[1]
+            self.assertEqual(json.loads(embedded),info['patch'])
+            empty, info = visual.build_review(repo, target, target, asset_root=PACKAGE/'docs/assets/diff2html')
+            self.assertEqual(info['patch'], '')
+            self.assertIn('没有文本差异', empty)
+            with self.assertRaises(ValueError):
+                visual.build_review(repo, '--all', target, asset_root=PACKAGE/'docs/assets/diff2html')
+
     def test_runtime_references_are_reachable_from_entrypoint(self):
         seen, queue = set(), [PACKAGE / "SKILL.md"]
         while queue:
