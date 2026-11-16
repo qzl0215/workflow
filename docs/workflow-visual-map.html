@@ -17,7 +17,7 @@ a{color:var(--accent);text-underline-offset:4px}button,input,select{font:inherit
 @media(max-width:600px){.flow{padding:16px}.flow-grid{grid-template-columns:1fr}.flow-node{min-height:0;padding:13px 16px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:4px 10px}.flow-node small{grid-column:1;font-size:11px}.flow-node strong{grid-column:1;grid-row:2;margin:0;font-size:18px}.flow-node span{grid-column:2;grid-row:1/3;text-align:right;font-size:12px}.connector{transform:rotate(90deg);font-size:22px;height:26px;line-height:26px}.return-line{position:static;border:0;width:auto;height:auto;margin-top:14px}.return-line:before{display:none}.return-line span{position:static;background:transparent;display:block;text-align:center;font-size:12px;white-space:normal}.return-line span:before{content:'↩ ';font-size:16px}}
 </style></head><body>
 <div class="topbar"><a class="brand" href="#overview">WORKFLOW / 5.3.0</a><nav aria-label="页面导航"><a href="#changes">本版变化</a><a href="#review">版本对比</a><a href="../README.md">使用说明</a></nav></div>
-<main data-source-digest="9ad070781eb4">
+<main data-source-digest="5d93ac45a588">
 <header id="overview" class="hero"><div><span class="eyebrow">工作地图 / 按需运行</span><h1>先分清任务，<br><span>再把结果做实。</span></h1><p>先看工作路径，点节点查判断条件。<br>每项能力的使用条件、做法和完整原文都可直接查看。</p></div><div class="hero-note"><p><b>AI 读得省</b>：精简入口，缺什么才读什么。</p><p><b>人读得懂</b>：先看关系，细节随时展开。</p><a href="#doc-534b494c4c2e6d64">查看 AI 入口与完整规则 ↗</a></div></header>
 <figure class="flow" aria-label="工作闭环示意图：判断请求，按需补齐能力，验证结果；仍有就绪工作则继续。">
 <div class="flow-grid" role="tablist" aria-label="选择要了解的环节">
@@ -32,9 +32,10 @@ a{color:var(--accent);text-underline-offset:4px}button,input,select{font:inherit
 <section id="changes"><span class="label">版本记录 / 直接来自 CHANGELOG</span><h2>这次具体改了什么</h2><div class="change-layout"><p class="rule">AI 入口按“请求分支、按需能力、推进与停止”组织，合并重复的交付与汇报说明；根入口从 9,735 字节降到 7,667 字节。目标共创不再因任何新请求就触发，根入口足够时直接工作。</p>
 <p class="rule">人类版改成可点击的工作闭环图：查看任务分支、按缺口找能力、对照完成与交接条件。替换满屏长文字卡片，正文按需在阅读抽屉展开，并保留完整 Markdown 原文。</p>
 <p class="rule">分支、分组、调用条件与停止规则都取自技能源码。AI 以运行效率为先，人类页以理解为先；没有新增参考模块、依赖或发布步骤。</p>
+<p class="rule">链接检查按文件格式区分：HTML 中展示的 Markdown 原文不再被误当成页面链接，真实 href/src 断链及越出包边界的引用仍会失败。</p>
 <p class="rule">两种模型的新旧版实际任务与路由对照、判断探针和限制见 evals/README.md 的 5.3 记录。字节减少和本轮用量观察不等于长期速度或效果已证明。</p></div></section>
 <details id="review" class="review"><summary>查看版本高亮对比</summary><p>上方说明来自目标版本的 CHANGELOG。这里保留可复查的源码差异。</p><div>下载 <a href="https://github.com/qzl0215/workflow/releases/latest">正式 Release</a> 的 workflow-review.html 查看版本差异。</div><div class="toolbar" id="diff-controls"><label>内容 <select id="scope"><option value="rules">技能规则与参考</option><option value="all">全部源码（含维护工具）</option></select></label><label>布局 <select id="layout"><option value="side-by-side">并排</option><option value="line-by-line">逐行</option></select></label></div><p id="diff-status" role="status"></p><div id="diff"></div></details>
-<footer>判断条件、能力分组与正文取自同一份技能源码。图只解释关系，不提供额外授权。source sha256 9ad070781eb4</footer></main>
+<footer>判断条件、能力分组与正文取自同一份技能源码。图只解释关系，不提供额外授权。source sha256 5d93ac45a588</footer></main>
 <dialog class="reader" id="reader" aria-label="技能详细阅读"><div class="reader-bar"><span>技能细节 / 与 AI 使用的正文一致</span><button id="close-reader" autofocus>关闭 ×</button></div><details class="reference" id="doc-534b494c4c2e6d64" data-path="SKILL.md" hidden><summary>工作流</summary><div class="reference-context"><span class="label">何时调用</span></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre>---
 name: workflow
 description: 推进用户目标与已授权任务：新功能、改版、部署到生产或方向不清的任务，开干前先澄清、确认需求契约、再让用户选方案；小事和已确认的工作直接做，轻量验真并完成交付。用户说 grill-me、要求先问清楚或挑战方案时先做深度质询。需求讨论和审查不自动授权实施；纯事实问答直接回答。

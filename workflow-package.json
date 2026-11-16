@@ -27,7 +27,7 @@
       "scripts/project_init.py": "sha256:8a3bde3ebbc0c94a11ceec5f5ea33e60d7ac4a5be3b22be2da2bbc2efbefe623",
       "scripts/safe_merge.py": "sha256:b6d3798f8b9e8dedf8f498061f723871342b80d5ca3f3942ffa6bdd721a64ffe",
       "scripts/work_context.py": "sha256:2ba866b0d59b8c6c02c85ea864c990125f47139056ff7e19a7d27791ae3a096f",
-      "scripts/workflow_doctor.py": "sha256:5ea54419f23b079e42b3aee2de196f704e3d3bf54d870692111b0b8404915709",
+      "scripts/workflow_doctor.py": "sha256:f22a18186b0c4904c9437dcabf5070628fbf2c2c01b46ee1d1559f4d8d9fbf6b",
       "templates/work.md": "sha256:619ee7ddf3498ffd33ed9357b4b7d074476262f8476d414d2d49a6897ba33419"
     }
   },
