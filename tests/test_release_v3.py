@@ -153,6 +153,7 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
             copy_runtime(runtime)
             slim = doctor(runtime)
             self.assertEqual(slim.returncode, 0, slim.stdout)
+
             actual = {
                 path.relative_to(runtime).as_posix()
                 for path in runtime.rglob("*")
@@ -168,6 +169,22 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
             )
             self.assertEqual(help_result.returncode, 0, help_result.stdout)
             self.assertIn("--sync-baseline", help_result.stdout)
+
+    def test_html_links_ignore_displayed_source_but_check_real_attributes(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / 'source'
+            copy_source(source)
+            page = source / 'docs/workflow-visual-map.html'
+            page.write_text('<a href="../README.md">valid</a><pre>[example](not-a-link.md)'
+                            '&lt;a href="not-an-element.html"&gt;</pre>'
+                            '<script>const sample=\'<a href="not-a-dom-node.html">\';</script>')
+            result = doctor(source)
+            self.assertEqual(result.returncode, 0, result.stdout)
+            page.write_text(page.read_text() + '<a href="missing.html">broken</a><img src="../../outside.png">')
+            result = doctor(source)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('本地链接不存在：missing.html', result.stdout)
+            self.assertIn('本地链接越出包边界：../../outside.png', result.stdout)
 
     def test_doctor_fails_on_missing_extra_hash_and_partial_source(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

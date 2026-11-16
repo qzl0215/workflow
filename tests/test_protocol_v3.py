@@ -131,7 +131,7 @@ class SkillStructureTest(unittest.TestCase):
             'references/extra.md': '# 补充\n\n仅在特殊条件使用。\n\n后续细节。\n',
         }
         page = visual.routing(sources)
-        self.assertEqual(page.count('class="route-card"'), 2)
+        self.assertEqual(page.count('class="module-row"'), 2)
         self.assertIn('用户在小屏查看', page)
         self.assertIn('仅小屏加读', page)
         self.assertIn('仅在特殊条件使用', page)
@@ -140,6 +140,34 @@ class SkillStructureTest(unittest.TestCase):
             self.assertIn('#' + visual.anchor(path), page)
         sources['SKILL.md'] = sources['SKILL.md'].replace('用户在小屏查看', '另一个触发条件')
         self.assertNotIn('用户在小屏查看', visual.routing(sources))
+
+    def test_decision_paths_and_stop_conditions_come_from_the_root(self):
+        source = '# 入口\n\n## 判断当前请求\n\n| 条件 | 动作 | 结束 |\n|---|---|---|\n| 只读 | 查证 → 回答 | 不改文件 |\n\n## 推进与停止\n\n| 状态 | 动作 |\n|---|---|\n| 有未完成工作 | 继续 |\n| 已完成 | 结束 |\n'
+        self.assertEqual(visual.table_rows(visual.section(source, '判断当前请求'), 3), [['只读', '查证 → 回答', '不改文件']])
+        self.assertIn('不改文件', visual.decisions(source))
+        self.assertIn('有未完成工作', visual.outcomes(source))
+        updated = source.replace('不改文件', '在指定边界结束')
+        self.assertNotIn('不改文件', visual.decisions(updated))
+        self.assertIn('在指定边界结束', visual.decisions(updated))
+
+    def test_reader_preserves_the_complete_markdown(self):
+        page, _ = visual.build()
+        class RawSources(HTMLParser):
+            def __init__(self):
+                super().__init__(); self.path = None; self.raw = False; self.pre = False; self.sources = {}
+            def handle_starttag(self, tag, attrs):
+                attrs = dict(attrs)
+                if attrs.get('class') == 'reference': self.path = attrs['data-path']
+                if attrs.get('class') == 'raw-source': self.raw = True
+                if tag == 'pre' and self.raw: self.pre = True; self.sources[self.path] = ''
+            def handle_data(self, data):
+                if self.pre: self.sources[self.path] += data
+            def handle_endtag(self, tag):
+                if tag == 'pre': self.pre = False; self.raw = False
+        raw = RawSources(); raw.feed(page)
+        for path, contents in raw.sources.items():
+            self.assertEqual(contents, (PACKAGE/path).read_text())
+        self.assertEqual(set(raw.sources), {'SKILL.md', 'templates/work.md', *(p.relative_to(PACKAGE).as_posix() for p in (PACKAGE/'references').glob('*.md'))})
 
 
 if __name__ == "__main__":

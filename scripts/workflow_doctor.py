@@ -8,6 +8,7 @@ import re
 import stat
 import sys
 from pathlib import Path
+from html.parser import HTMLParser
 from urllib.parse import unquote, urlsplit
 
 import install
@@ -57,7 +58,6 @@ MAX_SOURCE_BYTES = 8 * 1024 * 1024
 MAX_TEXT_FILE_BYTES = 2 * 1024 * 1024
 CONFLICT_MARKERS = ("<<<<<<<", "=======", ">>>>>>>")
 MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\((?P<target>[^)]+)\)")
-HTML_LINK = re.compile(r"(?:href|src)\s*=\s*['\"](?P<target>[^'\"]+)['\"]", re.I)
 SECRET_ASSIGNMENT = re.compile(
     r"(?i)(?:api[_-]?key|client[_-]?secret|password|access[_-]?token)"
     r"\s*[:=]\s*['\"]?(?!<|\{|\[|\$)[^\s'\"]{8,}"
@@ -127,22 +127,32 @@ def link_errors(package: Path, text_files: list[Path]) -> list[str]:
             text = read_text(path)
         except (OSError, UnicodeError):
             continue
-        patterns = [MARKDOWN_LINK]
         if path.suffix.lower() == ".html":
-            patterns.append(HTML_LINK)
-        for pattern in patterns:
-            for match in pattern.finditer(text):
-                target = local_link_target(match.group("target"))
-                if target is None:
-                    continue
-                candidate = (path.parent / target).resolve()
-                try:
-                    candidate.relative_to(root)
-                except ValueError:
-                    errors.append(f"{relative(path, package)}: 本地链接越出包边界：{target}")
-                    continue
-                if not candidate.exists():
-                    errors.append(f"{relative(path, package)}: 本地链接不存在：{target}")
+            class Links(HTMLParser):
+                def __init__(self):
+                    super().__init__()
+                    self.targets = []
+
+                def handle_starttag(self, tag, attrs):
+                    self.targets.extend(value for name, value in attrs if name in {'href', 'src'} and value)
+
+            parser = Links()
+            parser.feed(text)
+            targets = parser.targets
+        else:
+            targets = [match.group('target') for match in MARKDOWN_LINK.finditer(text)]
+        for raw in targets:
+            target = local_link_target(raw)
+            if target is None:
+                continue
+            candidate = (path.parent / target).resolve()
+            try:
+                candidate.relative_to(root)
+            except ValueError:
+                errors.append(f"{relative(path, package)}: 本地链接越出包边界：{target}")
+                continue
+            if not candidate.exists():
+                errors.append(f"{relative(path, package)}: 本地链接不存在：{target}")
     return errors
 
 
