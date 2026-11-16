@@ -33,6 +33,7 @@ STDLIB_OR_LOCAL = {
     "pathlib",
     "plistlib",
     "platform",
+    "posixpath",
     "re",
     "shlex",
     "shutil",

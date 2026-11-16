@@ -26,6 +26,38 @@ def run(*parts: str) -> subprocess.CompletedProcess[str]:
 
 
 class WorkflowPublisherContractTest(unittest.TestCase):
+    def test_review_asset_is_created_before_release_and_both_assets_are_verified(self) -> None:
+        spec = importlib.util.spec_from_file_location('workflow_publish_assets', SCRIPT)
+        module = importlib.util.module_from_spec(spec)
+        sys.path.insert(0, str(PACKAGE/'scripts'))
+        try:
+            spec.loader.exec_module(module)
+        finally:
+            sys.path.remove(str(PACKAGE/'scripts'))
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp); asset=root/'workflow.zip'; asset.write_bytes(b'runtime')
+            review=root/'workflow-review.html'; review.write_text('review')
+            commands=module.release_commands('5.2.0', 'a'*40, asset)
+            create=next(c for c in commands if c[:3]==['gh','release','create'])
+            self.assertIn(str(review),create)
+            state={'tagName':'5.2.0','isDraft':False,'isPrerelease':False,'isImmutable':True,
+                   'assets':[{'name':p.name} for p in [asset,review]],'url':'https://example.invalid/release'}
+            download=root/'download'; download.mkdir()
+            def fetch(*args, **kwargs):
+                name=args[args.index('--pattern')+1]
+                (download/name).write_bytes((root/name).read_bytes())
+            with patch.object(module,'release_state',return_value=state), patch.object(module,'checked',side_effect=fetch):
+                self.assertEqual(module.verify_release('5.2.0',asset,download),state['url'])
+            def corrupt(*args, **kwargs):
+                fetch(*args, **kwargs)
+                if args[args.index('--pattern')+1]=='workflow-review.html':
+                    (download/'workflow-review.html').write_text('tampered')
+            with patch.object(module,'release_state',return_value=state), patch.object(module,'checked',side_effect=corrupt), self.assertRaises(module.PublishError):
+                module.verify_release('5.2.0',asset,download)
+            state['assets'].pop()
+            with patch.object(module,'release_state',return_value=state), self.assertRaises(module.PublishError):
+                module.verify_release('5.2.0',asset,download)
+
     def test_major_upgrade_keeps_exact_candidate_version_validation(self) -> None:
         spec = importlib.util.spec_from_file_location("workflow_publish_major", SCRIPT)
         publish = importlib.util.module_from_spec(spec)

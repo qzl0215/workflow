@@ -59,7 +59,7 @@ python3 -B scripts/publish.py --version <版本> --yes
 
 该入口复用 `safe_merge.py` 在最新 `main` 上形成 target-first 集成，只在该最终 SHA 上执行一次完整测试与组合门，然后以 `git push --atomic` 同时更新 `main` 和新版本标签。标签碰撞时失败关闭；已原子落地但 Release 尚未完成时，可从同一不可变标签恢复 Release、资产验证和本机同步，不重跑同一完整门。
 
-入口随后从该完整 SHA 构建唯一 `workflow.zip`，创建或核对正式 immutable Release，下载比对资产，再调用 `install.py sync --target codex`，也就是发布后立即同步本机 Codex。本机版本与 Release tag 一致后发布链才完成；新任务会使用新版本，已经打开的任务按宿主已有上下文继续运行。
+入口随后从该完整 SHA 构建唯一运行包 `workflow.zip`，并用 CHANGELOG 的上一版本作基线生成独立的 `workflow-review.html`。审阅页包含目标版本全文、精确提交身份和差异；生成 HTML 与第三方库正文不进入文本 diff，其排除范围明确显示。两个资产在 immutable Release 创建前准备齐全，下载后分别比对 SHA-256，再调用 `install.py sync --target codex`，也就是发布后立即同步本机 Codex。本机版本与 Release tag 一致后发布链才完成；新任务会使用新版本，已经打开的任务按宿主已有上下文继续运行。恢复发布使用同一 CHANGELOG 基线与不可变目标，不覆写已有资产。
 
 登录时及每 24 小时自动同步继续作为兜底，用于接收从其他机器发布的新版本。
 

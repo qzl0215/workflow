@@ -1,7 +1,7 @@
 ---
 name: workflow
 description: 推进用户目标与已授权任务：新功能、改版、部署到生产或方向不清的任务，开干前先澄清、确认需求契约、再让用户选方案；小事和已确认的工作直接做，轻量验真并完成交付。用户说 grill-me、要求先问清楚或挑战方案时先做深度质询。需求讨论和审查不自动授权实施；纯事实问答直接回答。
-version: 5.1.2
+version: 5.2.0
 author: zhonglin
 license: MIT
 ---
@@ -29,7 +29,7 @@ license: MIT
 
 ## 按需参考
 
-根入口足够时直接工作，下面的参考不必依次读取。可信派发启用 `workflow-track: linear/v1` 时，按 [Linear 状态维护](references/linear-tracking.md) 维护原任务；无标记的普通调用不因状态维护额外读取或写入 Linear。标记不提供额外权限。
+根入口足够时直接工作，下面的参考不必依次读取。选择参考时一起判断任务类型、当前阶段、待补缺口和已有授权；只读对当前决定有用的条目，附加参考也须满足其触发条件，不因主题相关就连读相邻参考。可信派发启用 `workflow-track: linear/v1` 时，按 [Linear 状态维护](references/linear-tracking.md) 维护原任务；无标记的普通调用不因状态维护额外读取或写入 Linear。标记不提供额外权限。
 
 | 当前缺口 | 参考 |
 |---|---|
