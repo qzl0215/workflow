@@ -154,6 +154,8 @@ def routing(sources: dict[str, str]) -> str:
 
 def decisions(text: str) -> str:
     rows = table_rows(section(text, '判断当前请求'), 3)
+    if not rows:
+        return '<p>该版本未将请求分支列成表格，请从完整入口查看原有规则。</p>'
     return ''.join('<details class="decision"><summary><span class="branch-number">' + str(i + 1).zfill(2)
                    + '</span>' + inline(condition) + '</summary><div class="branch-body"><span class="label">本轮动作</span>'
                    + '<div class="action-path">' + '<span class="arrow" aria-hidden="true">→</span>'.join('<span>' + inline(step) + '</span>' for step in action.split(' → '))
@@ -162,6 +164,8 @@ def decisions(text: str) -> str:
 
 
 def outcomes(text: str) -> str:
+    if not table_rows(section(text, '推进与停止'), 2):
+        return '<p>该版本未将停止条件列成表格，请从完整入口查看原有规则。</p>'
     return '<div class="outcome-list">' + ''.join('<div class="outcome"><div>' + inline(state)
                    + '</div><span class="arrow" aria-hidden="true">→</span><p>' + inline(action) + '</p></div>'
                    for state, action in table_rows(section(text, '推进与停止'), 2)) + '</div>'
@@ -288,7 +292,7 @@ a{color:var(--accent);text-underline-offset:4px}button,input,select{font:inherit
 <button class="flow-node" id="tab-request" role="tab" aria-selected="true" aria-controls="panel-request" tabindex="0"><small>请求边界</small><strong>这次能做什么</strong><span>范围 · 确认 · 已有授权</span></button><span class="connector" aria-hidden="true">↔</span>
 <button class="flow-node" id="tab-capabilities" role="tab" aria-selected="false" aria-controls="panel-capabilities" tabindex="-1"><small>当前缺口</small><strong>现在缺什么</strong><span>按需调用 · 补齐即返回</span></button><span class="connector" aria-hidden="true">↔</span>
 <button class="flow-node" id="tab-outcomes" role="tab" aria-selected="false" aria-controls="panel-outcomes" tabindex="-1"><small>结果证据</small><strong>何时才算完成</strong><span>继续 · 恢复 · 交接 · 结束</span></button></div>
-<div class="return-line"><span>未完成，继续当前工作</span></div></figure>
+<div class="return-line"><span>仍有授权内工作可做，就继续</span></div></figure>
 <div class="figure-note"><span>三个判断问题，按当前情况使用；不是必须走完的三个阶段。</span><span>根入口足够时，可以零参考。</span></div>
 <section class="workbench" role="tabpanel" id="panel-request" aria-labelledby="tab-request"><div class="panel-intro"><span class="label">先识别本轮边界</span><h2>同一个请求，<br>先分清走哪条路。</h2><p>展开符合当前情况的一项，查看本轮动作与停止位置。</p><a href="__ROOT_LINK__">核对完整判断规则 ↗</a></div><div>__DECISIONS__</div></section>
 <section class="workbench" role="tabpanel" id="panel-capabilities" aria-labelledby="tab-capabilities" hidden><div class="panel-intro"><span class="label">缺口驱动调用</span><h2>能力可以组合，<br>不用整套加载。</h2><p>这些分组用于定位问题，不是四个必经阶段。点击名称查看条件、方法与原文。</p><a href="__ROOT_LINK__">核对路由与例外 ↗</a></div><div><div class="searchline"><input id="search" type="search" placeholder="搜索能力或技能正文" aria-label="搜索能力或技能全文"><span id="count" role="status"></span></div><div id="routing" class="capability-grid">__ROUTING__</div><p class="no-result" id="no-result" hidden>没有匹配内容。换一个词，或查看完整入口。</p></div></section>
