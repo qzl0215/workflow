@@ -2,7 +2,7 @@
 
 帮助用户把目标想完整，持续完成已授权任务，用必要证据验证结果，并沿项目入口交付。
 
-[技能入口](SKILL.md) 是运行规则的唯一入口；[变更记录](CHANGELOG.md) 说明各版本变化。
+AI 从精简的 [技能入口](SKILL.md) 按需读取参考；用户从 [人类阅读版](docs/workflow-visual-map.html) 的总览图与情境卡片查看对应内容。两种阅读方式共用一份 Markdown 真源，HTML 自动生成。[变更记录](CHANGELOG.md) 说明各版本变化。
 
 ## 使用
 
@@ -34,7 +34,7 @@
 
 日常使用只需交代任务。实际加载观测、路由负例与版本审阅用于维护者验证技能，普通任务不需要维护这些记录。
 
-下载 [最新正式 Release](https://github.com/qzl0215/workflow/releases/latest) 的 `workflow-review.html`，离线查看本版变化；需要时展开高亮差异或搜索规则全文。说明直接取自 CHANGELOG，代码差异默认显示技能规则与参考，可切换到维护源码。源码中的 [生成页](docs/workflow-visual-map.html) 也提供变化说明与全文。
+下载 [最新正式 Release](https://github.com/qzl0215/workflow/releases/latest) 的 `workflow-review.html`，离线查看图文总览、按情况找参考，或搜索全文。版本说明直接取自 CHANGELOG；高亮差异默认显示技能规则与参考，可切换到维护源码。
 
 手动比较两个已提交版本（输出到仓库外）：
 

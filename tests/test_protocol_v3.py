@@ -122,6 +122,25 @@ class SkillStructureTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             visual.render("```\nunclosed")
 
+    def test_visual_routes_follow_source_conditions_and_supplementary_references(self):
+        sources = {
+            'SKILL.md': '# 入口\n\n| 缺口 | 参考 |\n|---|---|\n'
+                        '| 用户在小屏查看 | [汇报](references/report.md)；仅小屏加读[小屏](references/mobile.md) |\n',
+            'references/report.md': '# 汇报\n\n需要解释时使用。\n',
+            'references/mobile.md': '# 小屏\n\n只在小屏使用。\n',
+            'references/extra.md': '# 补充\n\n仅在特殊条件使用。\n\n后续细节。\n',
+        }
+        page = visual.routing(sources)
+        self.assertEqual(page.count('class="route-card"'), 2)
+        self.assertIn('用户在小屏查看', page)
+        self.assertIn('仅小屏加读', page)
+        self.assertIn('仅在特殊条件使用', page)
+        self.assertNotIn('后续细节', page)
+        for path in sources.keys() - {'SKILL.md'}:
+            self.assertIn('#' + visual.anchor(path), page)
+        sources['SKILL.md'] = sources['SKILL.md'].replace('用户在小屏查看', '另一个触发条件')
+        self.assertNotIn('用户在小屏查看', visual.routing(sources))
+
 
 if __name__ == "__main__":
     unittest.main()

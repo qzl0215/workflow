@@ -102,6 +102,39 @@ def document(text: str, relative: str, sources: dict[str, str]) -> str:
     return render(LINK.sub(replace, text))
 
 
+def opening(text: str) -> str:
+    paragraph = re.search(r'^# [^\n]+\n+(.*?)(?=\n\s*\n|\Z)', text, re.M | re.S)
+    return paragraph[1].strip() if paragraph else ''
+
+
+def routing(sources: dict[str, str]) -> str:
+    """Visualize authored conditions; never maintain a second routing catalog."""
+    cards, covered = [], set()
+    for line in sources['SKILL.md'].splitlines():
+        if not line.startswith('|'):
+            continue
+        cells = [cell.strip() for cell in line.strip('|').split('|')]
+        if len(cells) != 2:
+            continue
+        targets = {target.split('#')[0] for _, target in LINK.findall(cells[1])
+                   if target.split('#')[0] in sources and target.startswith('references/')}
+        if targets:
+            covered.update(targets)
+            cards.append('<article class="route-card" role="listitem"><div class="condition">'
+                         + inline(cells[0]) + '</div><span class="route-arrow" aria-hidden="true">↓</span>'
+                         + '<div class="destination">' + document(cells[1], 'SKILL.md', sources) + '</div></article>')
+    extra = []
+    for path, contents in sources.items():
+        if path.startswith('references/') and path not in covered:
+            title = re.search(r'^# (.+)$', contents, re.M)[1]
+            extra.append('<article class="route-card" role="listitem"><h3><a href="#'
+                         + anchor(path) + '">' + html.escape(title) + '</a></h3>'
+                         + document(opening(contents), path, sources) + '</article>')
+    return ('<div class="route-grid" role="list">' + ''.join(cards) + '</div>'
+            + ('<h3>其他按需参考</h3><div class="route-grid supplemental" role="list">'
+               + ''.join(extra) + '</div>' if extra else ''))
+
+
 def page_from_sources(sources: dict[str, str], changelog: str = '') -> tuple[str, str]:
     text = sources['SKILL.md']
     match = re.search(r"^version:\s*(\S+)$", text, re.M)
@@ -113,20 +146,20 @@ def page_from_sources(sources: dict[str, str], changelog: str = '') -> tuple[str
     # Navigation and release notes reuse existing sources, with no second inventory.
     digest = hashlib.sha256()
     digest.update(changes.encode() + b'\0')
-    cards, navigation = [], []
+    cards = []
     for relative, contents in sources.items():
         digest.update(relative.encode() + b"\0" + contents.encode() + b"\0")
         title = re.search(r"^# (.+)$", contents, re.M)
         if not title:
             raise ValueError(f"缺少标题：{relative}")
-        navigation.append(f'<a href="#{anchor(relative)}">{html.escape(title.group(1))}</a>')
         cards.append(f'<details class="reference" id="{anchor(relative)}" data-path="{html.escape(relative)}">'
                      + "<summary>" + html.escape(title.group(1)) + "</summary>"
                      + f'<small>{html.escape(relative)}</small>' + document(contents, relative, sources) + "</details>")
     identity = digest.hexdigest()[:12]
     page = TEMPLATE.replace("__VERSION__", html.escape(version)).replace("__DIGEST__", identity)
     page = fill(page, {'__CHANGES__': render(changes), '__REFERENCES__': '\n'.join(cards),
-                       '__NAV__': ' · '.join(navigation)})
+                       '__INTRO__': document(opening(text), 'SKILL.md', sources),
+                       '__ROUTING__': routing(sources), '__ROOT_LINK__': '#' + anchor('SKILL.md')})
     return page, identity
 
 
@@ -190,34 +223,46 @@ def build_review(repo: Path, base: str, target: str, *, asset_root: Path | None 
 
 TEMPLATE = '''<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>workflow __VERSION__ · 变化与规则</title>
+<title>workflow __VERSION__ · 人类阅读版</title>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 __CSS__
 <style>
-:root{color-scheme:dark;--paper:#f0f1e9;--muted:#abb8b1;--mint:#a8edca;--line:#314039}
-*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:#101b16;color:var(--paper);font:16px/1.8 system-ui,-apple-system,sans-serif}
-main{max-width:1000px;margin:auto;padding:60px 24px}header{padding-bottom:36px;border-bottom:1px solid var(--line)}
-header p{color:var(--mint);letter-spacing:.1em}h1{font-size:clamp(38px,7vw,64px);line-height:1.2;margin:18px 0}h2{font-size:28px;margin-top:36px}h3{font-size:21px}
-p{max-width:85ch}a{color:var(--mint);text-underline-offset:4px}a:hover{color:#fff}a:focus-visible,summary:focus-visible{outline:2px solid var(--mint);outline-offset:5px}
-.rule{padding-left:16px;border-left:3px solid var(--mint)}code{font: .9em/1.7 ui-monospace,monospace;background:#203128;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}
-pre{padding:18px;background:#07110b;border:1px solid var(--line);overflow:auto}pre code{padding:0;background:none;white-space:pre}
+:root{color-scheme:light;--paper:#233b36;--muted:#526b64;--mint:#176b58;--line:#ccdcd4}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:#f6f7f2;color:var(--paper);font:16px/1.8 system-ui,-apple-system,sans-serif}
+main{max-width:1180px;margin:auto;padding:40px 28px}header{padding-bottom:34px;border-bottom:1px solid var(--line)}
+header .eyebrow{color:var(--mint);letter-spacing:.12em;font-size:13px;font-weight:700}h1{font-size:clamp(34px,5vw,52px);line-height:1.25;margin:18px 0}h2{font-size:28px;margin:36px 0 12px}h3{font-size:20px}
+p{max-width:85ch}a{color:var(--mint);text-underline-offset:4px}a:hover{color:#094432}a:focus-visible,summary:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--mint);outline-offset:4px}
+.rule{padding-left:16px;border-left:3px solid var(--mint)}code{font: .9em/1.7 ui-monospace,monospace;background:#e5eee7;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}
+pre{padding:18px;background:#edf2ec;border:1px solid var(--line);overflow:auto}pre code{padding:0;background:none;white-space:pre}
 .table{overflow:auto}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line)}th{color:var(--mint)}
-details{border:1px solid var(--line);border-radius:10px;padding:18px 22px;margin:12px 0}summary{cursor:pointer;font-weight:700;font-size:19px}details[open]{background:#15251c}
+details{border:1px solid var(--line);border-radius:10px;padding:18px 22px;margin:12px 0;background:#fff}summary{cursor:pointer;font-weight:700;font-size:19px}details[open]{background:#fff}
 footer{margin-top:45px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 input,button,select{font:inherit;padding:8px;border:1px solid var(--line);border-radius:6px}button,summary{cursor:pointer}.toolbar{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0}.toolbar input[type=search]{flex:1;min-width:180px}.reference{scroll-margin-top:20px}small{color:var(--muted)}#navigation{margin:20px 0}.d2h-wrapper{background:white;color:#222;padding:12px;border-radius:8px}.d2h-code-line-ctn{white-space:pre-wrap;overflow-wrap:anywhere}.d2h-code-side-line{width:100%}.d2h-wrapper a{color:#12614e}.d2h-wrapper table{table-layout:auto}.d2h-wrapper td{padding:0}.d2h-wrapper th{color:#222}#diff:empty{display:none}
-@media(max-width:600px){main{padding:28px 16px}details{padding:14px}th,td{padding:9px}body{font-size:15px}}
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:center}.hero p{max-width:36em}.reading-map{margin:0}.reading-map svg{display:block;width:100%;height:auto}.reading-map figcaption{font-size:13px;text-align:center;color:var(--muted)}
+.jump-links{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 0}.jump-links a{padding:5px 13px;border:1px solid var(--line);border-radius:24px;text-decoration:none;background:#fff}
+.section-intro{color:var(--muted);margin-top:0}.route-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.route-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;min-width:0}.condition{flex:1}.route-arrow{color:var(--mint);font-size:24px;line-height:1.5}.destination{border-top:1px solid var(--line);padding-top:10px}.destination p{margin:0}.destination a{font-weight:700}.supplemental .route-card{background:#eef3ec}.route-card h3{margin:0}.route-card p{font-size:15px}.reference>h2{font-size:24px}.reference>h3{border-bottom:1px solid var(--line);padding-bottom:6px}section,details{scroll-margin-top:20px}#changes{border-top:1px solid var(--line);margin-top:36px}#diff{overflow-x:auto}
+@media(max-width:850px){.hero{grid-template-columns:1fr}.reading-map{max-width:520px}.route-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){main{padding:24px 16px}details{padding:14px}th,td{padding:9px}body{font-size:15px}.route-grid{grid-template-columns:1fr}.hero{gap:16px}}
 </style></head><body><main data-source-digest="__DIGEST__">
-<header><p>workflow · __VERSION__</p><h1>这次改了什么</h1><a href="../README.md">安装与使用</a> · <a href="#documents">查阅规则</a></header>
+<header id="overview"><p class="eyebrow">WORKFLOW · __VERSION__ · 人类阅读版</p>
+<div class="hero"><div><h1>一个入口，<br>按需调用。</h1>__INTRO__<p><a href="__ROOT_LINK__">展开 AI 使用的精简入口 ↗</a></p></div>
+<figure class="reading-map"><svg viewBox="0 0 520 250" role="img" aria-labelledby="map-title map-description"><title id="map-title">一份内容，两种阅读方式</title><desc id="map-description">AI 直接读取 Markdown 入口和参考，人类阅读由它们生成的图文页面，规则只维护一份。</desc>
+<rect x="4" y="26" width="214" height="190" rx="18" fill="#e8f0e8" stroke="#ccdcd4"/><rect x="302" y="26" width="214" height="190" rx="18" fill="#fff" stroke="#ccdcd4"/>
+<g fill="none" stroke="#176b58" stroke-width="2.5"><path d="M86 59h35l16 16v47H86z M121 59v16h16 M97 89l-6 6 6 6 M122 89l6 6-6 6 M112 86l-7 19"/><rect x="371" y="62" width="76" height="57" rx="5"/><path d="M371 76h76 M381 88h21v21h-21z M411 88h25 M411 98h25 M411 108h17 M230 120h59 M280 112l9 8-9 8"/></g>
+<g fill="#233b36" text-anchor="middle" font-family="system-ui,sans-serif"><text x="111" y="153" font-size="23" font-weight="700">AI 读精简文本</text><text x="111" y="185" font-size="14">入口 + 按需参考</text><text x="409" y="153" font-size="23" font-weight="700">人读图文结构</text><text x="409" y="185" font-size="14">总览 + 导航 + 版本对比</text><text x="260" y="103" font-size="12" fill="#176b58">生成</text></g></svg><figcaption>内容只维护一份，图文页随发布更新。</figcaption></figure></div>
+<nav class="jump-links" aria-label="阅读导航"><a href="#routing">按情况找参考</a><a href="#documents">查阅全文</a><a href="#changes">本版变化</a><a href="#review">版本对比</a><a href="../README.md">安装与使用</a></nav></header>
+<section id="routing"><h2>遇到什么情况，读取哪份参考</h2><p class="section-intro">按当前缺口定位，点击参考名称展开原文。箭头表示条件与参考的对应关系，不是依次执行的步骤。</p>__ROUTING__</section>
+<section id="documents" aria-label="按需展开规则"><h2>查阅完整规则</h2><p class="section-intro">标题、正文和链接来自 AI 使用的同一份 Markdown。搜索后可只展开相关内容。</p><div class="toolbar"><input id="search" type="search" aria-label="搜索规则全文" placeholder="搜索名称、路径或正文"><button id="expand">展开结果</button><button id="collapse">全部折叠</button><span id="count"></span></div>__REFERENCES__</section>
 <section id="changes"><h2>本版变化</h2>__CHANGES__</section>
 <details id="review"><summary>查看版本高亮对比</summary><p>上方说明来自目标版本的 CHANGELOG；跨版本的完整变化以这里的差异为准。</p><div>__REVIEW_INFO__</div><div class="toolbar" id="diff-controls"><label>内容 <select id="scope"><option value="rules">技能规则与参考</option><option value="all">全部源码（含维护工具）</option></select></label><label>布局 <select id="layout"><option value="side-by-side">并排</option><option value="line-by-line">逐行</option></select></label></div><p id="diff-status" role="status"></p><div id="diff"></div></details>
-<section id="documents" aria-label="按需展开规则"><h2>查阅完整规则</h2><nav id="navigation">__NAV__</nav><div class="toolbar"><input id="search" type="search" aria-label="搜索规则全文" placeholder="搜索名称、路径或正文"><button id="expand">展开结果</button><button id="collapse">全部折叠</button><span id="count"></span></div>__REFERENCES__</section>
 <footer>由 CHANGELOG、SKILL.md、其参考与工作模板生成。页面不定义额外规则。source sha256 __DIGEST__</footer>
 </main>__LIBRARY__<script id="patch-data" type="application/json">__PATCH__</script><script>
 const docs=[...document.querySelectorAll('.reference')];
 function search(){const query=document.getElementById('search').value.toLowerCase();docs.forEach(d=>d.hidden=!d.textContent.toLowerCase().includes(query));document.getElementById('count').textContent=docs.filter(d=>!d.hidden).length+' / '+docs.length;}
 document.getElementById('search').oninput=search;document.getElementById('expand').onclick=()=>docs.filter(d=>!d.hidden).forEach(d=>d.open=true);document.getElementById('collapse').onclick=()=>docs.forEach(d=>d.open=false);
-function reveal(){const element=document.getElementById(location.hash.slice(1));if(element&&element.classList.contains('reference')){document.getElementById('search').value='';search();element.open=true;element.scrollIntoView();}}
+function reveal(){const element=document.getElementById(location.hash.slice(1));if(element&&element.tagName==='DETAILS'){if(element.classList.contains('reference')){document.getElementById('search').value='';search();}element.open=true;element.scrollIntoView();}}
 window.addEventListener('hashchange',reveal);
+document.addEventListener('click',event=>{const link=event.target.closest('a[href^="#"]');if(link&&link.hash===location.hash)reveal();});
 const patch=JSON.parse(document.getElementById('patch-data').textContent);
 function draw(){
  const target=document.getElementById('diff'),status=document.getElementById('diff-status');target.textContent='';
