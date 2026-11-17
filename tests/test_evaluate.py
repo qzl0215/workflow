@@ -8,7 +8,7 @@ import tempfile
 from unittest.mock import patch
 
 PACKAGE = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("workflow_evaluate", PACKAGE / "scripts/evaluate.py")
+spec = importlib.util.spec_from_file_location("workflow_evaluate", PACKAGE / "dev/evaluate.py")
 evaluate = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(evaluate)
 

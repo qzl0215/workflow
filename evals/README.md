@@ -23,7 +23,7 @@
 五个新场景覆盖事实查询、只研究迁移、已授权续作、桌面汇报和未登记普通项目。允许路径是集合，零 reference 可正确；非必要模块内容出现时标出，不把特定顺序写成唯一正确流程。路由筛查和任务产物检查分别报告，`null` 表示无法判定；不得用进程退出 0 或机械 `passed` 代替语义复核。外部应用在夹具中禁用，不能据此证明生产 Linear 权限或真实发布安全。
 
 ```bash
-python3 -B scripts/evaluate.py --model gpt-6-astra --model gpt-5.6-sol --baseline 5.1.2 --repeat 1 --mode tasks --variant baseline --variant candidate --task-case fact_only --task-case migration_research --task-case resumed_fix --task-case desktop_report --task-case plain_task --output /tmp/workflow-routing-new-run
+python3 -B dev/evaluate.py --model gpt-6-astra --model gpt-5.6-sol --baseline 5.1.2 --repeat 1 --mode tasks --variant baseline --variant candidate --task-case fact_only --task-case migration_research --task-case resumed_fix --task-case desktop_report --task-case plain_task --output /tmp/workflow-routing-new-run
 ```
 
 评审时还需核对：事实来自夹具、只读任务没有写文件、续作确实修复并验证、不重新索取已给的授权、不凭关键词启动发布/初始化/状态维护。`resumed_fix` 是非 Git 夹具，允许安全备份仅当新 `main.py.bak` 与原文件 SHA-256 完全相同；其他新增文件仍不通过。用量直接保留 `turn.completed.usage`，不把字符数换算成实际 token，不根据小样本宣称提升率。结果见 [5.2 记录](5.2.0-results.md)。
@@ -31,8 +31,8 @@ python3 -B scripts/evaluate.py --model gpt-6-astra --model gpt-5.6-sol --baselin
 使用宿主已登录的 Codex CLI，原始输出必须放在仓库外。以下命令会调用真实模型并消耗用量，不属于离线发布测试：
 
 ```bash
-python3 -B scripts/evaluate.py --codex <Codex可执行文件> --model gpt-6-astra --model gpt-5.6-sol --baseline 4.0.0 --repeat 2 --output <仓库外新目录>
-python3 -B scripts/evaluate.py --codex <Codex可执行文件> --model gpt-6-astra --model gpt-5.6-sol --baseline 4.0.0 --repeat 1 --mode tasks --output <另一个仓库外新目录>
+python3 -B dev/evaluate.py --codex <Codex可执行文件> --model gpt-6-astra --model gpt-5.6-sol --baseline 4.0.0 --repeat 2 --output <仓库外新目录>
+python3 -B dev/evaluate.py --codex <Codex可执行文件> --model gpt-6-astra --model gpt-5.6-sol --baseline 4.0.0 --repeat 1 --mode tasks --output <另一个仓库外新目录>
 ```
 
 默认模式是同一提示中的独立判断场景，固定注入根入口，不模拟自动选择 reference。实际任务模式在临时目录检查代码修复、既有文件保护、先方案不修改、目标与方法冲突时的引导、确认后的项目记忆原位更新、演示完成后的决策交接，以及原始素材优先：`raw_source` 的汇总把重复扣费并入退换货，只有回复中出现原始工单才有的扣费类别才通过；reference 可按需读取。文件差异只能筛查改动边界，仍需检查回复和产物语义，不能把“没有修改文件”当成“正确引导”。演示交接夹具只重建多轮任务的当前状态，不证明真实会话续接；实际任务也只覆盖小型本地场景，不能替代真实生产或复杂长任务评测。
@@ -152,11 +152,11 @@ Codex：单句探针两版相近，Sol 在小改动上仍会用「🎯」复述�
 
 ## 5.4.0：真实会话观测（2026-11-16）
 
-评测夹具回答不了技能在日常任务里怎样被使用。`scripts/observe.py` 只读本机 Claude Code 会话记录，给出：技能是否加载、各参考在加载后第几步被读、哪些参考零读取、与哪些其他技能同场出现，以及待人工复核的返工措辞和连续失败线索。
+评测夹具回答不了技能在日常任务里怎样被使用。`dev/observe.py` 只读本机 Claude Code 会话记录，给出：技能是否加载、各参考在加载后第几步被读、哪些参考零读取、与哪些其他技能同场出现，以及待人工复核的返工措辞和连续失败线索。
 
 ```bash
-python3 -B scripts/observe.py --since <ISO 起始时间> --output <仓库外的明细文件>
-python3 -B scripts/observe.py --excerpt <会话文件> --line <行号> --radius 40
+python3 -B dev/observe.py --since <ISO 起始时间> --output <仓库外的明细文件>
+python3 -B dev/observe.py --excerpt <会话文件> --line <行号> --radius 40
 ```
 
 读取按“参考路径出现在未报错的工具输入”计，不证明读完、理解或采用。零读取可能是根入口已够用，也可能是该读没读，脚本分不出，要回到原文判断。返工与失败措辞只是关键词初筛，多数命中是噪音；宿主超时、用户拒绝和钩子拦截不计入连续失败。明细含会话原文片段，只能写在仓库外；汇总不含原文。只覆盖本机 Claude Code 记录，不含 Codex 会话和其他机器上直接开启的会话。

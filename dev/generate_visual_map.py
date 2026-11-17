@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import html
 import json
@@ -215,6 +216,9 @@ def build() -> tuple[str, str]:
     changelog = PACKAGE/'CHANGELOG.md'
     page, identity = page_from_sources({p: (PACKAGE/p).read_text(encoding='utf-8') for p in paths},
                                       changelog.read_text(encoding='utf-8') if changelog.is_file() else '')
+    manifest = PACKAGE/'workflow-package.json'
+    page = fill(page, {'__FILEMAP__': file_map(lambda p: (PACKAGE/p).read_text(encoding='utf-8'), manifest.read_text(encoding='utf-8'))
+                       if manifest.is_file() else ''})
     return fill(page, {'__REVIEW_INFO__': '下载 <a href="https://github.com/qzl0215/workflow/releases/latest">正式 Release</a> 的 workflow-review.html 查看版本差异。',
                        '__PATCH__': '""', '__CSS__': '', '__LIBRARY__': ''}), identity
 
@@ -252,6 +256,8 @@ def build_review(repo: Path, base: str, target: str, *, asset_root: Path | None 
         paths.append('templates/work.md')
     page, digest = page_from_sources({p: git(repo, 'show', f'{after}:{p}') for p in paths},
                                     git(repo, 'show', f'{after}:CHANGELOG.md') if 'CHANGELOG.md' in names else '')
+    page = fill(page, {'__FILEMAP__': file_map(lambda p: git(repo, 'show', f'{after}:{p}'), git(repo, 'show', f'{after}:workflow-package.json'))
+                       if 'workflow-package.json' in names else ''})
     excluded = ['docs/workflow-visual-map.html', 'docs/assets/diff2html/diff2html.min.js',
                 'docs/assets/diff2html/diff2html.min.css', 'docs/assets/diff2html/LICENSE.md']
     patch = git(repo, '-c', 'core.quotePath=false', 'diff', '--no-ext-diff', '--no-textconv', '--no-color',
@@ -279,6 +285,167 @@ def build_review(repo: Path, base: str, target: str, *, asset_root: Path | None 
     return page, info
 
 
+FOLDERS = [('references/', '按需参考，事件发生才读'), ('templates/', '模板'), ('scripts/', '随包脚本'),
+           ('dev/', '开发与发布脚本，不随包'), ('docs/', '人读的生成页'), ('evals/', '评测记录'), ('tests/', '回归测试'), ('', '仓库说明')]
+NOT_SOURCE = ('CHANGELOG.md', 'workflow-package.json', 'docs/', 'evals/4', 'evals/5', 'evals/cases.json')
+
+
+def references_between(texts: dict[str, str]) -> list[tuple[str, str]]:
+    """A file points at another when its text names the path, a relative link, or a unique basename."""
+    names = {}
+    for path in texts:
+        names[posixpath.basename(path)] = names.get(posixpath.basename(path), 0) + 1
+    edges = []
+    for source, body in texts.items():
+        if source.startswith(NOT_SOURCE) or not body:
+            continue
+        for target in texts:
+            if target == source or target.startswith('docs/assets/') or target in {'.gitignore', 'LICENSE'}:
+                continue
+            if source.endswith('.py') and (not (target.endswith('.py') or target in {'SKILL.md', 'workflow-package.json', 'templates/work.md'})
+                                           or (target.startswith('tests/') and not source.startswith('tests/'))):
+                continue
+            base = posixpath.basename(target)
+            if (('/' in target and target in body) or f'({posixpath.relpath(target, posixpath.dirname(source) or ".")})' in body
+                    or (names[base] == 1 and base in body)):
+                edges.append((source, target))
+    return edges
+
+
+def external_skills(texts: dict[str, str]) -> list[str]:
+    found = []
+    for path, body in texts.items():
+        if path == 'SKILL.md' or path.startswith('references/'):
+            for line in body.splitlines():
+                if '装有' in line:
+                    found += [n for n in re.findall(r'`([a-z][a-z0-9-]+)`', line) if n not in found]
+    return found
+
+
+def purpose(path: str, body: str) -> str:
+    if path.endswith('.md') and body:
+        return opening(body)
+    if path.endswith('.py'):
+        try:
+            doc = ast.get_docstring(ast.parse(body)) or ''
+        except SyntaxError:
+            doc = ''
+        return doc.strip().splitlines()[0] if doc.strip() else ''
+    return ''
+
+
+def file_map(read, manifest_text: str) -> str:
+    manifest = json.loads(manifest_text)
+    runtime = set(manifest['runtime']['files'])
+    files = sorted(runtime | set(manifest['source_only']) | {'workflow-package.json'})
+    texts = {}
+    for path in files:
+        try:
+            texts[path] = '' if path.startswith('docs/') else read(path)
+        except (OSError, UnicodeDecodeError, subprocess.CalledProcessError):
+            texts[path] = ''
+    edges = references_between(texts)
+    outs = {f: [g for s, g in edges if s == f] for f in files}
+    ins = {f: [s for s, g in edges if g == f] for f in files}
+    when, order = {}, []
+    for condition, target in table_rows(section(texts['SKILL.md'], '按需读取'), 2):
+        for _, path in LINK.findall(target):
+            when[path] = condition
+            order.append(path)
+    externals = external_skills(texts)
+    esc = html.escape
+
+    def title(path: str) -> str:
+        heading = re.search(r'^# (.+)$', texts.get(path, ''), re.M)
+        return heading[1] if heading and path.endswith('.md') else posixpath.basename(path)
+
+    def chip(path: str) -> str:
+        return f'<button class="chip" data-go="{esc(path)}">{esc(path)}</button>'
+
+    tree = ''
+    for path in ('SKILL.md',):
+        tree += f'<button class="file" data-go="SKILL.md" data-rt="1"><i></i>SKILL.md</button>'
+    for folder, note in FOLDERS:
+        members = [f for f in files if (f.startswith(folder) if folder else '/' not in f) and f != 'SKILL.md']
+        if not members:
+            continue
+        tree += f'<div class="folder"><b>{esc(folder or "根目录")}</b><small>{esc(note)}</small></div>'
+        for f in sorted(members, key=lambda f: (f not in runtime, f)):
+            name = posixpath.basename(f) if folder else f
+            if f.startswith('docs/assets/'):
+                name = 'assets/…/' + name
+            tree += f'<button class="file sub" data-go="{esc(f)}" data-rt="{int(f in runtime)}"><i></i>{esc(name)}</button>'
+
+    panels = ''
+    for f in files:
+        body = texts[f]
+        badge = '随包安装' if f in runtime else '仅源码'
+        lines = f' · {len(body.splitlines())} 行' if body else ''
+        lead = (f'<p class="map-when"><span class="label">何时读</span>{inline(when[f])}</p>' if f in when
+                else f'<p class="map-lead">{inline(purpose(f, body))}</p>' if purpose(f, body) else '')
+        main_in = [g for g in ins[f] if not (g.endswith('.py') and not f.endswith('.py'))]
+        tool_in = [g for g in ins[f] if g not in main_in]
+        more = (f'<details class="map-more"><summary>另有 {len(tool_in)} 个脚本和测试提到它</summary>'
+                + ''.join(chip(g) for g in tool_in) + '</details>') if tool_in else ''
+        named = ''.join(f'<span class="chip ext">{esc(n)} · 外部技能</span>' for n in externals
+                        if f'`{n}`' in body and ('装有' in body)) if f.startswith('references/') else ''
+        read_link = (f'<a class="map-read" href="#{anchor(f)}">阅读全文 ↗</a>'
+                     if f == 'SKILL.md' or (f.startswith(('references/', 'templates/')) and f.endswith('.md')) else '')
+        panels += (f'<section class="map-panel" data-path="{esc(f)}" data-out="{esc(json.dumps(outs[f]))}" data-in="{esc(json.dumps(main_in))}" hidden>'
+                   f'<span class="label">{esc(f)} · {badge}{lines}</span><h3>{esc(title(f))}</h3>{lead}'
+                   f'<div class="map-rels"><div><span class="label">谁指向它</span>'
+                   + (''.join(chip(g) for g in main_in) or ('' if more else '<span class="none">没有</span>')) + more
+                   + '</div><div><span class="label">它指向谁</span>'
+                   + (''.join(chip(g) for g in outs[f]) + named or '<span class="none">没有</span>')
+                   + f'</div></div>{read_link}</section>')
+
+    # Load diagram: description → SKILL.md → references in routing order → what they name.
+    refs = [p for p in order if p in texts]
+    leaves = []
+    for ref in ['SKILL.md', *refs]:
+        for g in outs[ref]:
+            if g in runtime and not g.startswith('references/') and g != 'SKILL.md' and g not in leaves:
+                leaves.append(g)
+    leaves += [f'@{n}' for n in externals]
+    rows = max(len(refs), len(leaves), 1)
+    height, row_y = 70 + rows * 66, lambda i: 60 + i * 66
+    mid = 60 + (rows * 66 - 10) // 2
+
+    def node(x, y, w, path, first, second, cls=''):
+        go = f' data-go="{esc(path)}" tabindex="0" role="button"' if path else ''
+        return (f'<g class="n {cls}"{go}><rect x="{x}" y="{y}" width="{w}" height="56" rx="5"/>'
+                f'<text class="t" x="{x+12}" y="{y+24}">{esc(first)}</text><text class="s" x="{x+12}" y="{y+43}">{esc(second)}</text></g>')
+    svg = ''.join(f'<text class="col" x="{x}" y="30">{label}</text>' for x, label in
+                  [(10, '常驻上下文'), (200, '命中后读一次'), (400, '事件发生才读'), (760, '被点名才用')])
+    svg += f'<path class="e" d="M160 {mid+28} H198"/>'
+    for i, ref in enumerate(refs):
+        svg += f'<path class="e" d="M350 {mid+28} C 375 {mid+28}, 375 {row_y(i)+28}, 398 {row_y(i)+28}"/>'
+    for j, leaf in enumerate(leaves):
+        sources = ([r for r in refs if leaf in outs[r]] if not leaf.startswith('@')
+                   else [r for r in refs if f'`{leaf[1:]}`' in texts[r]])
+        dashed = ' d' if leaf.startswith('@') or leaf.endswith('.py') else ''
+        for r in sources:
+            i = refs.index(r)
+            svg += f'<path class="e{dashed}" d="M690 {row_y(i)+28} C 725 {row_y(i)+28}, 725 {row_y(j)+28}, 758 {row_y(j)+28}"/>'
+        if 'SKILL.md' in ins.get(leaf, []) and not sources:
+            svg += f'<path class="e" d="M275 {mid} V 44 H 880 V {row_y(j)}"/>'
+    svg += node(10, mid, 150, None, 'description', '技能的触发描述', 'desc')
+    svg += node(200, mid, 150, 'SKILL.md', 'SKILL.md', '入口：判断、推进、路由', 'hub')
+    for i, ref in enumerate(refs):
+        svg += node(400, row_y(i), 290, ref, title(ref), posixpath.basename(ref))
+    for j, leaf in enumerate(leaves):
+        if leaf.startswith('@'):
+            svg += node(760, row_y(j), 240, None, leaf[1:], '外部技能 · 本机装有才调用', 'leaf ext')
+        else:
+            svg += node(760, row_y(j), 240, leaf, posixpath.basename(leaf), dict(FOLDERS).get(posixpath.dirname(leaf) + '/', ''), 'leaf')
+    figure = (f'<div class="map-figure"><svg viewBox="0 0 1010 {height}" role="img" aria-label="加载关系：触发描述常驻，命中后读 SKILL.md，参考在对应事件发生时才读，模板、脚本和外部技能被点名才用。">'
+              f'<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>{svg}</svg></div>'
+              '<p class="figure-note"><span>实线：读文档。虚线：运行脚本或调用外部技能。点方块看详情。</span></p>')
+    return (f'<section id="files" class="files"><span class="label">文件与引用 / 由文件正文推出</span><h2>一个入口，按需读参考</h2>'
+            f'<p class="map-sum">共 {len(files)} 个文件，{len(runtime)} 个随包安装（实心点），其余只在源码里。</p>{figure}'
+            f'<div class="map-explorer"><nav class="map-tree" aria-label="仓库目录">{tree}</nav><div class="map-detail">{panels}</div></div></section>')
+
+
 TEMPLATE = r'''<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>workflow __VERSION__ · 工作地图</title>
@@ -296,8 +463,12 @@ a{color:var(--accent);text-underline-offset:4px}button,input,select{font:inherit
 @media(max-width:900px){.hero{grid-template-columns:1fr;gap:15px}.hero-note{max-width:40em}.workbench{grid-template-columns:1fr;gap:18px}.panel-intro p{margin:6px 0}.flow-node strong{font-size:19px}.flow-node{padding:18px 12px}.flow-grid{grid-template-columns:1fr 28px 1fr 28px 1fr}}
 @media(max-width:600px){main{padding:25px 18px 45px}.topbar{padding:16px 18px}.topbar nav{gap:12px;font-size:12px}h1{font-size:34px}.hero{margin-bottom:25px}.hero-note{font-size:14px}.flow{padding:14px 12px 52px}.flow-grid{grid-template-columns:1fr 18px 1fr 18px 1fr}.flow-node{padding:14px 7px;min-height:116px}.flow-node strong{font-size:16px}.flow-node span{font-size:11px}.connector{font-size:18px}.return-line{left:18%;width:65%;bottom:18px}.return-line span{font-size:10px;left:5%;padding:0 5px}.figure-note{display:block;font-size:11px}.capability-grid{grid-template-columns:1fr}.decision summary{padding:14px 10px;gap:12px}.branch-body{padding:0 15px 15px 35px}.reference{padding:22px 20px}.reader-bar{padding:14px 20px}.outcome{gap:8px;font-size:13px}.reading-body{font-size:15px}.toolbar{font-size:13px}.review{padding:15px}.topbar .brand{letter-spacing:.05em}}
 @media(max-width:600px){.flow{padding:16px}.flow-grid{grid-template-columns:1fr}.flow-node{min-height:0;padding:13px 16px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:4px 10px}.flow-node small{grid-column:1;font-size:11px}.flow-node strong{grid-column:1;grid-row:2;margin:0;font-size:18px}.flow-node span{grid-column:2;grid-row:1/3;text-align:right;font-size:12px}.connector{transform:rotate(90deg);font-size:22px;height:26px;line-height:26px}.return-line{position:static;border:0;width:auto;height:auto;margin-top:14px}.return-line:before{display:none}.return-line span{position:static;background:transparent;display:block;text-align:center;font-size:12px;white-space:normal}.return-line span:before{content:'↩ ';font-size:16px}}
+.files{border-top:1px solid var(--line);padding-top:32px;margin:10px 0 30px}.map-sum{color:var(--muted);font-size:14px}.map-figure{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:4px;padding:8px}.map-figure svg{display:block;min-width:820px;width:100%;height:auto;color:var(--ink)}.map-figure .col{font:700 11px ui-monospace,monospace;fill:var(--accent);letter-spacing:.08em}.map-figure .n rect{fill:var(--paper);stroke:var(--line)}.map-figure .n[data-go]{cursor:pointer}.map-figure .n[data-go]:hover rect,.map-figure .n.on rect{stroke:var(--accent);stroke-width:2}.map-figure .hub rect{fill:var(--soft);stroke:var(--accent)}.map-figure .ext rect{stroke-dasharray:4 3}.map-figure .t{font:600 13px -apple-system,"PingFang SC",sans-serif;fill:currentColor}.map-figure .s{font:11px -apple-system,"PingFang SC",sans-serif;fill:var(--muted)}.map-figure .e{fill:none;stroke:var(--accent);stroke-width:1.3;marker-end:url(#ah);color:var(--accent);opacity:.75}.map-figure .e.d{stroke-dasharray:5 4}
+.map-explorer{display:grid;grid-template-columns:250px minmax(0,1fr);gap:28px;margin-top:22px;align-items:start}.map-tree{position:sticky;top:12px;max-height:calc(100dvh - 24px);overflow:auto;border-right:1px solid var(--line);padding-right:12px;font-size:13px}.map-tree .folder{margin:14px 0 4px;display:flex;flex-direction:column}.map-tree .folder small{color:var(--muted);font-size:11px}.map-tree .file{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;padding:4px 6px;border-radius:3px;font:12px/1.5 ui-monospace,monospace;overflow-wrap:anywhere}.map-tree .file.sub{padding-left:14px}.map-tree .file i{flex:none;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--accent)}.map-tree .file[data-rt="1"] i{background:var(--accent)}.map-tree .file:hover{background:var(--soft)}.map-tree .file.on{background:var(--accent);color:#fff}.map-tree .file.on i{border-color:#fff}.map-tree .file.in:after{content:'引用它';margin-left:auto;font:10px sans-serif;color:var(--accent)}.map-tree .file.out:after{content:'被它引用';margin-left:auto;font:10px sans-serif;color:#b0642a}
+.map-panel h3{font-size:24px;margin:6px 0 10px}.map-when,.map-lead{border-left:3px solid var(--accent);background:var(--soft);padding:10px 14px;font-size:14px}.map-when .label{display:block}.map-rels{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:16px 0}.map-rels .label{display:block;margin-bottom:6px}.chip{display:inline-block;border:1px solid var(--line);background:#fff;border-radius:3px;padding:2px 8px;margin:0 6px 6px 0;font:12px/1.6 ui-monospace,monospace}.chip:hover{border-color:var(--accent)}.chip.ext{border-style:dashed;color:var(--muted)}.none{color:var(--muted);font-size:13px}.map-more{font-size:12px;color:var(--muted);margin-top:4px}.map-read{font-size:14px;font-weight:650}
+@media(max-width:760px){.map-explorer{grid-template-columns:1fr}.map-tree{position:static;max-height:280px;border-right:0;border-bottom:1px solid var(--line);padding:0 0 10px}.map-rels{grid-template-columns:1fr}}
 </style></head><body>
-<div class="topbar"><a class="brand" href="#overview">WORKFLOW / __VERSION__</a><nav aria-label="页面导航"><a href="#changes">本版变化</a><a href="#review">版本对比</a><a href="../README.md">使用说明</a></nav></div>
+<div class="topbar"><a class="brand" href="#overview">WORKFLOW / __VERSION__</a><nav aria-label="页面导航"><a href="#files">文件与引用</a><a href="#changes">本版变化</a><a href="#review">版本对比</a><a href="../README.md">使用说明</a></nav></div>
 <main data-source-digest="__DIGEST__">
 <header id="overview" class="hero"><div><span class="eyebrow">工作地图 / 按需运行</span><h1>先分清任务，<br><span>再把结果做实。</span></h1><p>先看工作路径，点节点查判断条件。<br>每项能力的使用条件、做法和完整原文都可直接查看。</p></div><div class="hero-note"><p><b>AI 读得省</b>：精简入口，缺什么才读什么。</p><p><b>人读得懂</b>：先看关系，细节随时展开。</p><a href="__ROOT_LINK__">查看 AI 入口与完整规则 ↗</a></div></header>
 <figure class="flow" aria-label="工作闭环示意图：判断请求，按需补齐能力，验证结果；仍有就绪工作则继续。">
@@ -310,6 +481,7 @@ a{color:var(--accent);text-underline-offset:4px}button,input,select{font:inherit
 <section class="workbench" role="tabpanel" id="panel-request" aria-labelledby="tab-request"><div class="panel-intro"><span class="label">先识别本轮边界</span><h2>同一个请求，<br>先分清走哪条路。</h2><p>展开符合当前情况的一项，查看本轮动作与停止位置。</p><a href="__ROOT_LINK__">核对完整判断规则 ↗</a></div><div>__DECISIONS__</div></section>
 <section class="workbench" role="tabpanel" id="panel-capabilities" aria-labelledby="tab-capabilities" hidden><div class="panel-intro"><span class="label">缺口驱动调用</span><h2>能力可以组合，<br>不用整套加载。</h2><p>这些分组用于定位问题，不是四个必经阶段。点击名称查看条件、方法与原文。</p><a href="__ROOT_LINK__">核对路由与例外 ↗</a></div><div><div class="searchline"><input id="search" type="search" placeholder="搜索能力或技能正文" aria-label="搜索能力或技能全文"><span id="count" role="status"></span></div><div id="routing" class="capability-grid">__ROUTING__</div><p class="no-result" id="no-result" hidden>没有匹配内容。换一个词，或查看完整入口。</p></div></section>
 <section class="workbench" role="tabpanel" id="panel-outcomes" aria-labelledby="tab-outcomes" hidden><div class="panel-intro"><span class="label">闭环而非跑完步骤</span><h2>进度不等于结果，<br>证据决定下一步。</h2><p>对照当前状态，继续、恢复或交接。只有范围内的目标与交付都成立，才结束。</p><a href="__ROOT_LINK__">核对执行边界 ↗</a></div><div>__OUTCOMES__</div></section>
+__FILEMAP__
 <section id="changes"><span class="label">版本记录 / 直接来自 CHANGELOG</span><h2>这次具体改了什么</h2><div class="change-layout">__CHANGES__</div></section>
 <details id="review" class="review"><summary>查看版本高亮对比</summary><p>上方说明来自目标版本的 CHANGELOG。这里保留可复查的源码差异。</p><div>__REVIEW_INFO__</div><div class="toolbar" id="diff-controls"><label>内容 <select id="scope"><option value="rules">技能规则与参考</option><option value="all">全部源码（含维护工具）</option></select></label><label>布局 <select id="layout"><option value="side-by-side">并排</option><option value="line-by-line">逐行</option></select></label></div><p id="diff-status" role="status"></p><div id="diff"></div></details>
 <footer>判断条件、能力分组与正文取自同一份技能源码。图只解释关系，不提供额外授权。source sha256 __DIGEST__</footer></main>
@@ -325,6 +497,9 @@ window.addEventListener('hashchange',reveal);document.addEventListener('click',e
 reader.addEventListener('click',event=>{if(event.target===reader){const r=reader.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right)reader.close();}});
 const patch=JSON.parse(document.getElementById('patch-data').textContent);
 function draw(){const target=document.getElementById('diff'),status=document.getElementById('diff-status');target.textContent='';document.getElementById('diff-controls').hidden=!patch.trim();if(!patch.trim()){status.textContent='没有文本差异。';return;}if(!window.Diff2Html){status.textContent='差异库未加载，请核对本地资源。';return;}try{const rule=name=>name==='SKILL.md'||/^(references|templates)\/.*\.md$/.test(name);const files=Diff2Html.parse(patch).filter(f=>document.getElementById('scope').value==='all'||rule(f.oldName)||rule(f.newName));target.innerHTML=Diff2Html.html(files,{drawFileList:true,matching:'lines',diffStyle:'char',maxLineSizeInBlockForComparison:1000,outputFormat:document.getElementById('layout').value});status.textContent=files.length?'显示 '+files.length+' 个文件。文本变化不等于行为收益。':'技能规则与参考没有文本变化；可切换到全部源码。';}catch(error){status.textContent='无法解析差异：'+error.message;}}
+const mapPanels=[...document.querySelectorAll('.map-panel')],mapFiles=[...document.querySelectorAll('.map-tree .file')],mapNodes=[...document.querySelectorAll('.map-figure [data-go]')];
+function pick(path,scroll){const panel=mapPanels.find(p=>p.dataset.path===path);if(!panel)return;mapPanels.forEach(p=>p.hidden=p!==panel);const out=JSON.parse(panel.dataset.out),inn=JSON.parse(panel.dataset.in);mapFiles.forEach(f=>{const g=f.dataset.go;f.classList.toggle('on',g===path);f.classList.toggle('out',out.includes(g));f.classList.toggle('in',inn.includes(g));});mapNodes.forEach(n=>n.classList.toggle('on',n.dataset.go===path));if(scroll)panel.scrollIntoView({block:'start'});}
+document.addEventListener('click',event=>{const go=event.target.closest('[data-go]');if(go)pick(go.dataset.go,!go.closest('.map-tree'));});mapNodes.forEach(n=>n.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();pick(n.dataset.go,true);}}));pick('SKILL.md',false);
 document.getElementById('layout').onchange=draw;document.getElementById('scope').onchange=draw;document.getElementById('review').ontoggle=event=>{if(event.target.open)draw();};search();reveal();
 </script></body></html>
 '''
