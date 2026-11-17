@@ -6,7 +6,7 @@
 
 ## 怎么问
 
-做法取自 mattpocock/skills 的 grilling。本机装有时直接调用：非代码需求用 `grill-me`，代码需求用 `grill-with-docs`；没装就按下面做。
+做法取自 mattpocock/skills 的 grill-me 和 grill-with-docs。这两个入口只能由用户点名，模型要调用的是它们背后的技能：非代码需求调用 `grilling`，代码需求调用 `grilling` 和 `domain-modeling`。本机装有就调用，没装就按下面做。
 
 - 把要定的事排成决策树：每个决定下面挂着依赖它的决定。
 - 分轮问。每轮只问前提已定、现在就能答的全部问题，一次问完并编号；依赖本轮答案的问题留到下一轮。

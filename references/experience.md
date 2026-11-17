@@ -26,6 +26,8 @@ npx -y modern-web-guidance@latest search "<2–5 个英文词，如 responsive d
 npx -y modern-web-guidance@latest retrieve "<id>"
 ```
 
+命令被宿主权限拦住时不重试，交付时告诉用户一次：放行 `npx -y modern-web-guidance@latest *` 后才能查。
+
 查不了时守住这几条：
 
 - 优先用浏览器原生能力，不手写替代品也不为它加依赖：弹层用 `<dialog>` 和 popover，折叠用 `<details>`，动作用 `<button>`，跳转用 `<a>`。

@@ -17,7 +17,7 @@ a{color:var(--accent);text-underline-offset:4px}button,input,select{font:inherit
 @media(max-width:600px){.flow{padding:16px}.flow-grid{grid-template-columns:1fr}.flow-node{min-height:0;padding:13px 16px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:4px 10px}.flow-node small{grid-column:1;font-size:11px}.flow-node strong{grid-column:1;grid-row:2;margin:0;font-size:18px}.flow-node span{grid-column:2;grid-row:1/3;text-align:right;font-size:12px}.connector{transform:rotate(90deg);font-size:22px;height:26px;line-height:26px}.return-line{position:static;border:0;width:auto;height:auto;margin-top:14px}.return-line:before{display:none}.return-line span{position:static;background:transparent;display:block;text-align:center;font-size:12px;white-space:normal}.return-line span:before{content:'↩ ';font-size:16px}}
 </style></head><body>
 <div class="topbar"><a class="brand" href="#overview">WORKFLOW / 5.5.0</a><nav aria-label="页面导航"><a href="#changes">本版变化</a><a href="#review">版本对比</a><a href="../README.md">使用说明</a></nav></div>
-<main data-source-digest="073f187ad7ba">
+<main data-source-digest="9d779ec029b0">
 <header id="overview" class="hero"><div><span class="eyebrow">工作地图 / 按需运行</span><h1>先分清任务，<br><span>再把结果做实。</span></h1><p>先看工作路径，点节点查判断条件。<br>每项能力的使用条件、做法和完整原文都可直接查看。</p></div><div class="hero-note"><p><b>AI 读得省</b>：精简入口，缺什么才读什么。</p><p><b>人读得懂</b>：先看关系，细节随时展开。</p><a href="#doc-534b494c4c2e6d64">查看 AI 入口与完整规则 ↗</a></div></header>
 <figure class="flow" aria-label="工作闭环示意图：判断请求，按需补齐能力，验证结果；仍有就绪工作则继续。">
 <div class="flow-grid" role="tablist" aria-label="选择要了解的环节">
@@ -35,9 +35,10 @@ a{color:var(--accent);text-underline-offset:4px}button,input,select{font:inherit
 <p class="rule">方案选择（仅大事）：选项做成页面 demo。做法取自 page-craft；HTML 和 CSS 底线取自 Google 的 modern-web-guidance，有网络时先查再写；内容按 owner 的偏好排：结论在前、图先于字、每个方案写前后变化与收益代价。</p>
 <p class="rule">执行编排：方案确认后 3 块以上独立工作按 pua 的 p9 做串并行编排，任务写清六件事、文件域不交叉、跑命令验收。按 owner 的选择保留旁白，装有 p9 时连同 PUA 注入一起执行。</p>
 <p class="rule">执行前定测试：按 mattpocock/skills 的 tdd 列测试接缝和第一条失败测试，并入方案确认，不多一轮；开工后一次一片。</p>
+<p class="rule">用 4 个具体案例做了新旧对照后修正两处：澄清环节改为调用 <code>grilling</code> 和 <code>domain-modeling</code>（原先写的 <code>grill-me</code>、<code>grill-with-docs</code> 只能由用户点名，两个案例都没调到）；modern-web-guidance 的查询命令被宿主拦住时，告诉用户怎样放行。</p>
 <p class="rule">维护方式：owner 要求以后不跑成批评测，默认用真实会话观察验证。本版没有跑模型评测，也没有发布后的会话证据，不声称模型行为改善。</p></div></section>
 <details id="review" class="review"><summary>查看版本高亮对比</summary><p>上方说明来自目标版本的 CHANGELOG。这里保留可复查的源码差异。</p><div>下载 <a href="https://github.com/qzl0215/workflow/releases/latest">正式 Release</a> 的 workflow-review.html 查看版本差异。</div><div class="toolbar" id="diff-controls"><label>内容 <select id="scope"><option value="rules">技能规则与参考</option><option value="all">全部源码（含维护工具）</option></select></label><label>布局 <select id="layout"><option value="side-by-side">并排</option><option value="line-by-line">逐行</option></select></label></div><p id="diff-status" role="status"></p><div id="diff"></div></details>
-<footer>判断条件、能力分组与正文取自同一份技能源码。图只解释关系，不提供额外授权。source sha256 073f187ad7ba</footer></main>
+<footer>判断条件、能力分组与正文取自同一份技能源码。图只解释关系，不提供额外授权。source sha256 9d779ec029b0</footer></main>
 <dialog class="reader" id="reader" aria-label="技能详细阅读"><div class="reader-bar"><span>技能细节 / 与 AI 使用的正文一致</span><button id="close-reader" autofocus>关闭 ×</button></div><details class="reference" id="doc-534b494c4c2e6d64" data-path="SKILL.md" hidden><summary>工作流</summary><div class="reference-context"><span class="label">何时调用</span></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre>---
 name: workflow
 description: 推进用户目标与已授权任务：新功能、改版、部署到生产或方向不清的任务，开干前先澄清、确认需求契约、再让用户选方案；小事和已确认的工作直接做，轻量验真并完成交付。用户说 grill-me、要求先问清楚或挑战方案时先做深度质询。需求讨论和审查不自动授权实施；纯事实问答直接回答。
@@ -262,6 +263,8 @@ npx -y modern-web-guidance@latest search &quot;&lt;2–5 个英文词，如 resp
 npx -y modern-web-guidance@latest retrieve &quot;&lt;id&gt;&quot;
 ```
 
+命令被宿主权限拦住时不重试，交付时告诉用户一次：放行 `npx -y modern-web-guidance@latest *` 后才能查。
+
 查不了时守住这几条：
 
 - 优先用浏览器原生能力，不手写替代品也不为它加依赖：弹层用 `&lt;dialog&gt;` 和 popover，折叠用 `&lt;details&gt;`，动作用 `&lt;button&gt;`，跳转用 `&lt;a&gt;`。
@@ -294,6 +297,7 @@ demo 只证明方向可供判断，不是成品验收。
 <p>写 HTML 和 CSS 的底线取自 Google 的 modern-web-guidance。有网络时先查再写，每个界面能力查一次：</p>
 <pre><code>npx -y modern-web-guidance@latest search &quot;&lt;2–5 个英文词，如 responsive data table&gt;&quot;
 npx -y modern-web-guidance@latest retrieve &quot;&lt;id&gt;&quot;</code></pre>
+<p>命令被宿主权限拦住时不重试，交付时告诉用户一次：放行 <code>npx -y modern-web-guidance@latest *</code> 后才能查。</p>
 <p>查不了时守住这几条：</p>
 <p class="rule">优先用浏览器原生能力，不手写替代品也不为它加依赖：弹层用 <code>&lt;dialog&gt;</code> 和 popover，折叠用 <code>&lt;details&gt;</code>，动作用 <code>&lt;button&gt;</code>，跳转用 <code>&lt;a&gt;</code>。</p>
 <p class="rule">语义结构：一个 <code>&lt;h1&gt;</code>，标题不跳级，内容放进 <code>&lt;main&gt;</code>、<code>&lt;nav&gt;</code> 等区域，设置 <code>lang</code> 和 viewport。</p>
@@ -393,7 +397,7 @@ npx -y modern-web-guidance@latest retrieve &quot;&lt;id&gt;&quot;</code></pre>
 
 ## 怎么问
 
-做法取自 mattpocock/skills 的 grilling。本机装有时直接调用：非代码需求用 `grill-me`，代码需求用 `grill-with-docs`；没装就按下面做。
+做法取自 mattpocock/skills 的 grill-me 和 grill-with-docs。这两个入口只能由用户点名，模型要调用的是它们背后的技能：非代码需求调用 `grilling`，代码需求调用 `grilling` 和 `domain-modeling`。本机装有就调用，没装就按下面做。
 
 - 把要定的事排成决策树：每个决定下面挂着依赖它的决定。
 - 分轮问。每轮只问前提已定、现在就能答的全部问题，一次问完并编号；依赖本轮答案的问题留到下一轮。
@@ -417,7 +421,7 @@ npx -y modern-web-guidance@latest retrieve &quot;&lt;id&gt;&quot;</code></pre>
 <p>用户要求 <code>grill-me</code>、先问清楚再做、挑毛病或挑战方案时使用，不限于这些字面说法；难逆决策、高代价实施、探索型需求（新算法、新判定口径、数据规则）、关键假设缺少证据或强证据冲突时，方案定稿前自行使用。</p>
 <p>用户要求质询时，质询就是本轮交付；开干流程的需求澄清也按本参考的方法问。不替用户回答后直接出完整方案，也不用调研拖过提问。自行触发时说明正在挑战哪项假设及原因。</p>
 <h3>怎么问</h3>
-<p>做法取自 mattpocock/skills 的 grilling。本机装有时直接调用：非代码需求用 <code>grill-me</code>，代码需求用 <code>grill-with-docs</code>；没装就按下面做。</p>
+<p>做法取自 mattpocock/skills 的 grill-me 和 grill-with-docs。这两个入口只能由用户点名，模型要调用的是它们背后的技能：非代码需求调用 <code>grilling</code>，代码需求调用 <code>grilling</code> 和 <code>domain-modeling</code>。本机装有就调用，没装就按下面做。</p>
 <p class="rule">把要定的事排成决策树：每个决定下面挂着依赖它的决定。</p>
 <p class="rule">分轮问。每轮只问前提已定、现在就能答的全部问题，一次问完并编号；依赖本轮答案的问题留到下一轮。</p>
 <p class="rule">每个问题附推荐答案和理由，措辞让用户回“是”就等于接受推荐。</p>
