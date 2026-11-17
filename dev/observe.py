@@ -22,7 +22,7 @@ LATE_CALLS = 30
 LONG_SESSION_CALLS = 30
 STREAK = 3
 SKILL_BASE = re.compile(r"Base directory for this skill: (\S+)")
-REFERENCE = re.compile(r"skills/" + SKILL + r"/((?:references|templates)/[\w.-]+\.md)")
+REFERENCE = re.compile(r"skills/" + SKILL + r"/((?:references|templates)/[\w.-]+\.(?:md|html))")
 WRAPPER = re.compile(r"<(system-reminder|local-command-caveat|local-command-stdout)>.*?</\1>", re.S)
 COMMAND_ARGS = re.compile(r"<command-args>(.*?)</command-args>", re.S)
 NOT_USER = ("<task-notification>", "<artifact-content-authored-by-others", "(Re-invocation")
@@ -165,7 +165,7 @@ def observe_session(path: Path, since: str = "", until: str = "") -> dict | None
 
 def package_references(package: Path = PACKAGE) -> list[str]:
     return sorted(str(path.relative_to(package)) for folder in ("references", "templates")
-                  for path in (package / folder).glob("*.md"))
+                  for path in (package / folder).iterdir() if path.suffix in {".md", ".html"})
 
 
 def summarize(sessions: list[dict], references: list[str]) -> dict:

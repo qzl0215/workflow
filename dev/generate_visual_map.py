@@ -99,6 +99,8 @@ def document(text: str, relative: str, sources: dict[str, str]) -> str:
             path = posixpath.normpath(posixpath.join(posixpath.dirname(relative), target.split('#')[0]))
             if path in sources:
                 return f'[{label}](#{anchor(path)})'
+            # inline() resolves from the package root, so re-root links that are not inlined sources.
+            return f'[{label}]({path})'
         return match[0]
     return render(LINK.sub(replace, text))
 
