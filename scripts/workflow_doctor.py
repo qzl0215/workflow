@@ -16,19 +16,11 @@ import install
 
 REQUIRED_REFERENCES = (
     "frame.md",
-    "research.md",
-    "experience.md",
-    "grill.md",
     "plan.md",
-    "orchestrate.md",
-    "execute.md",
-    "recover.md",
     "prove.md",
     "deliver.md",
     "report.md",
-    "report-mobile.md",
     "learn.md",
-    "initialize.md",
     "linear-tracking.md",
 )
 REQUIRED_TEMPLATES = ("work.md",)
