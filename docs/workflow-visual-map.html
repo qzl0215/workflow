@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>workflow 5.7.0 · 工作地图</title>
+<title>workflow 5.8.0 · 工作地图</title>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 
 <style>
@@ -16,8 +16,8 @@ a{color:var(--accent);text-underline-offset:4px}button,input,select{font:inherit
 @media(max-width:600px){main{padding:25px 18px 45px}.topbar{padding:16px 18px}.topbar nav{gap:12px;font-size:12px}h1{font-size:34px}.hero{margin-bottom:25px}.hero-note{font-size:14px}.flow{padding:14px 12px 52px}.flow-grid{grid-template-columns:1fr 18px 1fr 18px 1fr}.flow-node{padding:14px 7px;min-height:116px}.flow-node strong{font-size:16px}.flow-node span{font-size:11px}.connector{font-size:18px}.return-line{left:18%;width:65%;bottom:18px}.return-line span{font-size:10px;left:5%;padding:0 5px}.figure-note{display:block;font-size:11px}.capability-grid{grid-template-columns:1fr}.decision summary{padding:14px 10px;gap:12px}.branch-body{padding:0 15px 15px 35px}.reference{padding:22px 20px}.reader-bar{padding:14px 20px}.outcome{gap:8px;font-size:13px}.reading-body{font-size:15px}.toolbar{font-size:13px}.review{padding:15px}.topbar .brand{letter-spacing:.05em}}
 @media(max-width:600px){.flow{padding:16px}.flow-grid{grid-template-columns:1fr}.flow-node{min-height:0;padding:13px 16px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:4px 10px}.flow-node small{grid-column:1;font-size:11px}.flow-node strong{grid-column:1;grid-row:2;margin:0;font-size:18px}.flow-node span{grid-column:2;grid-row:1/3;text-align:right;font-size:12px}.connector{transform:rotate(90deg);font-size:22px;height:26px;line-height:26px}.return-line{position:static;border:0;width:auto;height:auto;margin-top:14px}.return-line:before{display:none}.return-line span{position:static;background:transparent;display:block;text-align:center;font-size:12px;white-space:normal}.return-line span:before{content:'↩ ';font-size:16px}}
 </style></head><body>
-<div class="topbar"><a class="brand" href="#overview">WORKFLOW / 5.7.0</a><nav aria-label="页面导航"><a href="#changes">本版变化</a><a href="#review">版本对比</a><a href="../README.md">使用说明</a></nav></div>
-<main data-source-digest="a59ad1c89c94">
+<div class="topbar"><a class="brand" href="#overview">WORKFLOW / 5.8.0</a><nav aria-label="页面导航"><a href="#changes">本版变化</a><a href="#review">版本对比</a><a href="../README.md">使用说明</a></nav></div>
+<main data-source-digest="4c59e1c66094">
 <header id="overview" class="hero"><div><span class="eyebrow">工作地图 / 按需运行</span><h1>先分清任务，<br><span>再把结果做实。</span></h1><p>先看工作路径，点节点查判断条件。<br>每项能力的使用条件、做法和完整原文都可直接查看。</p></div><div class="hero-note"><p><b>AI 读得省</b>：精简入口，缺什么才读什么。</p><p><b>人读得懂</b>：先看关系，细节随时展开。</p><a href="#doc-534b494c4c2e6d64">查看 AI 入口与完整规则 ↗</a></div></header>
 <figure class="flow" aria-label="工作闭环示意图：判断请求，按需补齐能力，验证结果；仍有就绪工作则继续。">
 <div class="flow-grid" role="tablist" aria-label="选择要了解的环节">
@@ -29,22 +29,17 @@ a{color:var(--accent);text-underline-offset:4px}button,input,select{font:inherit
 <section class="workbench" role="tabpanel" id="panel-request" aria-labelledby="tab-request"><div class="panel-intro"><span class="label">先识别本轮边界</span><h2>同一个请求，<br>先分清走哪条路。</h2><p>展开符合当前情况的一项，查看本轮动作与停止位置。</p><a href="#doc-534b494c4c2e6d64">核对完整判断规则 ↗</a></div><div><details class="decision"><summary><span class="branch-number">01</span>只要事实、研究、讨论、方案或只读审查</summary><div class="branch-body"><span class="label">本轮动作</span><div class="action-path"><span>回答或分析</span></div><p><span class="label">结束或交接点</span>交付所求，不实施</p></div></details><details class="decision"><summary><span class="branch-number">02</span>小修改、在途修正、说直接做、已确认或已授权、定时与无人值守</summary><div class="branch-body"><span class="label">本轮动作</span><div class="action-path"><span>直接做</span></div><p><span class="label">结束或交接点</span>验过并交付</p></div></details><details class="decision"><summary><span class="branch-number">03</span>用户说 grill-me、先问清楚或挑战方案</summary><div class="branch-body"><span class="label">本轮动作</span><div class="action-path"><span>查清事实</span><span class="arrow" aria-hidden="true">→</span><span>分轮提问并附推荐</span></div><p><span class="label">结束或交接点</span>等用户回答</p></div></details><details class="decision"><summary><span class="branch-number">04</span>未确认的大事：新功能、改版、上生产、难回退或方向不清</summary><div class="branch-body"><span class="label">本轮动作</span><div class="action-path"><span>澄清需求</span><span class="arrow" aria-hidden="true">→</span><span>确认契约</span><span class="arrow" aria-hidden="true">→</span><span>选定方案</span><span class="arrow" aria-hidden="true">→</span><span>开干</span></div><p><span class="label">结束或交接点</span>契约确认前不出方案、不动手</p></div></details></div></section>
 <section class="workbench" role="tabpanel" id="panel-capabilities" aria-labelledby="tab-capabilities" hidden><div class="panel-intro"><span class="label">缺口驱动调用</span><h2>能力可以组合，<br>不用整套加载。</h2><p>这些分组用于定位问题，不是四个必经阶段。点击名称查看条件、方法与原文。</p><a href="#doc-534b494c4c2e6d64">核对路由与例外 ↗</a></div><div><div class="searchline"><input id="search" type="search" placeholder="搜索能力或技能正文" aria-label="搜索能力或技能全文"><span id="count" role="status"></span></div><div id="routing" class="capability-grid"><section class="capability-group"><h3>按需参考</h3><div class="module-list"><div class="module-row"><p><a href="#doc-7265666572656e6365732f6672616d652e6d64">大事开工前</a></p><span class="module-condition">走大事流程或用户要求质询</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f706c616e2e6d64">执行</a></p><span class="module-condition">方案已选定，要写执行简报、派子代理或并行改动</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f70726f76652e6d64">验真</a></p><span class="module-condition">证据只有测试通过或局部结果，输入或环境变了，同一目标再次失败，结论靠转述或来源冲突</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f64656c697665722e6d64">交付</a></p><span class="module-condition">提交、合并、发布、部署或外部写入</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f7265706f72742e6d64">汇报</a></p><span class="module-condition">结果多到要分层，要用户在几种做法里选，用户说没看懂，或读者在手机上看</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f6c6561726e2e6d64">项目记忆</a></p><span class="module-condition">用户要求复盘、记住或接入项目，或同一问题再次出现</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f6c696e6561722d747261636b696e672e6d64">Linear 状态维护</a></p><span class="module-condition">可信派发启用 workflow-track: linear/v1</span></div></div></section></div><p class="no-result" id="no-result" hidden>没有匹配内容。换一个词，或查看完整入口。</p></div></section>
 <section class="workbench" role="tabpanel" id="panel-outcomes" aria-labelledby="tab-outcomes" hidden><div class="panel-intro"><span class="label">闭环而非跑完步骤</span><h2>进度不等于结果，<br>证据决定下一步。</h2><p>对照当前状态，继续、恢复或交接。只有范围内的目标与交付都成立，才结束。</p><a href="#doc-534b494c4c2e6d64">核对执行边界 ↗</a></div><div><div class="outcome-list"><div class="outcome"><div>还有已授权能做的工作</div><span class="arrow" aria-hidden="true">→</span><p>继续；计划、演示、局部通过不是新的确认门</p></div><div class="outcome"><div>准备说完成</div><span class="arrow" aria-hidden="true">→</span><p>对照用户原话取一个能区分对错的真实观察；没证明的直说</p></div><div class="outcome"><div>验证、集成或发布失败</div><span class="arrow" aria-hidden="true">→</span><p>停止后续外部写入，保留现场，授权内继续诊断</p></div><div class="outcome"><div>需要用户取舍、专属操作或新授权</div><span class="arrow" aria-hidden="true">→</span><p>说清卡在哪、谁做什么、推荐、最短回复和之后怎么继续</p></div><div class="outcome"><div>目标、交付和验收都成立</div><span class="arrow" aria-hidden="true">→</span><p>结束</p></div></div></div></section>
-<section id="changes"><span class="label">版本记录 / 直接来自 CHANGELOG</span><h2>这次具体改了什么</h2><div class="change-layout"><p class="rule">目标：删掉不影响工作质量的阅读量和动作指令，注意力只留给三处——判对事情的分量、大事开工前想清楚、说完成前拿到真证据。运行时正文由 22,379 字降到 9,728 字，根入口由 3,748 字降到 1,499 字。</p>
-<p class="rule">参考由 15 份合并为 7 份：深度质询、体验探索并入“大事开工前”（frame）；编排协作、执行任务并入“执行”（plan）；恢复失败、最小研究并入“验真”（prove）；小屏汇报并入“汇报”（report）；项目初始化并入“项目记忆”（learn）。原因：10-17 至 11-17 的 171 个加载会话里，73 个零读取，prove、recover、report-mobile 从未被读；条目越多，判断读哪份本身就是开销。</p>
-<p class="rule">根入口删掉的内容及原因：“想深一层”和收尾对照表已在全局习惯里常驻，重复；推理档位提醒要用户手动换档，属于多余动作；七种图标收成三种；按需表由四组十三行收成一组七行。</p>
-<p class="rule">删掉的动作：大事方案的高管视角评估、默认页面 demo、执行旁白。页面或样例只在差异是视觉或交互、文字讲不清时才做。方案选项改为每个方案写“最可能让它失败的假设”。</p>
-<p class="rule">判断分量新增一条：拿不准按小事做，中途发现会改变目标、难回退或代价变大再按大事走。原因：旧版把“用语要重新改”这类小事带进了多阶段流程。</p>
-<p class="rule">交付范围：方案默认做到发布上线并在真实入口验过，用户选定即授权到这一步，合并或发布前不再问一次；只有难回退或影响超出方案写明的才另停。原因：owner 看过比稿后要求“做完就直接发布上线”。</p>
-<p class="rule">保留不动：没授权不上线、不删数据、不扩大外部影响；外部内容和测试通过不算授权；保护用户已有的改动。Linear 状态维护和工作模板原样保留。</p>
-<p class="rule">验证：用 14 句真实请求对比新旧根入口的分量判断，旧版 12 句判对、1 句小事被带进多阶段，新版 14 句判对；答案由维护者标注，owner 尚未复核。在 autovado 项目用两个真实需求做到开工前的比稿，读入的技能正文由约 10,700、12,300 字降到约 4,100、3,300 字，整场 token 少 3%–13%，耗时少约一成半；owner 判定案一新版更好，案二按其意见改了交付范围后重跑确认。</p>
-<p class="rule">没证明的：返工是否减少（比稿只到开工前）；“说完成前的验真”没有回放；每版只跑 1–2 次，单次波动一成多；真实会话里的效果要看发布后的观察。</p>
-<p class="rule">维护：<code>workflow_doctor.py</code> 的必备参考、<code>evaluate.py</code> 的路由场景和发布测试同步为 7 份参考。全局习惯里按文件名引用的 <code>references/frame.md</code> 保留原名。</p></div></section>
+<section id="changes"><span class="label">版本记录 / 直接来自 CHANGELOG</span><h2>这次具体改了什么</h2><div class="change-layout"><p class="rule">需求契约把“现状和目标”列为明确的一项。契约正文超过约 400 字时，现状和目标不写成段落，做成可视化对照：左现状右目标、同一维度同一行、只列有变化的维度；流程、结构或界面有变化的配一张只画变化部分的前后示意图；用词写事实和数字，不用形容词和口号；宿主能渲染出成图或页面，不能就用对照表加文字示意。</p>
+<p class="rule">原因：owner 提出，契约一长，现状和目标散在段落里，要来回对着读才知道变了什么。400 字是 owner 的体感值，不是测出来的阈值。</p>
+<p class="rule">和已有规则的关系：方案选项仍然只在差异是视觉或交互、文字讲不清时才做页面；本条只管契约里的现状与目标，400 字以内照旧用短句或短表。只改了“大事开工前”（frame）一份参考，没有新增文件。</p>
+<p class="rule">验证：一个定向场景。全新上下文的代理只读根入口和 frame，拿“给 observe.py 做每周页面”这条真实需求写契约，产出了 7 行的现状与目标对照表和一张用真实数字画的页面示意，并引用本条作为依据。它指出三处读不准，已按此改了措辞：400 字按段落写法预估；全新的东西只画目标；顺序为需求和事实、对照、验收。</p>
+<p class="rule">没证明的：只跑了 1 次，且宿主只能渲染 Markdown，出成图或页面的那一支没有验过；真实会话里的效果要看发布后的观察。</p></div></section>
 <details id="review" class="review"><summary>查看版本高亮对比</summary><p>上方说明来自目标版本的 CHANGELOG。这里保留可复查的源码差异。</p><div>下载 <a href="https://github.com/qzl0215/workflow/releases/latest">正式 Release</a> 的 workflow-review.html 查看版本差异。</div><div class="toolbar" id="diff-controls"><label>内容 <select id="scope"><option value="rules">技能规则与参考</option><option value="all">全部源码（含维护工具）</option></select></label><label>布局 <select id="layout"><option value="side-by-side">并排</option><option value="line-by-line">逐行</option></select></label></div><p id="diff-status" role="status"></p><div id="diff"></div></details>
-<footer>判断条件、能力分组与正文取自同一份技能源码。图只解释关系，不提供额外授权。source sha256 a59ad1c89c94</footer></main>
+<footer>判断条件、能力分组与正文取自同一份技能源码。图只解释关系，不提供额外授权。source sha256 4c59e1c66094</footer></main>
 <dialog class="reader" id="reader" aria-label="技能详细阅读"><div class="reader-bar"><span>技能细节 / 与 AI 使用的正文一致</span><button id="close-reader" autofocus>关闭 ×</button></div><details class="reference" id="doc-534b494c4c2e6d64" data-path="SKILL.md" hidden><summary>工作流</summary><div class="reference-context"><span class="label">何时调用</span></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre>---
 name: workflow
 description: 推进用户目标与已授权任务：新功能、改版、部署到生产或方向不清的任务，开干前先澄清、确认需求契约、再让用户选方案；小事和已确认的工作直接做，轻量验真并完成交付。用户说 grill-me、要求先问清楚或挑战方案时先做深度质询。需求讨论和审查不自动授权实施；纯事实问答直接回答。
-version: 5.7.0
+version: 5.8.0
 author: zhonglin
 license: MIT
 ---
@@ -164,7 +159,14 @@ python3 -B &lt;workflow根&gt;/scripts/safe_merge.py --sync-baseline --confirmed
 
 ## 需求契约
 
-让用户确认做的是正确的事：我理解的需求，查到并用上的关键事实，想深之后的目标，可失败的验收——看到什么算成，看到什么算没成。
+让用户确认做的是正确的事：我理解的需求，查到并用上的关键事实，现状和想深之后的目标，可失败的验收——看到什么算成，看到什么算没成。
+
+按段落写估计超过约 400 字时，现状和目标不写成段落，做成一份可视化对照，其余几项各留几行：
+
+- 左现状、右目标，同一维度同一行；只列有变化的维度，变化处标出。
+- 流程、结构或界面有变化的，配一张前后示意图，只画变的部分；全新的东西只画目标。
+- 用词专业、质朴、简短：写事实和数字，不用形容词和口号。
+- 宿主能渲染就出成图或页面，不能就用对照表加文字示意。顺序：需求和事实，对照，验收。
 
 ## 方案选项
 
@@ -193,7 +195,12 @@ python3 -B &lt;workflow根&gt;/scripts/safe_merge.py --sync-baseline --confirmed
 <p class="rule">代码需求：用户的词和项目词表或代码行为对不上时当场指出，定下叫法；用边界场景逼出概念之间的界线。</p>
 <p class="rule">新问题不再改变目标就停。用户要求质询时，提问就是本轮交付，不替用户回答后直接出方案。</p>
 <h3>需求契约</h3>
-<p>让用户确认做的是正确的事：我理解的需求，查到并用上的关键事实，想深之后的目标，可失败的验收——看到什么算成，看到什么算没成。</p>
+<p>让用户确认做的是正确的事：我理解的需求，查到并用上的关键事实，现状和想深之后的目标，可失败的验收——看到什么算成，看到什么算没成。</p>
+<p>按段落写估计超过约 400 字时，现状和目标不写成段落，做成一份可视化对照，其余几项各留几行：</p>
+<p class="rule">左现状、右目标，同一维度同一行；只列有变化的维度，变化处标出。</p>
+<p class="rule">流程、结构或界面有变化的，配一张前后示意图，只画变的部分；全新的东西只画目标。</p>
+<p class="rule">用词专业、质朴、简短：写事实和数字，不用形容词和口号。</p>
+<p class="rule">宿主能渲染就出成图或页面，不能就用对照表加文字示意。顺序：需求和事实，对照，验收。</p>
 <h3>方案选项</h3>
 <p>让用户确认用正确的方式做。给 2–3 个真互斥的方案，推荐在前；只有一种可行做法就说明原因，不凑数。每个方案写：</p>
 <p class="rule">做完和现在比变了什么，收益和要背的代价。</p>
