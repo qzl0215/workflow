@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>workflow 5.5.0 · 工作地图</title>
+<title>workflow 5.6.0 · 工作地图</title>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 
 <style>
@@ -16,8 +16,8 @@ a{color:var(--accent);text-underline-offset:4px}button,input,select{font:inherit
 @media(max-width:600px){main{padding:25px 18px 45px}.topbar{padding:16px 18px}.topbar nav{gap:12px;font-size:12px}h1{font-size:34px}.hero{margin-bottom:25px}.hero-note{font-size:14px}.flow{padding:14px 12px 52px}.flow-grid{grid-template-columns:1fr 18px 1fr 18px 1fr}.flow-node{padding:14px 7px;min-height:116px}.flow-node strong{font-size:16px}.flow-node span{font-size:11px}.connector{font-size:18px}.return-line{left:18%;width:65%;bottom:18px}.return-line span{font-size:10px;left:5%;padding:0 5px}.figure-note{display:block;font-size:11px}.capability-grid{grid-template-columns:1fr}.decision summary{padding:14px 10px;gap:12px}.branch-body{padding:0 15px 15px 35px}.reference{padding:22px 20px}.reader-bar{padding:14px 20px}.outcome{gap:8px;font-size:13px}.reading-body{font-size:15px}.toolbar{font-size:13px}.review{padding:15px}.topbar .brand{letter-spacing:.05em}}
 @media(max-width:600px){.flow{padding:16px}.flow-grid{grid-template-columns:1fr}.flow-node{min-height:0;padding:13px 16px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:4px 10px}.flow-node small{grid-column:1;font-size:11px}.flow-node strong{grid-column:1;grid-row:2;margin:0;font-size:18px}.flow-node span{grid-column:2;grid-row:1/3;text-align:right;font-size:12px}.connector{transform:rotate(90deg);font-size:22px;height:26px;line-height:26px}.return-line{position:static;border:0;width:auto;height:auto;margin-top:14px}.return-line:before{display:none}.return-line span{position:static;background:transparent;display:block;text-align:center;font-size:12px;white-space:normal}.return-line span:before{content:'↩ ';font-size:16px}}
 </style></head><body>
-<div class="topbar"><a class="brand" href="#overview">WORKFLOW / 5.5.0</a><nav aria-label="页面导航"><a href="#changes">本版变化</a><a href="#review">版本对比</a><a href="../README.md">使用说明</a></nav></div>
-<main data-source-digest="daec7d06d108">
+<div class="topbar"><a class="brand" href="#overview">WORKFLOW / 5.6.0</a><nav aria-label="页面导航"><a href="#changes">本版变化</a><a href="#review">版本对比</a><a href="../README.md">使用说明</a></nav></div>
+<main data-source-digest="24ff116d32ad">
 <header id="overview" class="hero"><div><span class="eyebrow">工作地图 / 按需运行</span><h1>先分清任务，<br><span>再把结果做实。</span></h1><p>先看工作路径，点节点查判断条件。<br>每项能力的使用条件、做法和完整原文都可直接查看。</p></div><div class="hero-note"><p><b>AI 读得省</b>：精简入口，缺什么才读什么。</p><p><b>人读得懂</b>：先看关系，细节随时展开。</p><a href="#doc-534b494c4c2e6d64">查看 AI 入口与完整规则 ↗</a></div></header>
 <figure class="flow" aria-label="工作闭环示意图：判断请求，按需补齐能力，验证结果；仍有就绪工作则继续。">
 <div class="flow-grid" role="tablist" aria-label="选择要了解的环节">
@@ -27,7 +27,7 @@ a{color:var(--accent);text-underline-offset:4px}button,input,select{font:inherit
 <div class="return-line"><span>仍有授权内工作可做，就继续</span></div></figure>
 <div class="figure-note"><span>三个判断问题，按当前情况使用；不是必须走完的三个阶段。</span><span>根入口足够时，可以零参考。</span></div>
 <section class="workbench" role="tabpanel" id="panel-request" aria-labelledby="tab-request"><div class="panel-intro"><span class="label">先识别本轮边界</span><h2>同一个请求，<br>先分清走哪条路。</h2><p>展开符合当前情况的一项，查看本轮动作与停止位置。</p><a href="#doc-534b494c4c2e6d64">核对完整判断规则 ↗</a></div><div><details class="decision"><summary><span class="branch-number">01</span>用户要求 grill-me、先问清楚或挑战方案</summary><div class="branch-body"><span class="label">本轮动作</span><div class="action-path"><span>查清可查事实，集中质询并附推荐</span></div><p><span class="label">结束或交接点</span>等用户回答，再形成方案或开工</p></div></details><details class="decision"><summary><span class="branch-number">02</span>用户只要事实、研究、讨论、方案或只读审查</summary><div class="branch-body"><span class="label">本轮动作</span><div class="action-path"><span>完成该范围内的回答或分析</span></div><p><span class="label">结束或交接点</span>交付所求结果，不擅自实施</p></div></details><details class="decision"><summary><span class="branch-number">03</span>小修改、在途修正、明确说直接做、已有确认或授权、定时或无人值守任务</summary><div class="branch-body"><span class="label">本轮动作</span><div class="action-path"><span>直接推进当前就绪工作</span></div><p><span class="label">结束或交接点</span>完成授权范围内的验收与交付</p></div></details><details class="decision"><summary><span class="branch-number">04</span>尚未确认的新功能、改版、生产部署或方向不清</summary><div class="branch-body"><span class="label">本轮动作</span><div class="action-path"><span>澄清需求</span><span class="arrow" aria-hidden="true">→</span><span>确认需求契约</span><span class="arrow" aria-hidden="true">→</span><span>选定方案</span><span class="arrow" aria-hidden="true">→</span><span>开干</span></div><p><span class="label">结束或交接点</span>需求确认前不出方案、不动手；已授权部分继续</p></div></details></div></section>
-<section class="workbench" role="tabpanel" id="panel-capabilities" aria-labelledby="tab-capabilities" hidden><div class="panel-intro"><span class="label">缺口驱动调用</span><h2>能力可以组合，<br>不用整套加载。</h2><p>这些分组用于定位问题，不是四个必经阶段。点击名称查看条件、方法与原文。</p><a href="#doc-534b494c4c2e6d64">核对路由与例外 ↗</a></div><div><div class="searchline"><input id="search" type="search" placeholder="搜索能力或技能正文" aria-label="搜索能力或技能全文"><span id="count" role="status"></span></div><div id="routing" class="capability-grid"><section class="capability-group"><h3>校准方向</h3><div class="module-list"><div class="module-row"><p><a href="#doc-7265666572656e6365732f6672616d652e6d64">目标共创</a></p><span class="module-condition">要走开干流程，或目标、方法、重要取舍需校准</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f72657365617263682e6d64">最小研究</a></p><span class="module-condition">缺少会改变决定的事实</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f6772696c6c2e6d64">深度质询</a></p><span class="module-condition">用户要求质询，需求澄清要分轮问，或难逆、高代价、探索型方案的关键假设缺证据</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f657870657269656e63652e6d64">体验探索</a></p><span class="module-condition">体验方向需要比较或真实交互验证，或大事的方案要做成页面 demo</span></div></div></section><section class="capability-group"><h3>推进任务</h3><div class="module-list"><div class="module-row"><p><a href="#doc-7265666572656e6365732f706c616e2e6d64">结果规划</a></p><span class="module-condition">多项结果有依赖或集成风险，出方案时要定测试和执行简报，或定稿后交给中档实施</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f6f726368657374726174652e6d64">编排协作</a></p><span class="module-condition">照执行简报派发和验收，或宿主允许协作且独立任务、复核有净收益</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f657865637574652e6d64">执行任务</a></p><span class="module-condition">执行现场、输入基线或共享资源需处理</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f7265636f7665722e6d64">恢复失败</a></p><span class="module-condition">失败原因不清、证据冲突或尝试没有进展</span></div></div></section><section class="capability-group"><h3>验证交付</h3><div class="module-list"><div class="module-row"><p><a href="#doc-7265666572656e6365732f70726f76652e6d64">结果验真</a></p><span class="module-condition">验证范围、证据复用或完成声明不明确</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f64656c697665722e6d64">真实交付</a></p><span class="module-condition">提交、集成、发布、部署或外部写入</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f7265706f72742e6d64">汇报</a></p><span class="module-condition">汇报几句话说不完，或需用户做重要决定</span></div><div class="module-row"><p>在汇报基础上加读<a href="#doc-7265666572656e6365732f7265706f72742d6d6f62696c652e6d64">小屏汇报</a></p><span class="module-condition">读者在手机或聊天软件里看汇报</span></div></div></section><section class="capability-group"><h3>保持上下文</h3><div class="module-list"><div class="module-row"><p><a href="#doc-7265666572656e6365732f6c6561726e2e6d64">项目记忆与复盘</a></p><span class="module-condition">已确认的重要决定、可复用发现或用户要求复盘</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f696e697469616c697a652e6d64">项目初始化</a></p><span class="module-condition">明确要求接入、迁移、复查，或实际遇到结构性缺口</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f6c696e6561722d747261636b696e672e6d64">Linear 状态维护</a></p><span class="module-condition">可信派发启用 workflow-track: linear/v1</span></div></div></section></div><p class="no-result" id="no-result" hidden>没有匹配内容。换一个词，或查看完整入口。</p></div></section>
+<section class="workbench" role="tabpanel" id="panel-capabilities" aria-labelledby="tab-capabilities" hidden><div class="panel-intro"><span class="label">缺口驱动调用</span><h2>能力可以组合，<br>不用整套加载。</h2><p>这些分组用于定位问题，不是四个必经阶段。点击名称查看条件、方法与原文。</p><a href="#doc-534b494c4c2e6d64">核对路由与例外 ↗</a></div><div><div class="searchline"><input id="search" type="search" placeholder="搜索能力或技能正文" aria-label="搜索能力或技能全文"><span id="count" role="status"></span></div><div id="routing" class="capability-grid"><section class="capability-group"><h3>校准方向</h3><div class="module-list"><div class="module-row"><p><a href="#doc-7265666572656e6365732f6672616d652e6d64">目标共创</a></p><span class="module-condition">要走开干流程，或目标、方法、重要取舍需校准</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f72657365617263682e6d64">最小研究</a></p><span class="module-condition">结论要依赖没亲自核对的汇总、截图或转述，或来源互相冲突</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f6772696c6c2e6d64">深度质询</a></p><span class="module-condition">用户要求质询，开干流程准备问需求，或难逆、高代价、探索型方案的关键假设缺证据</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f657870657269656e63652e6d64">体验探索</a></p><span class="module-condition">体验方向需要比较或真实交互验证，或准备给大事出方案选项</span></div></div></section><section class="capability-group"><h3>推进任务</h3><div class="module-list"><div class="module-row"><p><a href="#doc-7265666572656e6365732f706c616e2e6d64">结果规划</a></p><span class="module-condition">多项结果有依赖或集成风险，准备给方案选项或写执行简报，或定稿后交给中档实施</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f6f726368657374726174652e6d64">编排协作</a></p><span class="module-condition">准备委派子任务、并行写入、照执行简报派发，或请独立复核</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f657865637574652e6d64">执行任务</a></p><span class="module-condition">开工时现场有无关的未提交改动、需要隔离，或要同步基线</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f7265636f7665722e6d64">恢复失败</a></p><span class="module-condition">同一目标第二次失败，或准备原样重试</span></div></div></section><section class="capability-group"><h3>验证交付</h3><div class="module-list"><div class="module-row"><p><a href="#doc-7265666572656e6365732f70726f76652e6d64">结果验真</a></p><span class="module-condition">准备说完成，而证据只有测试通过、自评或局部结果；或输入、环境变了仍想沿用旧证据</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f64656c697665722e6d64">真实交付</a></p><span class="module-condition">提交、集成、发布、部署或外部写入</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f7265706f72742e6d64">汇报</a></p><span class="module-condition">结果多到要分层，要用户在几种做法里选，或用户说没看懂、无法决定</span></div><div class="module-row"><p>在汇报基础上加读<a href="#doc-7265666572656e6365732f7265706f72742d6d6f62696c652e6d64">小屏汇报</a></p><span class="module-condition">读者在手机或聊天软件里看汇报</span></div></div></section><section class="capability-group"><h3>保持上下文</h3><div class="module-list"><div class="module-row"><p><a href="#doc-7265666572656e6365732f6c6561726e2e6d64">项目记忆与复盘</a></p><span class="module-condition">用户要求复盘或记住，同一问题再次出现，或要把已确认的决定写进长期资料</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f696e697469616c697a652e6d64">项目初始化</a></p><span class="module-condition">明确要求接入、迁移、复查，或实际遇到结构性缺口</span></div><div class="module-row"><p><a href="#doc-7265666572656e6365732f6c696e6561722d747261636b696e672e6d64">Linear 状态维护</a></p><span class="module-condition">可信派发启用 workflow-track: linear/v1</span></div></div></section></div><p class="no-result" id="no-result" hidden>没有匹配内容。换一个词，或查看完整入口。</p></div></section>
 <section class="workbench" role="tabpanel" id="panel-outcomes" aria-labelledby="tab-outcomes" hidden><div class="panel-intro"><span class="label">闭环而非跑完步骤</span><h2>进度不等于结果，<br>证据决定下一步。</h2><p>对照当前状态，继续、恢复或交接。只有范围内的目标与交付都成立，才结束。</p><a href="#doc-534b494c4c2e6d64">核对执行边界 ↗</a></div><div><div class="outcome-list"><div class="outcome"><div>仍有已授权、可执行的工作</div><span class="arrow" aria-hidden="true">→</span><p>继续；计划、演示、局部通过和进度更新都不是新的确认门</p></div><div class="outcome"><div>结果缺少必要证据</div><span class="arrow" aria-hidden="true">→</span><p>补足关键缺口，只声明已证明的范围</p></div><div class="outcome"><div>验证、集成或发布失败</div><span class="arrow" aria-hidden="true">→</span><p>停止受影响的后续外部写入，保留现场，继续授权内诊断与恢复</p></div><div class="outcome"><div>需要用户的重要取舍、专属操作、新授权或外部解锁</div><span class="arrow" aria-hidden="true">→</span><p>交清当前处境、责任者、最小动作与完成信号，说明之后如何恢复</p></div><div class="outcome"><div>目标、范围内交付与验收全部完成</div><span class="arrow" aria-hidden="true">→</span><p>结束；没有可复用发现就不追加复盘</p></div></div></div></section>
 <section id="changes"><span class="label">版本记录 / 直接来自 CHANGELOG</span><h2>这次具体改了什么</h2><div class="change-layout"><p class="rule">开干流程按项目 owner 点名的五个技能加深，要点写进现有参考；本机装有原技能就调用完整版，没装也生效。原因：服务器上没有 p9、p10、pua、tdd 和 modern-web-guidance，只写调用指令在那里等于没有。</p>
 <p class="rule">需求澄清：按 mattpocock/skills 的 grilling 分轮问——决策树、每轮问完当前能答的全部问题、附推荐、回“是”即接受。代码需求加 domain-modeling 的词表核对、与代码对照、边界场景和决策记录。</p>
@@ -37,13 +37,14 @@ a{color:var(--accent);text-underline-offset:4px}button,input,select{font:inherit
 <p class="rule">执行前定测试：按 mattpocock/skills 的 tdd 列测试接缝和第一条失败测试，并入方案确认，不多一轮；开工后一次一片。</p>
 <p class="rule">用 4 个具体案例做了新旧对照后修正两处：澄清环节改为调用 <code>grilling</code> 和 <code>domain-modeling</code>（原先写的 <code>grill-me</code>、<code>grill-with-docs</code> 只能由用户点名，两个案例都没调到）；modern-web-guidance 的查询命令被宿主拦住时，告诉用户怎样放行。</p>
 <p class="rule">用量前移、上下文收窄：需求、现状调研、方案、验收条件四项在开工前备齐，收成一页执行简报并由用户随方案确认；执行只带简报，在干净的上下文里做，主会话只派发和验收。调研范围大时交给子代理，只带回结论和位置。原因：案例对照里新版在执行阶段为一个百来行的改动写了两百多行任务文本，owner 要求多花的时间和用量落在需求沟通和方案阶段，执行要更省更快。</p>
+<p class="rule">替换了什么：深度质询原先“一次集中提出”改为分轮问；方案选项原先只写做什么和怎么验收，现在加上执行简报；编排协作原先只讲写入所有权，现在先讲照简报派发；体验探索里“演示不是必需品”对大事不再适用。没有新增参考文件。</p>
 <p class="rule">维护方式：owner 要求以后不跑成批评测，默认用真实会话观察验证。本版没有跑模型评测，也没有发布后的会话证据，不声称模型行为改善。</p></div></section>
 <details id="review" class="review"><summary>查看版本高亮对比</summary><p>上方说明来自目标版本的 CHANGELOG。这里保留可复查的源码差异。</p><div>下载 <a href="https://github.com/qzl0215/workflow/releases/latest">正式 Release</a> 的 workflow-review.html 查看版本差异。</div><div class="toolbar" id="diff-controls"><label>内容 <select id="scope"><option value="rules">技能规则与参考</option><option value="all">全部源码（含维护工具）</option></select></label><label>布局 <select id="layout"><option value="side-by-side">并排</option><option value="line-by-line">逐行</option></select></label></div><p id="diff-status" role="status"></p><div id="diff"></div></details>
-<footer>判断条件、能力分组与正文取自同一份技能源码。图只解释关系，不提供额外授权。source sha256 daec7d06d108</footer></main>
+<footer>判断条件、能力分组与正文取自同一份技能源码。图只解释关系，不提供额外授权。source sha256 24ff116d32ad</footer></main>
 <dialog class="reader" id="reader" aria-label="技能详细阅读"><div class="reader-bar"><span>技能细节 / 与 AI 使用的正文一致</span><button id="close-reader" autofocus>关闭 ×</button></div><details class="reference" id="doc-534b494c4c2e6d64" data-path="SKILL.md" hidden><summary>工作流</summary><div class="reference-context"><span class="label">何时调用</span></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre>---
 name: workflow
 description: 推进用户目标与已授权任务：新功能、改版、部署到生产或方向不清的任务，开干前先澄清、确认需求契约、再让用户选方案；小事和已确认的工作直接做，轻量验真并完成交付。用户说 grill-me、要求先问清楚或挑战方案时先做深度质询。需求讨论和审查不自动授权实施；纯事实问答直接回答。
-version: 5.5.0
+version: 5.6.0
 author: zhonglin
 license: MIT
 ---
@@ -85,42 +86,44 @@ license: MIT
 
 ## 按需读取
 
-先判断任务类型、当前阶段、缺口与授权，再选下表条目；可以零读取。缺口补齐就回到当前任务，不因主题相关或文内有链接而连读。阶段用于定位当前决定，不要求固定流程。
+先判断任务类型、当前阶段、缺口与授权，再选下表条目；可以零读取。加载时判一次不够：开始动手、同一目标再次失败、准备说完成、准备收尾或交接时，各对照本表一次。缺口补齐就回到当前任务，不因主题相关或文内有链接而连读。阶段用于定位当前决定，不要求固定流程。
 
 ### 校准方向
 
 | 何时读取 | 参考 |
 |---|---|
 | 要走开干流程，或目标、方法、重要取舍需校准 | [目标共创](references/frame.md) |
-| 缺少会改变决定的事实 | [最小研究](references/research.md) |
-| 用户要求质询，需求澄清要分轮问，或难逆、高代价、探索型方案的关键假设缺证据 | [深度质询](references/grill.md) |
-| 体验方向需要比较或真实交互验证，或大事的方案要做成页面 demo | [体验探索](references/experience.md) |
+| 结论要依赖没亲自核对的汇总、截图或转述，或来源互相冲突 | [最小研究](references/research.md) |
+| 用户要求质询，开干流程准备问需求，或难逆、高代价、探索型方案的关键假设缺证据 | [深度质询](references/grill.md) |
+| 体验方向需要比较或真实交互验证，或准备给大事出方案选项 | [体验探索](references/experience.md) |
 
 ### 推进任务
 
 | 何时读取 | 参考 |
 |---|---|
-| 多项结果有依赖或集成风险，出方案时要定测试和执行简报，或定稿后交给中档实施 | [结果规划](references/plan.md) |
-| 照执行简报派发和验收，或宿主允许协作且独立任务、复核有净收益 | [编排协作](references/orchestrate.md) |
-| 执行现场、输入基线或共享资源需处理 | [执行任务](references/execute.md) |
-| 失败原因不清、证据冲突或尝试没有进展 | [恢复失败](references/recover.md) |
+| 多项结果有依赖或集成风险，准备给方案选项或写执行简报，或定稿后交给中档实施 | [结果规划](references/plan.md) |
+| 准备委派子任务、并行写入、照执行简报派发，或请独立复核 | [编排协作](references/orchestrate.md) |
+| 开工时现场有无关的未提交改动、需要隔离，或要同步基线 | [执行任务](references/execute.md) |
+| 同一目标第二次失败，或准备原样重试 | [恢复失败](references/recover.md) |
 
 ### 验证交付
 
 | 何时读取 | 参考 |
 |---|---|
-| 验证范围、证据复用或完成声明不明确 | [结果验真](references/prove.md) |
+| 准备说完成，而证据只有测试通过、自评或局部结果；或输入、环境变了仍想沿用旧证据 | [结果验真](references/prove.md) |
 | 提交、集成、发布、部署或外部写入 | [真实交付](references/deliver.md) |
-| 汇报几句话说不完，或需用户做重要决定 | [汇报](references/report.md) |
+| 结果多到要分层，要用户在几种做法里选，或用户说没看懂、无法决定 | [汇报](references/report.md) |
 | 读者在手机或聊天软件里看汇报 | 在汇报基础上加读[小屏汇报](references/report-mobile.md) |
 
 ### 保持上下文
 
 | 何时读取 | 参考 |
 |---|---|
-| 已确认的重要决定、可复用发现或用户要求复盘 | [项目记忆与复盘](references/learn.md) |
+| 用户要求复盘或记住，同一问题再次出现，或要把已确认的决定写进长期资料 | [项目记忆与复盘](references/learn.md) |
 | 明确要求接入、迁移、复查，或实际遇到结构性缺口 | [项目初始化](references/initialize.md) |
 | 可信派发启用 workflow-track: linear/v1 | [Linear 状态维护](references/linear-tracking.md) |
+
+宿主另有专门技能覆盖当前阶段时（界面设计、架构、数据分析等），在该阶段动手前调用它，由它负责专业方法与标准；本技能继续负责目标、授权、验证和交付，不并行再跑一套同类流程。
 
 未登记项目和上下文压缩本身不触发治理。没有可信标记的普通任务不因状态维护读写 Linear；标记不提供权限。具体项目知识留在项目，通用方法才归技能。
 
@@ -128,7 +131,17 @@ license: MIT
 
 简单任务留在对话。长任务需要恢复时复用一个当前记录，保留目标、授权与决定、完成事实、证据入口和下一步；无现成入口时用 [工作模板](templates/work.md)。共享状态由当前唯一写者维护，受托执行者写原记录，协调者汇总；接管先交接，主责任者核验整体结果。任务身份摘要只在异步结果可能过期时使用。
 
-汇报先说结论、必要缺口与下一动作，不复述执行日志。确需用户介入前，完成可自行调查和授权内不依赖用户输入的工作；讲清为何停下、由谁行动、推荐及理由、备选的前后差异与实际代价风险、最短回复或操作、完成信号和恢复路径。信息不足以决定时不让用户拍板；只给链接、选项或泛问反馈不构成交接。几句话说不清或涉及重要决定时读取汇报参考。
+汇报先说结论、必要缺口与下一动作，不复述执行日志。确需用户介入时讲清为何停下、由谁行动、推荐及理由、最短回复或操作、完成信号和恢复路径；只给链接、选项或泛问反馈不构成交接。
+
+收尾或交接的消息发出前，对照消息本身：
+
+| 消息里出现 | 先做到 |
+|---|---|
+| 「后续、下一步、还可以做」 | 属于原目标且在授权内的现在做完，不留成选项 |
+| 要用户动手的操作 | 确认自己确实做不了；仍需他做，就写成能照做的步骤和做完的信号 |
+| 用户没提过的术语、组件或改动 | 一句话说清它是什么、和他有什么关系 |
+| 要用户选或批准 | 每种做法写清和现在比变了什么、收益、代价与风险，推荐在前；信息不足以决定时先补足 |
+| 要动正在运行的服务或他人在用的资源 | 动手前说明影响面和回退方式 |
 
 按实际内容用图标区分：📋 汇报、✅ 完成、🔧 进行中、⛔ 阻塞、🟠 本人操作、🔵 待决策、💡 洞察。不空列、不重复，不把图标当证据或确认门。手机使用短段并以对应图标起头；长任务有实质进展或阻塞时更新。
 
@@ -149,19 +162,22 @@ license: MIT
 <div class="table"><table><tr><th>当前状态</th><th>下一动作</th></tr><tr><td>仍有已授权、可执行的工作</td><td>继续；计划、演示、局部通过和进度更新都不是新的确认门</td></tr><tr><td>结果缺少必要证据</td><td>补足关键缺口，只声明已证明的范围</td></tr><tr><td>验证、集成或发布失败</td><td>停止受影响的后续外部写入，保留现场，继续授权内诊断与恢复</td></tr><tr><td>需要用户的重要取舍、专属操作、新授权或外部解锁</td><td>交清当前处境、责任者、最小动作与完成信号，说明之后如何恢复</td></tr><tr><td>目标、范围内交付与验收全部完成</td><td>结束；没有可复用发现就不追加复盘</td></tr></table></div>
 <p>交付沿项目原生入口，核对真实目标状态。只有目标本身是研究、方案或演示时，该产物才可作为完成点。</p>
 <h3>按需读取</h3>
-<p>先判断任务类型、当前阶段、缺口与授权，再选下表条目；可以零读取。缺口补齐就回到当前任务，不因主题相关或文内有链接而连读。阶段用于定位当前决定，不要求固定流程。</p>
+<p>先判断任务类型、当前阶段、缺口与授权，再选下表条目；可以零读取。加载时判一次不够：开始动手、同一目标再次失败、准备说完成、准备收尾或交接时，各对照本表一次。缺口补齐就回到当前任务，不因主题相关或文内有链接而连读。阶段用于定位当前决定，不要求固定流程。</p>
 <h4>校准方向</h4>
-<div class="table"><table><tr><th>何时读取</th><th>参考</th></tr><tr><td>要走开干流程，或目标、方法、重要取舍需校准</td><td><a href="#doc-7265666572656e6365732f6672616d652e6d64">目标共创</a></td></tr><tr><td>缺少会改变决定的事实</td><td><a href="#doc-7265666572656e6365732f72657365617263682e6d64">最小研究</a></td></tr><tr><td>用户要求质询，需求澄清要分轮问，或难逆、高代价、探索型方案的关键假设缺证据</td><td><a href="#doc-7265666572656e6365732f6772696c6c2e6d64">深度质询</a></td></tr><tr><td>体验方向需要比较或真实交互验证，或大事的方案要做成页面 demo</td><td><a href="#doc-7265666572656e6365732f657870657269656e63652e6d64">体验探索</a></td></tr></table></div>
+<div class="table"><table><tr><th>何时读取</th><th>参考</th></tr><tr><td>要走开干流程，或目标、方法、重要取舍需校准</td><td><a href="#doc-7265666572656e6365732f6672616d652e6d64">目标共创</a></td></tr><tr><td>结论要依赖没亲自核对的汇总、截图或转述，或来源互相冲突</td><td><a href="#doc-7265666572656e6365732f72657365617263682e6d64">最小研究</a></td></tr><tr><td>用户要求质询，开干流程准备问需求，或难逆、高代价、探索型方案的关键假设缺证据</td><td><a href="#doc-7265666572656e6365732f6772696c6c2e6d64">深度质询</a></td></tr><tr><td>体验方向需要比较或真实交互验证，或准备给大事出方案选项</td><td><a href="#doc-7265666572656e6365732f657870657269656e63652e6d64">体验探索</a></td></tr></table></div>
 <h4>推进任务</h4>
-<div class="table"><table><tr><th>何时读取</th><th>参考</th></tr><tr><td>多项结果有依赖或集成风险，出方案时要定测试和执行简报，或定稿后交给中档实施</td><td><a href="#doc-7265666572656e6365732f706c616e2e6d64">结果规划</a></td></tr><tr><td>照执行简报派发和验收，或宿主允许协作且独立任务、复核有净收益</td><td><a href="#doc-7265666572656e6365732f6f726368657374726174652e6d64">编排协作</a></td></tr><tr><td>执行现场、输入基线或共享资源需处理</td><td><a href="#doc-7265666572656e6365732f657865637574652e6d64">执行任务</a></td></tr><tr><td>失败原因不清、证据冲突或尝试没有进展</td><td><a href="#doc-7265666572656e6365732f7265636f7665722e6d64">恢复失败</a></td></tr></table></div>
+<div class="table"><table><tr><th>何时读取</th><th>参考</th></tr><tr><td>多项结果有依赖或集成风险，准备给方案选项或写执行简报，或定稿后交给中档实施</td><td><a href="#doc-7265666572656e6365732f706c616e2e6d64">结果规划</a></td></tr><tr><td>准备委派子任务、并行写入、照执行简报派发，或请独立复核</td><td><a href="#doc-7265666572656e6365732f6f726368657374726174652e6d64">编排协作</a></td></tr><tr><td>开工时现场有无关的未提交改动、需要隔离，或要同步基线</td><td><a href="#doc-7265666572656e6365732f657865637574652e6d64">执行任务</a></td></tr><tr><td>同一目标第二次失败，或准备原样重试</td><td><a href="#doc-7265666572656e6365732f7265636f7665722e6d64">恢复失败</a></td></tr></table></div>
 <h4>验证交付</h4>
-<div class="table"><table><tr><th>何时读取</th><th>参考</th></tr><tr><td>验证范围、证据复用或完成声明不明确</td><td><a href="#doc-7265666572656e6365732f70726f76652e6d64">结果验真</a></td></tr><tr><td>提交、集成、发布、部署或外部写入</td><td><a href="#doc-7265666572656e6365732f64656c697665722e6d64">真实交付</a></td></tr><tr><td>汇报几句话说不完，或需用户做重要决定</td><td><a href="#doc-7265666572656e6365732f7265706f72742e6d64">汇报</a></td></tr><tr><td>读者在手机或聊天软件里看汇报</td><td>在汇报基础上加读<a href="#doc-7265666572656e6365732f7265706f72742d6d6f62696c652e6d64">小屏汇报</a></td></tr></table></div>
+<div class="table"><table><tr><th>何时读取</th><th>参考</th></tr><tr><td>准备说完成，而证据只有测试通过、自评或局部结果；或输入、环境变了仍想沿用旧证据</td><td><a href="#doc-7265666572656e6365732f70726f76652e6d64">结果验真</a></td></tr><tr><td>提交、集成、发布、部署或外部写入</td><td><a href="#doc-7265666572656e6365732f64656c697665722e6d64">真实交付</a></td></tr><tr><td>结果多到要分层，要用户在几种做法里选，或用户说没看懂、无法决定</td><td><a href="#doc-7265666572656e6365732f7265706f72742e6d64">汇报</a></td></tr><tr><td>读者在手机或聊天软件里看汇报</td><td>在汇报基础上加读<a href="#doc-7265666572656e6365732f7265706f72742d6d6f62696c652e6d64">小屏汇报</a></td></tr></table></div>
 <h4>保持上下文</h4>
-<div class="table"><table><tr><th>何时读取</th><th>参考</th></tr><tr><td>已确认的重要决定、可复用发现或用户要求复盘</td><td><a href="#doc-7265666572656e6365732f6c6561726e2e6d64">项目记忆与复盘</a></td></tr><tr><td>明确要求接入、迁移、复查，或实际遇到结构性缺口</td><td><a href="#doc-7265666572656e6365732f696e697469616c697a652e6d64">项目初始化</a></td></tr><tr><td>可信派发启用 workflow-track: linear/v1</td><td><a href="#doc-7265666572656e6365732f6c696e6561722d747261636b696e672e6d64">Linear 状态维护</a></td></tr></table></div>
+<div class="table"><table><tr><th>何时读取</th><th>参考</th></tr><tr><td>用户要求复盘或记住，同一问题再次出现，或要把已确认的决定写进长期资料</td><td><a href="#doc-7265666572656e6365732f6c6561726e2e6d64">项目记忆与复盘</a></td></tr><tr><td>明确要求接入、迁移、复查，或实际遇到结构性缺口</td><td><a href="#doc-7265666572656e6365732f696e697469616c697a652e6d64">项目初始化</a></td></tr><tr><td>可信派发启用 workflow-track: linear/v1</td><td><a href="#doc-7265666572656e6365732f6c696e6561722d747261636b696e672e6d64">Linear 状态维护</a></td></tr></table></div>
+<p>宿主另有专门技能覆盖当前阶段时（界面设计、架构、数据分析等），在该阶段动手前调用它，由它负责专业方法与标准；本技能继续负责目标、授权、验证和交付，不并行再跑一套同类流程。</p>
 <p>未登记项目和上下文压缩本身不触发治理。没有可信标记的普通任务不因状态维护读写 Linear；标记不提供权限。具体项目知识留在项目，通用方法才归技能。</p>
 <h3>恢复与沟通</h3>
 <p>简单任务留在对话。长任务需要恢复时复用一个当前记录，保留目标、授权与决定、完成事实、证据入口和下一步；无现成入口时用 <a href="#doc-74656d706c617465732f776f726b2e6d64">工作模板</a>。共享状态由当前唯一写者维护，受托执行者写原记录，协调者汇总；接管先交接，主责任者核验整体结果。任务身份摘要只在异步结果可能过期时使用。</p>
-<p>汇报先说结论、必要缺口与下一动作，不复述执行日志。确需用户介入前，完成可自行调查和授权内不依赖用户输入的工作；讲清为何停下、由谁行动、推荐及理由、备选的前后差异与实际代价风险、最短回复或操作、完成信号和恢复路径。信息不足以决定时不让用户拍板；只给链接、选项或泛问反馈不构成交接。几句话说不清或涉及重要决定时读取汇报参考。</p>
+<p>汇报先说结论、必要缺口与下一动作，不复述执行日志。确需用户介入时讲清为何停下、由谁行动、推荐及理由、最短回复或操作、完成信号和恢复路径；只给链接、选项或泛问反馈不构成交接。</p>
+<p>收尾或交接的消息发出前，对照消息本身：</p>
+<div class="table"><table><tr><th>消息里出现</th><th>先做到</th></tr><tr><td>「后续、下一步、还可以做」</td><td>属于原目标且在授权内的现在做完，不留成选项</td></tr><tr><td>要用户动手的操作</td><td>确认自己确实做不了；仍需他做，就写成能照做的步骤和做完的信号</td></tr><tr><td>用户没提过的术语、组件或改动</td><td>一句话说清它是什么、和他有什么关系</td></tr><tr><td>要用户选或批准</td><td>每种做法写清和现在比变了什么、收益、代价与风险，推荐在前；信息不足以决定时先补足</td></tr><tr><td>要动正在运行的服务或他人在用的资源</td><td>动手前说明影响面和回退方式</td></tr></table></div>
 <p>按实际内容用图标区分：📋 汇报、✅ 完成、🔧 进行中、⛔ 阻塞、🟠 本人操作、🔵 待决策、💡 洞察。不空列、不重复，不把图标当证据或确认门。手机使用短段并以对应图标起头；长任务有实质进展或阻塞时更新。</p>
 <p>工时按 AI 实际执行时长估；不替用户预设限制，权限不变。工具缺失和未覆盖项如实说明。授权内能继续就继续，目标完成就结束。</p></div></details>
 <details class="reference" id="doc-7265666572656e6365732f64656c697665722e6d64" data-path="references/deliver.md" hidden><summary>真实交付</summary><div class="reference-context"><span class="label">何时调用</span><p>提交、集成、发布、部署或外部写入 → <a href="#doc-7265666572656e6365732f64656c697665722e6d64">真实交付</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 真实交付
@@ -213,9 +229,9 @@ python3 -B &lt;workflow根&gt;/scripts/safe_merge.py --sync-baseline --confirmed
 <p>调用方负责远端确认；该入口只消费已存在的完整提交，不替代平台审核。分别报告远端交付与本机同步状态。同步受阻停止后续外部写入，但保留远端已成功的事实；解锁后单独重试同步即可。</p>
 <h3>宿主拒绝</h3>
 <p>宿主实际拒绝动作时不换工具绕过。只有拒绝信息明确允许用户授权解锁，才说明原动作、目标和载荷并请求精确授权；不可解锁时如实报告。重试前确认动作身份未变，用户回复不能代替平台许可。</p></div></details>
-<details class="reference" id="doc-7265666572656e6365732f657865637574652e6d64" data-path="references/execute.md" hidden><summary>执行任务</summary><div class="reference-context"><span class="label">何时调用</span><p>执行现场、输入基线或共享资源需处理 → <a href="#doc-7265666572656e6365732f657865637574652e6d64">执行任务</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 执行任务
+<details class="reference" id="doc-7265666572656e6365732f657865637574652e6d64" data-path="references/execute.md" hidden><summary>执行任务</summary><div class="reference-context"><span class="label">何时调用</span><p>开工时现场有无关的未提交改动、需要隔离，或要同步基线 → <a href="#doc-7265666572656e6365732f657865637574652e6d64">执行任务</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 执行任务
 
-执行现场、输入基线或共享资源需要处理时使用。核对当前任务、实际输入和获准范围；缺少可查事实先调查，缺少会改变目标的重要取舍才询问。
+开工时现场有无关的未提交改动、需要隔离，或要同步基线时使用。核对当前任务、实际输入和获准范围；缺少可查事实先调查，缺少会改变目标的重要取舍才询问。
 
 保护无关脏改动，能安全绕开就继续。复用宿主已有现场，按写冲突和恢复需要选择工作树、文件边界或补丁隔离。只读任务不创建工作树，不为流程再建一层隔离。
 
@@ -231,14 +247,14 @@ python3 -B &lt;workflow根&gt;/scripts/safe_merge.py --sync-baseline --remote &l
 
 实现满足用户目标的完整结果，验证与影响相称。委派任务返回实际改动、证据、失败和未覆盖项，主责任者核验后继续整体工作。失败需诊断时使用 [恢复失败](recover.md)；已有授权的交付继续进入 [真实交付](deliver.md)。
 </pre></details><div class="reading-body"><h2>执行任务</h2>
-<p>执行现场、输入基线或共享资源需要处理时使用。核对当前任务、实际输入和获准范围；缺少可查事实先调查，缺少会改变目标的重要取舍才询问。</p>
+<p>开工时现场有无关的未提交改动、需要隔离，或要同步基线时使用。核对当前任务、实际输入和获准范围；缺少可查事实先调查，缺少会改变目标的重要取舍才询问。</p>
 <p>保护无关脏改动，能安全绕开就继续。复用宿主已有现场，按写冲突和恢复需要选择工作树、文件边界或补丁隔离。只读任务不创建工作树，不为流程再建一层隔离。</p>
 <p>基线由任务和项目规则决定。离线工作、指定旧版本或无远端项目不强制同步。需要集成共享目标时取得项目要求的新鲜基线，保留已有工作，不擅自清理、变基或改写历史。</p>
 <p>项目明确登记开发基准且任务需要同步时，以项目仓库为当前目录调用：</p>
 <pre><code>python3 -B &lt;workflow根&gt;/scripts/safe_merge.py --sync-baseline --remote &lt;远端&gt; --target &lt;目标分支&gt;</code></pre>
 <p>基准取本机配置 <code>workflow.developmentBaseline</code> 或显式 <code>--baseline &lt;开发基准绝对路径&gt;</code>；无配置时跳过，不猜生产目录。只同步同仓库已登记、未锁定且检出目标分支的基准。脏现场、分叉或未完成 Git 操作会停止同步并保留现场；任务工作树保持不变。机器路径不进入共享源码。</p>
 <p>实现满足用户目标的完整结果，验证与影响相称。委派任务返回实际改动、证据、失败和未覆盖项，主责任者核验后继续整体工作。失败需诊断时使用 <a href="#doc-7265666572656e6365732f7265636f7665722e6d64">恢复失败</a>；已有授权的交付继续进入 <a href="#doc-7265666572656e6365732f64656c697665722e6d64">真实交付</a>。</p></div></details>
-<details class="reference" id="doc-7265666572656e6365732f657870657269656e63652e6d64" data-path="references/experience.md" hidden><summary>体验探索</summary><div class="reference-context"><span class="label">何时调用</span><p>体验方向需要比较或真实交互验证，或大事的方案要做成页面 demo → <a href="#doc-7265666572656e6365732f657870657269656e63652e6d64">体验探索</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 体验探索
+<details class="reference" id="doc-7265666572656e6365732f657870657269656e63652e6d64" data-path="references/experience.md" hidden><summary>体验探索</summary><div class="reference-context"><span class="label">何时调用</span><p>体验方向需要比较或真实交互验证，或准备给大事出方案选项 → <a href="#doc-7265666572656e6365732f657870657269656e63652e6d64">体验探索</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 体验探索
 
 体验方向不确定、呈现差异会影响选择，或需要验证真实交互时使用。明确用户要完成的任务、关键路径和可能失败的位置；局部呈现已明确时直接实施。
 
@@ -392,7 +408,7 @@ npx -y modern-web-guidance@latest retrieve &quot;&lt;id&gt;&quot;</code></pre>
 <p>不为凑人数加视角；视角结论一致就合并成一个方案并说明。</p>
 <p>开干后连续推进到结果，不再逐步请示。只有结果与预期有较大出入，或出现没考虑到的新风险才打断，说明偏差并给推荐。没覆盖的新目标、权限、数据删除和不可逆影响按 <a href="#doc-7265666572656e6365732f64656c697665722e6d64">真实交付</a> 取得决定。</p>
 <p>需求契约和方案都用简单短句、业务语言、图文表并茂，逻辑清晰，只留影响决定的信息，最小化理解成本，提高决策效率和决策依据的可读性。宿主能渲染时用可视化页面，否则用短表。</p></div></details>
-<details class="reference" id="doc-7265666572656e6365732f6772696c6c2e6d64" data-path="references/grill.md" hidden><summary>深度质询</summary><div class="reference-context"><span class="label">何时调用</span><p>用户要求质询，需求澄清要分轮问，或难逆、高代价、探索型方案的关键假设缺证据 → <a href="#doc-7265666572656e6365732f6772696c6c2e6d64">深度质询</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 深度质询
+<details class="reference" id="doc-7265666572656e6365732f6772696c6c2e6d64" data-path="references/grill.md" hidden><summary>深度质询</summary><div class="reference-context"><span class="label">何时调用</span><p>用户要求质询，开干流程准备问需求，或难逆、高代价、探索型方案的关键假设缺证据 → <a href="#doc-7265666572656e6365732f6772696c6c2e6d64">深度质询</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 深度质询
 
 用户要求 `grill-me`、先问清楚再做、挑毛病或挑战方案时使用，不限于这些字面说法；难逆决策、高代价实施、探索型需求（新算法、新判定口径、数据规则）、关键假设缺少证据或强证据冲突时，方案定稿前自行使用。
 
@@ -488,9 +504,9 @@ python3 -B &lt;workflow根&gt;/scripts/project_init.py record --project &lt;项�
 <p>需要保存初始化记录时，在验收后由项目已有证据入口承接：</p>
 <pre><code>python3 -B &lt;workflow根&gt;/scripts/project_init.py record --project &lt;项目根&gt; --entrypoint &lt;项目内入口&gt; --evidence &lt;项目内证据&gt;</code></pre>
 <p><code>.workflow/project.json</code> 仅保存代际与入口，不复制项目事实。既有记录格式与兼容代际不变，不因技能交互策略变化重新初始化。</p></div></details>
-<details class="reference" id="doc-7265666572656e6365732f6c6561726e2e6d64" data-path="references/learn.md" hidden><summary>项目记忆与复盘</summary><div class="reference-context"><span class="label">何时调用</span><p>已确认的重要决定、可复用发现或用户要求复盘 → <a href="#doc-7265666572656e6365732f6c6561726e2e6d64">项目记忆与复盘</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 项目记忆与复盘
+<details class="reference" id="doc-7265666572656e6365732f6c6561726e2e6d64" data-path="references/learn.md" hidden><summary>项目记忆与复盘</summary><div class="reference-context"><span class="label">何时调用</span><p>用户要求复盘或记住，同一问题再次出现，或要把已确认的决定写进长期资料 → <a href="#doc-7265666572656e6365732f6c6561726e2e6d64">项目记忆与复盘</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 项目记忆与复盘
 
-已确认的重要决定需要跨任务复用，或出现重复失败、明显返工、重要遗漏及用户要求复盘时使用。只保存会改变未来行动的稳定事实、决定或难以便宜重查的证据；临时猜测留在当前任务。没有新内容就结束，不做空复盘；上下文压缩本身不触发治理。
+用户要求复盘或记住，同一问题再次出现，或要把已确认的决定写进长期资料时使用。只保存会改变未来行动的稳定事实、决定或难以便宜重查的证据；临时猜测留在当前任务。没有新内容就结束，不做空复盘；上下文压缩本身不触发治理。
 
 ## 归属与更新
 
@@ -506,7 +522,7 @@ python3 -B &lt;workflow根&gt;/scripts/project_init.py record --project &lt;项�
 
 当前授权任务内已确认决定的必要文档同步直接完成，不重复请示。改变业务政策、扩大治理范围或修改 workflow 本身仍需对应授权；已有明确授权不再确认“建立需求”。原目标未完成时先处理原任务，不把缺陷包装成可选优化。
 </pre></details><div class="reading-body"><h2>项目记忆与复盘</h2>
-<p>已确认的重要决定需要跨任务复用，或出现重复失败、明显返工、重要遗漏及用户要求复盘时使用。只保存会改变未来行动的稳定事实、决定或难以便宜重查的证据；临时猜测留在当前任务。没有新内容就结束，不做空复盘；上下文压缩本身不触发治理。</p>
+<p>用户要求复盘或记住，同一问题再次出现，或要把已确认的决定写进长期资料时使用。只保存会改变未来行动的稳定事实、决定或难以便宜重查的证据；临时猜测留在当前任务。没有新内容就结束，不做空复盘；上下文压缩本身不触发治理。</p>
 <h3>归属与更新</h3>
 <p>业务概念、规则和决定归项目原有产品或决策资料；实际行为、验证和发布入口归代码、配置及操作说明；进度、阻塞和下一步归当前任务。workflow 只承载跨项目的方法与边界，不复制具体项目知识。</p>
 <p>先找已有责任位置。内容存在但难找时补入口，不复制正文；确无合适位置且有复用价值时才最小新增。核实已确认决定、实际观察与未验证假设，保留必要来源、理由和适用范围；不能把模型建议写成用户政策，把计划写成已上线。没有遥测不猜用量或成本。</p>
@@ -579,9 +595,9 @@ python3 -B &lt;workflow根&gt;/scripts/project_init.py record --project &lt;项�
 <p>沿用可用工具的真实字段和返回值；精确替换失败或出现他人变化时先读当前区块，只合并本次事实，未解决冲突交回协调者，不能用整段覆盖消掉他人更新。工具没有条件写能力时，不把先读后写当成原子比较交换。</p>
 <p>成功回执足以确认本次保存时不额外整库读回。网络失败或结果不明时先定向核原 Issue 的状态、事件与证据身份，再决定是否补写；确认已保存不重放，仍不明则保留同步缺口。失败不抹掉已发生进展，不把 Linear 写入成功当业务任务完成。</p>
 <p>本轮结果或卡点回报协调者时带原 Issue、执行入口、实际变化及保存结果；稳定背景只给入口。外部写入受阻时继续不依赖它的已授权工作，禁止绕过权限或新增认证来凑维护成功。</p></div></details>
-<details class="reference" id="doc-7265666572656e6365732f6f726368657374726174652e6d64" data-path="references/orchestrate.md" hidden><summary>编排协作</summary><div class="reference-context"><span class="label">何时调用</span><p>照执行简报派发和验收，或宿主允许协作且独立任务、复核有净收益 → <a href="#doc-7265666572656e6365732f6f726368657374726174652e6d64">编排协作</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 编排协作
+<details class="reference" id="doc-7265666572656e6365732f6f726368657374726174652e6d64" data-path="references/orchestrate.md" hidden><summary>编排协作</summary><div class="reference-context"><span class="label">何时调用</span><p>准备委派子任务、并行写入、照执行简报派发，或请独立复核 → <a href="#doc-7265666572656e6365732f6f726368657374726174652e6d64">编排协作</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 编排协作
 
-宿主允许委派，且独立任务、独立证据或复核能缩短工作或降低风险时使用。是否协作和并行度由实际收益决定；工具不可用时单体完成，验收不降级。
+准备委派子任务、并行写入或请独立复核时使用；前提是宿主允许委派，且能缩短工作或降低风险。是否协作和并行度由实际收益决定；工具不可用时单体完成，验收不降级。
 
 给执行者足够的目标、必要输入、可写范围、完成条件和依赖。稳定背景给入口，关键的一次性约束直接说明。上下文包与返回结果默认内联；跨会话恢复才保存文件。
 
@@ -609,7 +625,7 @@ python3 -B &lt;workflow根&gt;/scripts/project_init.py record --project &lt;项�
 
 出现冲突或过期结果时只重做受影响范围；高风险判断需要独立复核时从实际产物与要求开始，不继承实现者结论。所有任务结束后验证整体结果；没有净收益的协作及时收敛。
 </pre></details><div class="reading-body"><h2>编排协作</h2>
-<p>宿主允许委派，且独立任务、独立证据或复核能缩短工作或降低风险时使用。是否协作和并行度由实际收益决定；工具不可用时单体完成，验收不降级。</p>
+<p>准备委派子任务、并行写入或请独立复核时使用；前提是宿主允许委派，且能缩短工作或降低风险。是否协作和并行度由实际收益决定；工具不可用时单体完成，验收不降级。</p>
 <p>给执行者足够的目标、必要输入、可写范围、完成条件和依赖。稳定背景给入口，关键的一次性约束直接说明。上下文包与返回结果默认内联；跨会话恢复才保存文件。</p>
 <h3>串并行编排</h3>
 <p>开工后照已确认的执行简报做（见 <a href="#doc-7265666572656e6365732f706c616e2e6d64">结果规划</a> 的“执行简报”）。这一步只派发和验收，不再调研、不再设计、不改已定的口径。没有简报时，先按那一节补上再动手。</p>
@@ -626,7 +642,7 @@ python3 -B &lt;workflow根&gt;/scripts/project_init.py record --project &lt;项�
 <p>每任务当前状态只有一个写者；已明确转交状态维护的专属执行者直接写原任务，协调者平时读取，其他参与者返回实际产物、证据、失败与未覆盖项。写权交接须确认旧写者停止且无未决请求，新写者读回后接手；线程终态不自动转移写权。主责任者核对范围、证据适用性和集成结果，不能只采用执行者的完成自述。</p>
 <p>任务或输入可能在异步执行期间变化时，绑定任务版本或输入身份。<code>work_context.py</code> 可从旧版或当前 <code>work.md</code> 提取任务并计算摘要；它的 <code>dispatchable</code> 仅表示状态可派发，不验证真实授权，哈希也不证明内容正确。普通任务不要求这些字段。</p>
 <p>出现冲突或过期结果时只重做受影响范围；高风险判断需要独立复核时从实际产物与要求开始，不继承实现者结论。所有任务结束后验证整体结果；没有净收益的协作及时收敛。</p></div></details>
-<details class="reference" id="doc-7265666572656e6365732f706c616e2e6d64" data-path="references/plan.md" hidden><summary>结果规划</summary><div class="reference-context"><span class="label">何时调用</span><p>多项结果有依赖或集成风险，出方案时要定测试和执行简报，或定稿后交给中档实施 → <a href="#doc-7265666572656e6365732f706c616e2e6d64">结果规划</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 结果规划
+<details class="reference" id="doc-7265666572656e6365732f706c616e2e6d64" data-path="references/plan.md" hidden><summary>结果规划</summary><div class="reference-context"><span class="label">何时调用</span><p>多项结果有依赖或集成风险，准备给方案选项或写执行简报，或定稿后交给中档实施 → <a href="#doc-7265666572656e6365732f706c616e2e6d64">结果规划</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 结果规划
 
 多项结果存在依赖、跨模块影响或集成风险，或方案定稿后要交给中档实施时使用。简单任务可直接实施；用户要求先看方案时，提供足以决定的方案并等待其确认。
 
@@ -710,9 +726,9 @@ python3 -B &lt;workflow根&gt;/scripts/project_init.py record --project &lt;项�
 <p>难逆、高代价或探索型方案定稿前，先按 <a href="#doc-7265666572656e6365732f6772696c6c2e6d64">深度质询</a> 挑战关键假设；探索型需求的样例判定结果是其中的证据。交给中档实施的方案必须能直接执行：改哪些文件或模块、关键做法、验收标准、已排除的路及原因。中档实施不重做调研，不重开已定的决定；方案未写明的局部细节按授权自行决定。</p>
 <p>会话不能改自己的档位，只能提醒用户。方案定稿、准备开工时说明：方案已定稿，在宿主的模型或档位选择（如输入框旁）切到中档，切完回复什么（如“开工”），以及收到回复后直接开始的实施内容。本来就要停下等用户确认方案时，换档提醒并入同一次交接，不多一轮；已授权直接执行且实施不小时，在方案定稿处停一次，实施很小就直接做完。宿主能读到当前档位（如环境变量 <code>CLAUDE_EFFORT</code>）且已是中档或更低时不提醒；读不到就提醒一次，同一任务不重复；宿主没有档位概念时跳过。</p>
 <p>中档实施中方案被推翻、失败原因不明或需要重新取舍时，停下说明原因并提醒切回高档，不在中档硬顶；切回后重新定稿，再按同样方式换档实施。</p></div></details>
-<details class="reference" id="doc-7265666572656e6365732f70726f76652e6d64" data-path="references/prove.md" hidden><summary>结果验真</summary><div class="reference-context"><span class="label">何时调用</span><p>验证范围、证据复用或完成声明不明确 → <a href="#doc-7265666572656e6365732f70726f76652e6d64">结果验真</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 结果验真
+<details class="reference" id="doc-7265666572656e6365732f70726f76652e6d64" data-path="references/prove.md" hidden><summary>结果验真</summary><div class="reference-context"><span class="label">何时调用</span><p>准备说完成，而证据只有测试通过、自评或局部结果；或输入、环境变了仍想沿用旧证据 → <a href="#doc-7265666572656e6365732f70726f76652e6d64">结果验真</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 结果验真
 
-验证范围、证据复用或完成声明不明确时使用。对照用户要求和实际产物，选择能区分正确与错误的最小可靠观察：真实输出、定向测试、构建、交互或数据核对。预期依据来自需求、项目约定、独立样例或可信对照，不能只是复算待验证实现；需求沟通时已定下的独立验收优先使用，不以模型自评或用户观感代替。
+准备说完成，而证据只有测试通过、自评或局部结果，或输入、环境变了仍想沿用旧证据时使用。对照用户要求和实际产物，选择能区分正确与错误的最小可靠观察：真实输出、定向测试、构建、交互或数据核对。预期依据来自需求、项目约定、独立样例或可信对照，不能只是复算待验证实现；需求沟通时已定下的独立验收优先使用，不以模型自评或用户观感代替。
 
 先确认改动范围与遗漏。委派回执只是线索，应核对关键产物与原始证据。局部测试不能替代集成结果；部署成功不能替代用户入口可用。未知、失败和未覆盖项如实说明。
 
@@ -732,7 +748,7 @@ python3 -B &lt;workflow根&gt;/scripts/project_init.py record --project &lt;项�
 
 成功证据简洁保留范围、制品身份和入口，失败展开定位所需信息。区分本地验证、集成验证和真实交付；只声明已证明的层级。有授权内交付继续执行，目标全部成立后结束。
 </pre></details><div class="reading-body"><h2>结果验真</h2>
-<p>验证范围、证据复用或完成声明不明确时使用。对照用户要求和实际产物，选择能区分正确与错误的最小可靠观察：真实输出、定向测试、构建、交互或数据核对。预期依据来自需求、项目约定、独立样例或可信对照，不能只是复算待验证实现；需求沟通时已定下的独立验收优先使用，不以模型自评或用户观感代替。</p>
+<p>准备说完成，而证据只有测试通过、自评或局部结果，或输入、环境变了仍想沿用旧证据时使用。对照用户要求和实际产物，选择能区分正确与错误的最小可靠观察：真实输出、定向测试、构建、交互或数据核对。预期依据来自需求、项目约定、独立样例或可信对照，不能只是复算待验证实现；需求沟通时已定下的独立验收优先使用，不以模型自评或用户观感代替。</p>
 <p>先确认改动范围与遗漏。委派回执只是线索，应核对关键产物与原始证据。局部测试不能替代集成结果；部署成功不能替代用户入口可用。未知、失败和未覆盖项如实说明。</p>
 <p>分别判断产物已经形成、技术行为已有证据、用户目标已经成立；三者不能互相替代。演示可查看只证明演示可供判断，不证明方向已接受或成品已交付。证据成立后仍有授权内工作就继续；确需用户接受方向或完成专属动作时，按当前证据说明交接点和恢复后的下一动作。</p>
 <h3>证据复用</h3>
@@ -742,9 +758,9 @@ python3 -B &lt;workflow根&gt;/scripts/project_init.py record --project &lt;项�
 <p>局部可逆改动做定向检查；共享接口、模块或用户路径变化补相关连接点的证据。优先复用实施中已取得的有效观察，收尾只补关键缺口，不默认全量测试、完整业务回放或另建验收系统。项目必需检查仍执行；缓存、迁移、并发、安全和生产形态风险按实际影响覆盖旧状态、失败恢复及关键非功能条件。必要证据充分后结束，只因新变化、失败或未解问题才扩大验证。</p>
 <p>界面修改优先用真实实现检查关键交互和受影响连接点；不默认新增验收入口，不要求证明无关区域的每一处像素。样例预览与真实权限、数据和默认入口分别报告。</p>
 <p>成功证据简洁保留范围、制品身份和入口，失败展开定位所需信息。区分本地验证、集成验证和真实交付；只声明已证明的层级。有授权内交付继续执行，目标全部成立后结束。</p></div></details>
-<details class="reference" id="doc-7265666572656e6365732f7265636f7665722e6d64" data-path="references/recover.md" hidden><summary>恢复失败</summary><div class="reference-context"><span class="label">何时调用</span><p>失败原因不清、证据冲突或尝试没有进展 → <a href="#doc-7265666572656e6365732f7265636f7665722e6d64">恢复失败</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 恢复失败
+<details class="reference" id="doc-7265666572656e6365732f7265636f7665722e6d64" data-path="references/recover.md" hidden><summary>恢复失败</summary><div class="reference-context"><span class="label">何时调用</span><p>同一目标第二次失败，或准备原样重试 → <a href="#doc-7265666572656e6365732f7265636f7665722e6d64">恢复失败</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 恢复失败
 
-失败原因不清、证据冲突或尝试没有进展时使用。错误已明确且修复局部可逆时，直接修复并重验即可。
+同一目标第二次失败、准备原样重试，或证据互相冲突时使用。错误已明确且修复局部可逆时，直接修复并重验即可。
 
 保留预期、实际结果、原始错误和最小复现，区分产品、验证器、环境、权限与目标本身的问题。用可证伪假设和最小实验区分根因，修复正确边界，再验证原复现及受影响的相邻行为。
 
@@ -754,7 +770,7 @@ python3 -B &lt;workflow根&gt;/scripts/project_init.py record --project &lt;项�
 
 根因或恢复路径成立后返回原任务，不因失败重启全部流程。保留用于下一动作的证据，不复制完整探索日志。
 </pre></details><div class="reading-body"><h2>恢复失败</h2>
-<p>失败原因不清、证据冲突或尝试没有进展时使用。错误已明确且修复局部可逆时，直接修复并重验即可。</p>
+<p>同一目标第二次失败、准备原样重试，或证据互相冲突时使用。错误已明确且修复局部可逆时，直接修复并重验即可。</p>
 <p>保留预期、实际结果、原始错误和最小复现，区分产品、验证器、环境、权限与目标本身的问题。用可证伪假设和最小实验区分根因，修复正确边界，再验证原复现及受影响的相邻行为。</p>
 <p>相同输入下重复同一失败且没有新增观察时，改变假设、观察点、工具或路线。保留已排除解释，不盲目重试，也不靠增加执行者替代诊断。外部瞬时失败可以按明确恢复条件重试，不能在结果不确定时重复不可幂等写入。</p>
 <p>涉及数据损坏、共享机制或安全风险时，先限制影响并保留恢复现场。可自行完成的调查和授权内修复继续进行；必须由用户取舍、授予新权限或外部解锁时，说明具体阻塞、推荐路径和已发生状态。</p>
@@ -786,9 +802,9 @@ python3 -B &lt;workflow根&gt;/scripts/project_init.py record --project &lt;项�
 <p class="rule">回复点一下或回一个词；点按区不小于 44 点。</p>
 <p class="rule">聊天软件放不下的内容给链接，消息里只留结论和要读者做的事。</p>
 <p class="rule">页面渲染出来按手机宽度看过。</p></div></details>
-<details class="reference" id="doc-7265666572656e6365732f7265706f72742e6d64" data-path="references/report.md" hidden><summary>汇报</summary><div class="reference-context"><span class="label">何时调用</span><p>汇报几句话说不完，或需用户做重要决定 → <a href="#doc-7265666572656e6365732f7265706f72742e6d64">汇报</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 汇报
+<details class="reference" id="doc-7265666572656e6365732f7265706f72742e6d64" data-path="references/report.md" hidden><summary>汇报</summary><div class="reference-context"><span class="label">何时调用</span><p>结果多到要分层，要用户在几种做法里选，或用户说没看懂、无法决定 → <a href="#doc-7265666572656e6365732f7265706f72742e6d64">汇报</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 汇报
 
-要向用户汇报结果、请用户决定或交回控制权，而几句话说不完时使用。一两句能说清的留在对话里，不为汇报另做产物。图标和交接必须说清的事项见根入口；这里只管让读者看得快、判断得准。
+结果多到要分层、要用户在几种做法里选，或用户说没看懂、无法决定时使用。一两句能说清的留在对话里，不为汇报另做产物。图标和收尾前的对照见根入口；这里只管让读者看得快、判断得准。
 
 汇报的产物是读者的下一步决定，不是文档。动笔前先答两问：读者看完要做什么；他只看第一屏会不会做错。第一问答不出，说明工作还没收敛到可以汇报，先继续做。
 
@@ -849,7 +865,7 @@ python3 -B &lt;workflow根&gt;/scripts/project_init.py record --project &lt;项�
 
 决定重要且宿主允许协作时，让一个不带上下文的读者只看汇报，说出结论和要他做的事；说不出就改。
 </pre></details><div class="reading-body"><h2>汇报</h2>
-<p>要向用户汇报结果、请用户决定或交回控制权，而几句话说不完时使用。一两句能说清的留在对话里，不为汇报另做产物。图标和交接必须说清的事项见根入口；这里只管让读者看得快、判断得准。</p>
+<p>结果多到要分层、要用户在几种做法里选，或用户说没看懂、无法决定时使用。一两句能说清的留在对话里，不为汇报另做产物。图标和收尾前的对照见根入口；这里只管让读者看得快、判断得准。</p>
 <p>汇报的产物是读者的下一步决定，不是文档。动笔前先答两问：读者看完要做什么；他只看第一屏会不会做错。第一问答不出，说明工作还没收敛到可以汇报，先继续做。</p>
 <h3>内容</h3>
 <p class="rule">一份汇报只服务一个决定。多个决定按依赖排好，一次问一个；互不相干的分开发。</p>
@@ -885,15 +901,15 @@ python3 -B &lt;workflow根&gt;/scripts/project_init.py record --project &lt;项�
 <p class="rule">读者能用一个词回复。</p>
 <p class="rule">页面渲染出来看过，不只看代码。</p>
 <p>决定重要且宿主允许协作时，让一个不带上下文的读者只看汇报，说出结论和要他做的事；说不出就改。</p></div></details>
-<details class="reference" id="doc-7265666572656e6365732f72657365617263682e6d64" data-path="references/research.md" hidden><summary>最小研究</summary><div class="reference-context"><span class="label">何时调用</span><p>缺少会改变决定的事实 → <a href="#doc-7265666572656e6365732f72657365617263682e6d64">最小研究</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 最小研究
+<details class="reference" id="doc-7265666572656e6365732f72657365617263682e6d64" data-path="references/research.md" hidden><summary>最小研究</summary><div class="reference-context"><span class="label">何时调用</span><p>结论要依赖没亲自核对的汇总、截图或转述，或来源互相冲突 → <a href="#doc-7265666572656e6365732f72657365617263682e6d64">最小研究</a></p></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre># 最小研究
 
-用于缺少会改变当前决定的事实。从项目入口定位本问题的责任资料：业务约定与决定回答“应当怎样”，代码、配置和运行观察回答“实际怎样”，任务记录回答“目前做到哪里”。入口缺失时定向搜索，不先通读全部文档；项目之外再查相关系统或权威一手来源。用户或他人整理的汇总、截图和转述是线索，口径不明或可能有损且会改变决定时，从原始数据、记录或原话抽样核对。
+结论要依赖没亲自核对的汇总、截图或转述，来源互相冲突，或缺少会改变当前决定的事实时使用。从项目入口定位本问题的责任资料：业务约定与决定回答“应当怎样”，代码、配置和运行观察回答“实际怎样”，任务记录回答“目前做到哪里”。入口缺失时定向搜索，不先通读全部文档；项目之外再查相关系统或权威一手来源。用户或他人整理的汇总、截图和转述是线索，口径不明或可能有损且会改变决定时，从原始数据、记录或原话抽样核对。
 
 区分事实、推断和未知；可变状态绑定可复查的版本、时间或查询条件。来源冲突时核对适用范围和新旧决定，不能靠数量投票：当前实现不能否定已确认要求，新决定也不证明已经实现。高风险结论需要独立来源或可失败实验；继续阅读不能消除的关键假设，用最小可逆实验验证。
 
 证据足以支持下一步，或新信息已不改变决定时停止。事实不可取得时说明缺口及影响，不编造结论。返回结论、来源和适用边界；仅昂贵、不可复现或跨会话有用的证据需要持久保存。
 </pre></details><div class="reading-body"><h2>最小研究</h2>
-<p>用于缺少会改变当前决定的事实。从项目入口定位本问题的责任资料：业务约定与决定回答“应当怎样”，代码、配置和运行观察回答“实际怎样”，任务记录回答“目前做到哪里”。入口缺失时定向搜索，不先通读全部文档；项目之外再查相关系统或权威一手来源。用户或他人整理的汇总、截图和转述是线索，口径不明或可能有损且会改变决定时，从原始数据、记录或原话抽样核对。</p>
+<p>结论要依赖没亲自核对的汇总、截图或转述，来源互相冲突，或缺少会改变当前决定的事实时使用。从项目入口定位本问题的责任资料：业务约定与决定回答“应当怎样”，代码、配置和运行观察回答“实际怎样”，任务记录回答“目前做到哪里”。入口缺失时定向搜索，不先通读全部文档；项目之外再查相关系统或权威一手来源。用户或他人整理的汇总、截图和转述是线索，口径不明或可能有损且会改变决定时，从原始数据、记录或原话抽样核对。</p>
 <p>区分事实、推断和未知；可变状态绑定可复查的版本、时间或查询条件。来源冲突时核对适用范围和新旧决定，不能靠数量投票：当前实现不能否定已确认要求，新决定也不证明已经实现。高风险结论需要独立来源或可失败实验；继续阅读不能消除的关键假设，用最小可逆实验验证。</p>
 <p>证据足以支持下一步，或新信息已不改变决定时停止。事实不可取得时说明缺口及影响，不编造结论。返回结论、来源和适用边界；仅昂贵、不可复现或跨会话有用的证据需要持久保存。</p></div></details>
 <details class="reference" id="doc-74656d706c617465732f776f726b2e6d64" data-path="templates/work.md" hidden><summary>当前工作：&lt;用户结果&gt;</summary><div class="reference-context"><span class="label">何时调用</span></div><details class="raw-source"><summary>查看完整 Markdown 原文</summary><pre>---
@@ -973,6 +989,6 @@ function reveal(){const element=document.getElementById(location.hash.slice(1));
 window.addEventListener('hashchange',reveal);document.addEventListener('click',event=>{const link=event.target.closest('a[href^="#"]');if(link&&link.hash===location.hash)reveal();});document.getElementById('close-reader').onclick=()=>reader.close();
 reader.addEventListener('click',event=>{if(event.target===reader){const r=reader.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right)reader.close();}});
 const patch=JSON.parse(document.getElementById('patch-data').textContent);
-function draw(){const target=document.getElementById('diff'),status=document.getElementById('diff-status');target.textContent='';document.getElementById('diff-controls').hidden=!patch.trim();if(!patch.trim()){status.textContent='没有文本差异。';return;}if(!window.Diff2Html){status.textContent='差异库未加载，请核对本地资源。';return;}try{const rule=name=>name==='SKILL.md'||/^(references|templates)\/.*\.md$/.test(name);const files=Diff2Html.parse(patch).filter(f=>document.getElementById('scope').value==='all'||rule(f.oldName)||rule(f.newName));target.innerHTML=Diff2Html.html(files,{drawFileList:true,matching:'lines',diffStyle:'char',outputFormat:document.getElementById('layout').value});status.textContent=files.length?'显示 '+files.length+' 个文件。文本变化不等于行为收益。':'技能规则与参考没有文本变化；可切换到全部源码。';}catch(error){status.textContent='无法解析差异：'+error.message;}}
+function draw(){const target=document.getElementById('diff'),status=document.getElementById('diff-status');target.textContent='';document.getElementById('diff-controls').hidden=!patch.trim();if(!patch.trim()){status.textContent='没有文本差异。';return;}if(!window.Diff2Html){status.textContent='差异库未加载，请核对本地资源。';return;}try{const rule=name=>name==='SKILL.md'||/^(references|templates)\/.*\.md$/.test(name);const files=Diff2Html.parse(patch).filter(f=>document.getElementById('scope').value==='all'||rule(f.oldName)||rule(f.newName));target.innerHTML=Diff2Html.html(files,{drawFileList:true,matching:'lines',diffStyle:'char',maxLineSizeInBlockForComparison:1000,outputFormat:document.getElementById('layout').value});status.textContent=files.length?'显示 '+files.length+' 个文件。文本变化不等于行为收益。':'技能规则与参考没有文本变化；可切换到全部源码。';}catch(error){status.textContent='无法解析差异：'+error.message;}}
 document.getElementById('layout').onchange=draw;document.getElementById('scope').onchange=draw;document.getElementById('review').ontoggle=event=>{if(event.target.open)draw();};search();reveal();
 </script></body></html>
