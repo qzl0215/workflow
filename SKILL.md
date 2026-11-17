@@ -1,7 +1,7 @@
 ---
 name: workflow
 description: 推进用户目标与已授权任务：新功能、改版、部署到生产或方向不清的任务，开干前先澄清、确认需求契约、再让用户选方案；小事和已确认的工作直接做，轻量验真并完成交付。用户说 grill-me、要求先问清楚或挑战方案时先做深度质询。需求讨论和审查不自动授权实施；纯事实问答直接回答。
-version: 5.4.0
+version: 5.5.0
 author: zhonglin
 license: MIT
 ---
@@ -50,15 +50,15 @@ license: MIT
 |---|---|
 | 要走开干流程，或目标、方法、重要取舍需校准 | [目标共创](references/frame.md) |
 | 缺少会改变决定的事实 | [最小研究](references/research.md) |
-| 用户要求质询，或难逆、高代价、探索型方案的关键假设缺证据 | [深度质询](references/grill.md) |
-| 体验方向需要比较或真实交互验证 | [体验探索](references/experience.md) |
+| 用户要求质询，需求澄清要分轮问，或难逆、高代价、探索型方案的关键假设缺证据 | [深度质询](references/grill.md) |
+| 体验方向需要比较或真实交互验证，或大事的方案要做成页面 demo | [体验探索](references/experience.md) |
 
 ### 推进任务
 
 | 何时读取 | 参考 |
 |---|---|
-| 多项结果有依赖或集成风险，或定稿后交给中档实施 | [结果规划](references/plan.md) |
-| 宿主允许协作，且独立任务或复核有净收益 | [编排协作](references/orchestrate.md) |
+| 多项结果有依赖或集成风险，开工前要定测试，或定稿后交给中档实施 | [结果规划](references/plan.md) |
+| 方案确认后有 3 块以上独立工作，或宿主允许协作且独立任务、复核有净收益 | [编排协作](references/orchestrate.md) |
 | 执行现场、输入基线或共享资源需处理 | [执行任务](references/execute.md) |
 | 失败原因不清、证据冲突或尝试没有进展 | [恢复失败](references/recover.md) |
 
