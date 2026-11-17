@@ -20,21 +20,23 @@
 - 保留权限、现场保护、证据适用性、原生交付与失败恢复。表述不能扩大验证能证明的范围。
 - 运行内容使用中文；命令、路径、API、ID 和兼容名保留机器标识。
 - AI 阅读以运行效率为先：精简入口、按需可达，用实际任务检查无关读取和重复判断，不以少字数代替行为验证。人类阅读以易懂为先：用图解释分支、依赖与闭环，细节可直接展开；HTML 从源码生成，不手工维护第二套规则。修改路由或接口时同步其消费者、manifest、README 和生成页；发布白名单继续精确，但不以固定词句冻结技能结构。
-- 模型行为默认用真实会话观察（`scripts/observe.py`）和少量定向场景验证，不跑成批的多模型评测；项目 owner 于 2026-11-17 要求如此，只有 owner 点名时才按 [评测说明](evals/README.md) 做完整评测。离线检查不能冒充模型结果，决策探针不能冒充端到端验收；公开记录样本与限制。原始日志可能含本机信息，放在仓库外。
+- 模型行为默认用真实会话观察（`dev/observe.py`）和少量定向场景验证，不跑成批的多模型评测；项目 owner 于 2026-11-17 要求如此，只有 owner 点名时才按 [评测说明](evals/README.md) 做完整评测。离线检查不能冒充模型结果，决策探针不能冒充端到端验收；公开记录样本与限制。原始日志可能含本机信息，放在仓库外。
+- 目录分工：`references/` 按需读的参考，`templates/` 模板，`scripts/` 随包安装的运行时脚本，`dev/` 开发和发布脚本（不随包）。
+- 每次请求都要的习惯放在常驻的全局习惯文件里，不只写在技能里：多数真实会话不加载本技能。团队成员在自己的全局习惯（如 `~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`）里加一句：“动手前先想清真用户和真目标：谁在什么处境下、为什么提的是这个需求；小事心里想，大事写成‘我的理解’让用户改。”
 
 ## 必需检查
 
-开发时先运行与影响面相称的定向测试。视觉源变化时先生成页面：
+开发时先运行与影响面相称的定向测试。总览页的“文件与引用”一节从全部文件推出，任何文件变化后都先生成页面：
 
 ```bash
-python3 -B scripts/generate_visual_map.py
-python3 -B scripts/generate_visual_map.py --check
+python3 -B dev/generate_visual_map.py
+python3 -B dev/generate_visual_map.py --check
 ```
 
 运行时内容稳定后刷新逐文件身份并提交候选：
 
 ```bash
-python3 -B scripts/release_check.py --write-manifest
+python3 -B dev/release_check.py --write-manifest
 git add <本次文件>
 git commit
 ```
@@ -42,7 +44,7 @@ git commit
 候选提交后先生成对比页给评审看；省略 `--base` 时以 CHANGELOG 里上一个已发布版本为基线，未提交的改动不在对比里：
 
 ```bash
-python3 -B scripts/generate_visual_map.py --review-output <仓库外路径>
+python3 -B dev/generate_visual_map.py --review-output <仓库外路径>
 ```
 
 完整测试与组合发布门由正式发布入口在最终 target-first 集成 SHA 上恰好运行一次；`release_check.py` 继续负责 manifest、运行时 doctor、发布资产和生成视觉图的一致性，发布入口只编排而不复制这些责任。
@@ -51,7 +53,7 @@ python3 -B scripts/generate_visual_map.py --review-output <仓库外路径>
 
 ```bash
 python3 -B -m unittest discover -s tests -p 'test_*.py'
-python3 -B scripts/release_check.py
+python3 -B dev/release_check.py
 ```
 
 成功时只保留范围与总结果，失败时展开具体错误和恢复入口。
@@ -63,7 +65,7 @@ python3 -B scripts/release_check.py
 候选已提交且工作树干净后，正式发布只有一个项目入口：
 
 ```bash
-python3 -B scripts/publish.py --version <版本> --yes
+python3 -B dev/publish.py --version <版本> --yes
 ```
 
 该入口复用 `safe_merge.py` 在最新 `main` 上形成 target-first 集成，只在该最终 SHA 上执行一次完整测试与组合门，然后以 `git push --atomic` 同时更新 `main` 和新版本标签。标签碰撞时失败关闭；已原子落地但 Release 尚未完成时，可从同一不可变标签恢复 Release、资产验证和本机同步，不重跑同一完整门。

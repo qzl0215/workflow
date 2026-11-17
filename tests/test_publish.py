@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 PACKAGE = Path(__file__).resolve().parents[1]
-SCRIPT = PACKAGE / "scripts/publish.py"
+SCRIPT = PACKAGE / "dev/publish.py"
 
 
 def run(*parts: str) -> subprocess.CompletedProcess[str]:

@@ -9,7 +9,7 @@ import tempfile
 import unittest
 
 PACKAGE = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("workflow_observe", PACKAGE / "scripts/observe.py")
+spec = importlib.util.spec_from_file_location("workflow_observe", PACKAGE / "dev/observe.py")
 observe = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(observe)
 

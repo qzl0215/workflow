@@ -39,10 +39,10 @@ AI 从精简的 [技能入口](SKILL.md) 判断当前请求、按需读取参考
 手动比较两个已提交版本（输出到仓库外）：
 
 ```bash
-python3 -B scripts/generate_visual_map.py --base 5.2.0 --target 5.2.1 --review-output /tmp/workflow-review.html
+python3 -B dev/generate_visual_map.py --base 5.2.0 --target 5.2.1 --review-output /tmp/workflow-review.html
 ```
 
-省略 `--base` 和 `--target` 时，比较当前提交与 CHANGELOG 里上一个已发布版本，用于发布前评审。目标版本须包含 5.2 起的可视化资源；历史版本可作为基线。正式发布自动生成审阅页。文本差异不能代替行为评测；验证方法见 [评测说明](evals/README.md)，实际加载观测的样本与限制见 [5.2 评测](evals/5.2.0-results.md)。日常会话里的真实加载用 `scripts/observe.py` 观察，口径与限制见评测说明的 5.4 记录。
+省略 `--base` 和 `--target` 时，比较当前提交与 CHANGELOG 里上一个已发布版本，用于发布前评审。目标版本须包含 5.2 起的可视化资源；历史版本可作为基线。正式发布自动生成审阅页。文本差异不能代替行为评测；验证方法见 [评测说明](evals/README.md)，实际加载观测的样本与限制见 [5.2 评测](evals/5.2.0-results.md)。日常会话里的真实加载用 `dev/observe.py` 观察，口径与限制见评测说明的 5.4 记录。
 
 ## 安装
 

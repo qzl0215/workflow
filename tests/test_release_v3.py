@@ -47,9 +47,9 @@ SOURCE_ONLY_FILES = {
     "evals/4.0.0-results.md",
     "evals/4.1.0-results.md",
     "evals/4.2.0-results.md",
-    "scripts/evaluate.py",
+    "dev/evaluate.py",
     "tests/test_evaluate.py",
-    "scripts/observe.py",
+    "dev/observe.py",
     "tests/test_observe.py",
     "docs/workflow-visual-map.html",
     "docs/assets/diff2html/diff2html.min.js",
@@ -57,9 +57,9 @@ SOURCE_ONLY_FILES = {
     "docs/assets/diff2html/LICENSE.md",
     "docs/assets/diff2html/provenance.json",
     "evals/5.2.0-results.md",
-    "scripts/generate_visual_map.py",
-    "scripts/publish.py",
-    "scripts/release_check.py",
+    "dev/generate_visual_map.py",
+    "dev/publish.py",
+    "dev/release_check.py",
     "tests/test_portability.py",
     "tests/test_publish.py",
     "tests/test_protocol_v3.py",
@@ -124,6 +124,14 @@ def doctor(package: Path) -> subprocess.CompletedProcess[str]:
 
 
 class WorkflowV3ReleaseContractTest(unittest.TestCase):
+    def test_scripts_directory_holds_only_runtime_scripts(self) -> None:
+        manifest = json.loads((PACKAGE / MANIFEST).read_text(encoding="utf-8"))
+        runtime_scripts = {name for name in manifest["runtime"]["files"] if name.startswith("scripts/")}
+        tracked = subprocess.run(
+            ["git", "ls-files", "scripts"], cwd=PACKAGE, text=True, stdout=subprocess.PIPE, check=True
+        ).stdout.split()
+        self.assertEqual(set(tracked), runtime_scripts)
+
     def test_manifest_is_exact_and_every_runtime_hash_matches(self) -> None:
         value = manifest(PACKAGE)
         self.assertEqual(set(value), {"schema", "name", "version", "entrypoint", "runtime", "source_only"})
@@ -261,7 +269,7 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
             result = run(
                 sys.executable,
                 "-B",
-                str(source / "scripts/release_check.py"),
+                str(source / "dev/release_check.py"),
                 "--write-manifest",
                 cwd=source,
             )
@@ -273,7 +281,7 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
             rejected = run(
                 sys.executable,
                 "-B",
-                str(source / "scripts/release_check.py"),
+                str(source / "dev/release_check.py"),
                 "--write-manifest",
                 cwd=source,
             )
@@ -296,7 +304,7 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
             built = run(
                 sys.executable,
                 "-B",
-                str(source / "scripts/release_check.py"),
+                str(source / "dev/release_check.py"),
                 "--build-runtime",
                 str(first),
                 "--git-ref",
@@ -313,7 +321,7 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
             rebuilt = run(
                 sys.executable,
                 "-B",
-                str(source / "scripts/release_check.py"),
+                str(source / "dev/release_check.py"),
                 "--build-runtime",
                 str(second),
                 "--git-ref",
@@ -327,7 +335,7 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
             rejected = run(
                 sys.executable,
                 "-B",
-                str(source / "scripts/release_check.py"),
+                str(source / "dev/release_check.py"),
                 "--build-runtime",
                 str(mutable),
                 "--git-ref",
@@ -339,7 +347,7 @@ class WorkflowV3ReleaseContractTest(unittest.TestCase):
             self.assertFalse(mutable.exists())
 
     def test_default_release_gate_is_one_composite_entrypoint(self) -> None:
-        result = run(sys.executable, "-B", str(PACKAGE / "scripts/release_check.py"), cwd=PACKAGE)
+        result = run(sys.executable, "-B", str(PACKAGE / "dev/release_check.py"), cwd=PACKAGE)
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertIn("workflow_release_check: OK", result.stdout)
 

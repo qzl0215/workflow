@@ -486,10 +486,14 @@ def run_check(destination: Path) -> int:
     )
     if tree_errors:
         return fail("；".join(tree_errors))
-    scripts = ("workflow_doctor.py",) if runtime else ("release_check.py",)
-    for script in scripts:
+    if runtime:
+        checker = "scripts/workflow_doctor.py"
+    else:
+        # 5.9.0 起发布检查在 dev/；旧版源码仍在 scripts/。
+        checker = "dev/release_check.py" if (destination / "dev/release_check.py").is_file() else "scripts/release_check.py"
+    for script in (checker,):
         result = subprocess.run(
-            [sys.executable, "-B", str(destination / "scripts" / script)],
+            [sys.executable, "-B", str(destination / script)],
             cwd=destination,
             text=True,
             stdout=subprocess.PIPE,

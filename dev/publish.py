@@ -12,7 +12,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-import install
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+import install  # noqa: E402
 
 
 PACKAGE = Path(__file__).resolve().parents[1]
@@ -24,7 +25,7 @@ REVIEW_NAME = "workflow-review.html"
 VERSION = re.compile(r"(?:[3-9]|[1-9][0-9]+)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\Z")
 FULL_GATE = (
     f"{sys.executable} -B -m unittest discover -s tests -p 'test_*.py' && "
-    f"{sys.executable} -B scripts/release_check.py"
+    f"{sys.executable} -B dev/release_check.py"
 )
 
 
@@ -84,7 +85,7 @@ def release_commands(version: str, integration_sha: str, asset: Path) -> list[li
         [
             sys.executable,
             "-B",
-            str(PACKAGE / "scripts/release_check.py"),
+            str(PACKAGE / "dev/release_check.py"),
             "--build-runtime",
             str(asset),
             "--git-ref",
@@ -253,7 +254,7 @@ def publish(version: str) -> None:
         if comparison_base(version, integration_sha) != base:
             raise PublishError('integration changed the release comparison baseline')
         checked('git', 'merge-base', '--is-ancestor', base, integration_sha)
-        checked(sys.executable, '-B', str(PACKAGE/'scripts/generate_visual_map.py'),
+        checked(sys.executable, '-B', str(PACKAGE/'dev/generate_visual_map.py'),
                 '--base', base, '--target', integration_sha, '--review-output', str(temp/REVIEW_NAME))
         if release_state(version) is None:
             create = release_commands(version, integration_sha, asset)[2]

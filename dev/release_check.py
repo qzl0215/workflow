@@ -15,7 +15,8 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-import install
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+import install  # noqa: E402
 import workflow_doctor
 
 
@@ -34,9 +35,9 @@ SOURCE_ONLY_FILES = frozenset(
         "evals/4.0.0-results.md",
         "evals/4.1.0-results.md",
         "evals/4.2.0-results.md",
-        "scripts/evaluate.py",
+        "dev/evaluate.py",
         "tests/test_evaluate.py",
-        "scripts/observe.py",
+        "dev/observe.py",
         "tests/test_observe.py",
         "docs/workflow-visual-map.html",
         "docs/assets/diff2html/diff2html.min.js",
@@ -44,9 +45,9 @@ SOURCE_ONLY_FILES = frozenset(
         "docs/assets/diff2html/LICENSE.md",
         "docs/assets/diff2html/provenance.json",
         "evals/5.2.0-results.md",
-        "scripts/generate_visual_map.py",
-        "scripts/publish.py",
-        "scripts/release_check.py",
+        "dev/generate_visual_map.py",
+        "dev/publish.py",
+        "dev/release_check.py",
         "tests/test_portability.py",
         "tests/test_publish.py",
         "tests/test_protocol_v3.py",
@@ -197,7 +198,7 @@ def release_gate(package: Path = PACKAGE) -> list[str]:
     doctor_code, doctor_output = run_python(package, "scripts/workflow_doctor.py")
     if doctor_code:
         errors.append("workflow doctor 失败：\n" + doctor_output)
-    visual_code, visual_output = run_python(package, "scripts/generate_visual_map.py", "--check")
+    visual_code, visual_output = run_python(package, "dev/generate_visual_map.py", "--check")
     if visual_code:
         errors.append("视觉地图校验失败：\n" + visual_output)
     return errors

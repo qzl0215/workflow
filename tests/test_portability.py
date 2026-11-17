@@ -88,12 +88,12 @@ class PortabilityContractTest(unittest.TestCase):
             target.parent.mkdir(parents=True)
             shutil.copytree(PACKAGE, target, ignore=shutil.ignore_patterns(".git"))
             for script, args in (
-                ("workflow_doctor.py", []),
-                ("release_check.py", []),
-                ("generate_visual_map.py", ["--check"]),
+                ("scripts/workflow_doctor.py", []),
+                ("dev/release_check.py", []),
+                ("dev/generate_visual_map.py", ["--check"]),
             ):
                 result = subprocess.run(
-                    [sys.executable, "-B", str(target / "scripts" / script), *args],
+                    [sys.executable, "-B", str(target / script), *args],
                     cwd=target,
                     text=True,
                     stdout=subprocess.PIPE,
@@ -1140,7 +1140,7 @@ class PortabilityContractTest(unittest.TestCase):
                 )
             elif relative == "scripts/install.py":
                 shutil.copy2(PACKAGE / relative, path)
-            elif relative == "scripts/release_check.py":
+            elif relative == "dev/release_check.py":
                 path.write_text(
                     "if __name__ == '__main__':\n    print('legacy_release_check: OK')\n",
                     encoding="utf-8",

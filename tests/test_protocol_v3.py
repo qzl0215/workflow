@@ -12,7 +12,7 @@ import json
 from html.parser import HTMLParser
 
 PACKAGE = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("workflow_visual", PACKAGE / "scripts/generate_visual_map.py")
+spec = importlib.util.spec_from_file_location("workflow_visual", PACKAGE / "dev/generate_visual_map.py")
 visual = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(visual)
 
@@ -172,6 +172,19 @@ class SkillStructureTest(unittest.TestCase):
         for path, contents in raw.sources.items():
             self.assertEqual(contents, (PACKAGE/path).read_text())
         self.assertEqual(set(raw.sources), {'SKILL.md', 'templates/work.md', *(p.relative_to(PACKAGE).as_posix() for p in (PACKAGE/'references').glob('*.md'))})
+
+
+class FileMapTest(unittest.TestCase):
+    def test_file_map_covers_every_packaged_file_and_every_routed_reference(self) -> None:
+        manifest = json.loads((PACKAGE / "workflow-package.json").read_text(encoding="utf-8"))
+        files = set(manifest["runtime"]["files"]) | set(manifest["source_only"]) | {"workflow-package.json"}
+        page, _ = visual.build()
+        section = page[page.index('<section id="files"'):page.index('<section id="changes"')]
+        panels = set(re.findall(r'class="map-panel" data-path="([^"]+)"', section))
+        self.assertEqual(panels, files)
+        routed = {path for _, path in visual.LINK.findall(visual.section((PACKAGE / "SKILL.md").read_text(encoding="utf-8"), "按需读取"))}
+        nodes = set(re.findall(r'<g class="n [^"]*" data-go="([^"]+)"', section))
+        self.assertLessEqual(routed, nodes)
 
 
 if __name__ == "__main__":
