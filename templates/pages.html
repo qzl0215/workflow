@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--
+workflow 页面版式库
+
+用途：要给人看一份对照、方案或汇报页面时，从这里取版式，不从零设计。
+读法：先只读这段索引；选定后搜索「@pattern 名称」，只读到对应的「@end 名称」为止。
+用法：复制公共底座（第一个 style）和选中的片段，把示例内容换成真实内容。
+      发布为 Artifact 时去掉最前面的 doctype、html 和 meta 三项；存成本地文件时保留。
+
+书写约定（换内容时一并遵守）：
+- 小标题写结论，不写话题。
+- 版式只是骨架，内容要写足：行数、维度、数字和证据按真实情况写全，不因示例只有三四行而少写；一页通常组合多个版式。
+- 格子里只写短语，不写整句；写不下就拆成更多行或列，不删信息。
+- 每张图或表下面写依据：数据来源、口径、核对时间。
+- 要读者回复的，把怎么回放在页首。
+- 方案逐行可比：每个方案同样的行、同样的顺序，含风险和怎么验收。
+- 颜色只用底座里的变量；手机上折行，不横向滚动。
+- 截图单独发布成文件，不内嵌进页面。
+- 没有数据不画条形；同一组横条共用一个刻度。
+
+索引（名称｜表达什么｜何时用）：
+ask     ｜页首决策框：一句结论、要读者定的一件事、最短回复｜需要读者拍板时放在页面最上方，先于任何说明
+me      ｜并排摆出我对用户、背景、痛点、目标的四个前提，并标明哪些已确认｜动手前对齐理解、请对方只改错处时用
+tally   ｜用三个大数概括全页，每个数带一行小字和证据强度｜页面开头要让人一眼抓住量级时用
+gap     ｜逐项对照现状与目标，同一维度同一行，变化的格子有标记｜要说清每一项差在哪、做到哪时用
+status  ｜逐项现在怎样，用状态点标出通、半通、断｜盘点现状，不需要目标列时
+swap    ｜旧做法划掉、箭头指向新做法，一行一条｜要改规则或约定、请对方逐条点头时用
+accept  ｜每个验收项并排写出成与没成各自看到什么，验收可以判失败｜交付前约定凭什么算做到时用
+scale   ｜同一刻度的横条对比现在与改后，虚线标出目标线，数字在右｜要让人看出差了多少倍、过没过线时用
+rank    ｜多项按大小排序，颜色表示各自状态｜项目多，既要看谁大又要看谁没做
+options ｜两到三个方案并排，每张卡同样的行、同样的顺序，逐行可比｜让读者在几种做法里选一个时用；推荐的排第一，排除的弱化
+matrix  ｜要求 × 方案矩阵：每格三态（有 / 部分 / 没有），列顶用占比条汇总｜逐条核对几个方案或版本各满足了哪些要求时用
+phases  ｜分期上线：上方里程碑条，下方编号的每一期（做什么、工时、怎么算做到）｜一件事要分几步交付、每步有过关标准时用
+pairs   ｜每个指标一对横条，同一刻度上比之前和之后｜有两三个能量化的指标要比前后时
+stages  ｜逐个环节对照之前和之后，并给出判断｜改动涉及多个环节、好坏不一时
+evidence｜把结论分成已证实、未证实、没做三栏，每条写明怎么查的｜交付或汇报时要说清证据边界
+flow    ｜几个方框用箭头连成一条短流程，标出外部环节和要问人的关口｜要讲清一件事按什么顺序发生时
+shots   ｜改前改后截图并排，下面逐条标变好、变差、没解决｜界面改动要让人亲眼看出差别时
+lanes   ｜泳道格：列是阶段、行是不同情形，每格标重点做、轻轻过或跳过｜同一流程在不同情形下轻重不同时
+-->
+<title>workflow 页面版式库</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 公共底座：全库只此一份。片段只用这里的颜色变量和公共类，不写死颜色。 */
+:root{--bg:#f7f8f5;--card:#ffffff;--ink:#182c30;--muted:#5b6b6f;--line:#d4dcd9;--soft:#eaf2ef;--accent:#086a70;--on-accent:#ffffff;--good:#1f7a4d;--warn:#b96a10;--bad:#b3382c;
+--sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10191b;--card:#172325;--ink:#e3ecea;--muted:#93a5a6;--line:#2c3c3e;--soft:#1d3032;--accent:#4fc0c2;--on-accent:#06282a;--good:#5fcf96;--warn:#f0a94a;--bad:#f08a7e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10191b;--card:#172325;--ink:#e3ecea;--muted:#93a5a6;--line:#2c3c3e;--soft:#1d3032;--accent:#4fc0c2;--on-accent:#06282a;--good:#5fcf96;--warn:#f0a94a;--bad:#f08a7e;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 var(--sans);padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1{font-size:28px;line-height:1.3;margin:0;letter-spacing:-.02em;text-wrap:balance}
+h2{font-size:18px;line-height:1.4;margin:0;text-wrap:balance}
+h3{font-size:15px;margin:0}
+p{margin:0}
+section{display:flex;flex-direction:column;gap:12px;min-width:0}
+.eyebrow{font:700 11px/1.6 var(--mono);letter-spacing:.1em;color:var(--accent)}
+.lede{color:var(--muted);max-width:44em}
+.cap{font-size:12px;color:var(--muted)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+/* 状态标签：ok 成立/更好，part 部分/持平，no 没有/变差，rec 推荐 */
+.pill{display:inline-block;font-size:12px;line-height:1.5;font-weight:700;padding:1px 9px;border-radius:99px;border:1.5px solid currentColor;white-space:nowrap}
+.pill.ok{color:var(--good)}.pill.part{color:var(--warn)}.pill.no{color:var(--bad)}.pill.rec{color:var(--on-accent);background:var(--accent);border-color:var(--accent)}
+/* 横条：.track 是刻度槽，.fill 用内联 width 百分比；同一组横条共用同一刻度 */
+.track{position:relative;height:14px;background:var(--soft);border-radius:3px;min-width:0}
+.fill{display:block;height:100%;border-radius:3px;background:var(--accent)}
+.fill.was{background:var(--muted)}.fill.good{background:var(--good)}.fill.bad{background:var(--bad)}
+.num{font-variant-numeric:tabular-nums;font-weight:700}
+@media(max-width:640px){h1{font-size:23px}.two,.three{grid-template-columns:minmax(0,1fr)}}
+</style>
+<div class="wrap">
+<header><span class="eyebrow">WORKFLOW · 页面版式库</span><h1>版式按需取用，内容按真实情况写足</h1><p class="lede">示例统一用「订单导出提速」这个虚构场景。每段上方的名称就是索引里的名称。</p></header>
+<p class="cap">@pattern ask</p>
+<!-- @pattern ask｜页首决策框：一句结论、要读者定的一件事、最短回复｜需要读者拍板时放在页面最上方，先于任何说明 -->
+<section class="p-ask">
+<h2>推荐A：两天做完，可回退</h2>
+<div class="status">
+<span class="pill ok">实测 86 秒降到 7 秒</span>
+<span class="pill part">十万条未实测</span>
+<span class="pill no">尚未上线</span>
+</div>
+<div class="ask">
+<p class="eyebrow">要你定的一件事</p>
+<p class="q">订单导出用哪个做法</p>
+<ul class="replies">
+<li class="first"><b>回「A」</b><span>即开工，两天上线</span></li>
+<li><b>回「B」</b><span>只加缓存，半天上线</span></li>
+<li><b>回「先不做」</b><span>保持现状</span></li>
+</ul>
+</div>
+</section>
+<style>
+.p-ask .status{display:flex;flex-wrap:wrap;gap:8px}
+.p-ask .ask{background:var(--soft);border-left:4px solid var(--accent);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.p-ask .q{font-size:17px;font-weight:700}
+.p-ask .replies{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.p-ask .replies li{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 12px;display:flex;flex-direction:column}
+.p-ask .replies li.first{border-color:var(--accent)}
+.p-ask .replies b{color:var(--accent)}
+.p-ask .replies span{font-size:13px;color:var(--muted)}
+@media(max-width:640px){.p-ask .replies{grid-template-columns:minmax(0,1fr)}}
+</style>
+<!-- @end ask -->
+
+<p class="cap">@pattern me</p>
+<!-- @pattern me｜并排摆出我对用户、背景、痛点、目标的四个前提，并标明哪些已确认｜动手前对齐理解、请对方只改错处时用 -->
+<section class="p-me">
+<h2>我的理解：导出慢在逐条查询</h2>
+<div class="p-me-grid">
+<div class="box"><span class="cap">真用户</span><b>每天导订单的运营</b><span class="pill ok">已确认</span></div>
+<div class="box"><span class="cap">真背景</span><b>月底对账要导全量</b><span class="pill ok">已确认</span></div>
+<div class="box"><span class="cap">真痛点</span><b>导一次等 86 秒</b><span class="pill ok">已确认</span></div>
+<div class="box"><span class="cap">真目标</span><b>7 秒内拿到文件</b><span class="pill part">推测</span></div>
+</div>
+<p class="cap">只改不对的那一格，其余默认照此开工。</p>
+</section>
+<style>
+.p-me .p-me-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.p-me .box{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.p-me .box b{line-height:1.45}
+@media(max-width:900px){.p-me .p-me-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.p-me .p-me-grid{grid-template-columns:minmax(0,1fr)}}
+</style>
+<!-- @end me -->
+
+<p class="cap">@pattern tally</p>
+<!-- @pattern tally｜用三个大数概括全页，每个数带一行小字和证据强度｜页面开头要让人一眼抓住量级时用 -->
+<section class="p-tally">
+<h2>导出从 86 秒降到 7 秒</h2>
+<div class="three">
+<div class="box"><b class="num">86 秒</b><span class="cap">现在导一次的耗时</span><span class="pill ok">已验证</span></div>
+<div class="box"><b class="num">7 秒</b><span class="cap">改后导一次的耗时</span><span class="pill part">估算</span></div>
+<div class="box"><b class="num">2,400 次</b><span class="cap">现在一次导出的查询数</span><span class="pill ok">已验证</span></div>
+</div>
+</section>
+<style>
+.p-tally .box{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.p-tally .num{font-size:26px;line-height:1.2}
+.p-tally .pill{margin-top:4px}
+</style>
+<!-- @end tally -->
+
+<p class="cap">@pattern gap</p>
+<!-- @pattern gap｜逐项对照现状与目标，同一维度同一行，变化的格子有标记｜要说清每一项差在哪、做到哪时用 -->
+<section class="p-gap">
+<h2>四项里三项要改，一项不动</h2>
+<div class="box p-gap-board">
+<div class="p-gap-row p-gap-head"><span>项目</span><span>现状</span><span>目标</span><span>状态</span></div>
+<div class="p-gap-row"><b>查询方式</b><span data-label="现状">逐条查询</span><span data-label="目标" class="p-gap-chg">批量查询</span><span data-label="状态"><i class="pill ok">已做完</i></span></div>
+<div class="p-gap-row"><b>重复数据</b><span data-label="现状">每次重查</span><span data-label="目标" class="p-gap-chg">缓存 10 分钟</span><span data-label="状态"><i class="pill part">做了一半</i></span></div>
+<div class="p-gap-row"><b>导出耗时</b><span data-label="现状">86 秒</span><span data-label="目标" class="p-gap-chg">7 秒</span><span data-label="状态"><i class="pill no">还没开始</i></span></div>
+<div class="p-gap-row"><b>文件格式</b><span data-label="现状">表格文件</span><span data-label="目标">表格文件</span><span data-label="状态"><i class="pill part">不动</i></span></div>
+</div>
+</section>
+<style>
+.p-gap .p-gap-board{padding:0}
+.p-gap .p-gap-row{display:grid;grid-template-columns:minmax(0,9em) minmax(0,1fr) minmax(0,1fr) minmax(0,7em);gap:6px 16px;padding:12px 16px;border-top:1px solid var(--line);align-items:center}
+.p-gap .p-gap-row:first-child{border-top:0}
+.p-gap .p-gap-head{font-size:12px;color:var(--muted);padding-block:8px}
+.p-gap .p-gap-chg{font-weight:700;border-left:3px solid var(--accent);padding-left:8px;background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.p-gap .pill{font-style:normal}
+@media(max-width:640px){
+.p-gap .p-gap-head{display:none}
+.p-gap .p-gap-row{grid-template-columns:minmax(0,1fr)}
+.p-gap .p-gap-row [data-label]::before{content:attr(data-label);display:inline-block;width:3.2em;font-size:12px;font-weight:400;color:var(--muted)}
+}
+</style>
+<!-- @end gap -->
+
+<p class="cap">@pattern status</p>
+<!-- @pattern status｜逐项现在怎样，用状态点标出通、半通、断｜盘点现状，不需要目标列时 -->
+<section class="p-status">
+<h2>导出四个环节，只打通了查询</h2>
+<div class="box">
+<div class="row head"><span>环节</span><span>现在</span><span>状态</span></div>
+<div class="row"><b>查询</b><span data-label="现在">12 张报表里 5 张已改批量</span><span><i class="dot ok">通</i></span></div>
+<div class="row"><b>缓存</b><span data-label="现在">商品信息已缓存，客户信息没有</span><span><i class="dot part">半通</i></span></div>
+<div class="row"><b>写文件</b><span data-label="现在">仍是全部查完再写，超 5 万行会满</span><span><i class="dot no">断</i></span></div>
+<div class="row"><b>下载</b><span data-label="现在">链接 10 分钟失效，没有重试</span><span><i class="dot part">半通</i></span></div>
+<p class="cap">依据：11 月 17 日在测试环境逐个环节跑过一遍，万行订单样本。</p>
+</div>
+</section>
+<style>
+.p-status .box{display:flex;flex-direction:column;padding:0}
+.p-status .row{display:grid;grid-template-columns:6em minmax(0,1fr) 5em;gap:14px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);font-size:14px}
+.p-status .head{background:var(--soft);font-size:12px;color:var(--muted);border-radius:6px 6px 0 0}
+.p-status .cap{padding:12px 16px}
+.p-status .dot{font-style:normal;font-size:12px;font-weight:700;white-space:nowrap;padding:3px 10px;border-radius:99px}
+.p-status .dot::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:6px}
+.p-status .dot.ok{color:var(--good);background:color-mix(in srgb,var(--good) 14%,var(--card))}
+.p-status .dot.part{color:var(--warn);background:color-mix(in srgb,var(--warn) 16%,var(--card))}
+.p-status .dot.no{color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--card))}
+@media(max-width:640px){.p-status .head{display:none}.p-status .row{grid-template-columns:minmax(0,1fr) auto;gap:4px 12px}.p-status .row b{grid-column:1/-1}}
+</style>
+<!-- @end status -->
+
+<p class="cap">@pattern swap</p>
+<!-- @pattern swap｜旧做法划掉、箭头指向新做法，一行一条｜要改规则或约定、请对方逐条点头时用 -->
+<section class="p-swap">
+<h2>三条做法要换，换完才到 7 秒</h2>
+<div class="p-swap-list">
+<div class="p-swap-row"><span class="p-swap-was" data-label="原来">每张订单查一次库</span><span class="p-swap-to">→</span><span data-label="改成">每 500 张查一次</span></div>
+<div class="p-swap-row"><span class="p-swap-was" data-label="原来">商品信息每次重查</span><span class="p-swap-to">→</span><span data-label="改成">商品信息缓存 10 分钟</span></div>
+<div class="p-swap-row"><span class="p-swap-was" data-label="原来">全部查完再写文件</span><span class="p-swap-to">→</span><span data-label="改成">查一批写一批</span></div>
+<div class="p-swap-row"><span class="p-swap-new" data-label="新增">新增</span><span class="p-swap-to">＋</span><span data-label="新增">超过 10 秒给出提示</span></div>
+</div>
+</section>
+<style>
+.p-swap .p-swap-list{border-top:1px solid var(--line)}
+.p-swap .p-swap-row{display:grid;grid-template-columns:minmax(0,1fr) 1.5em minmax(0,1fr);gap:4px 12px;padding:11px 0;border-bottom:1px solid var(--line);align-items:start}
+.p-swap .p-swap-was{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--bad)}
+.p-swap .p-swap-new{color:var(--muted)}
+.p-swap .p-swap-to{color:var(--accent);text-align:center;font-weight:700}
+.p-swap .p-swap-row>span:last-child{font-weight:700}
+@media(max-width:640px){
+.p-swap .p-swap-row{grid-template-columns:minmax(0,1fr)}
+.p-swap .p-swap-to{display:none}
+.p-swap .p-swap-row [data-label]::before{content:attr(data-label);display:inline-block;width:3.2em;font-size:12px;font-weight:400;color:var(--muted);text-decoration:none}
+.p-swap .p-swap-new{display:none}
+}
+</style>
+<!-- @end swap -->
+
+<p class="cap">@pattern accept</p>
+<!-- @pattern accept｜每个验收项并排写出成与没成各自看到什么，验收可以判失败｜交付前约定凭什么算做到时用 -->
+<section class="p-accept">
+<h2>三项都过才算提速完成</h2>
+<div class="box p-accept-board">
+<div class="p-accept-row p-accept-head"><span>验收项</span><span>看到什么算成</span><span>看到什么算没成</span></div>
+<div class="p-accept-row"><b>导出耗时</b><span class="p-accept-yes" data-label="算成">一万单 7 秒内出文件</span><span class="p-accept-no" data-label="算没成">任一次超过 10 秒</span></div>
+<div class="p-accept-row"><b>数据一致</b><span class="p-accept-yes" data-label="算成">与旧导出逐行相同</span><span class="p-accept-no" data-label="算没成">有一行对不上</span></div>
+<div class="p-accept-row"><b>缓存不过期</b><span class="p-accept-yes" data-label="算成">改价后 10 分钟内更新</span><span class="p-accept-no" data-label="算没成">导出仍是旧价格</span></div>
+</div>
+</section>
+<style>
+.p-accept .p-accept-board{padding:0}
+.p-accept .p-accept-row{display:grid;grid-template-columns:minmax(0,8em) minmax(0,1fr) minmax(0,1fr);gap:6px 16px;padding:12px 16px;border-top:1px solid var(--line);align-items:start}
+.p-accept .p-accept-row:first-child{border-top:0}
+.p-accept .p-accept-head{font-size:12px;color:var(--muted);padding-block:8px}
+.p-accept .p-accept-yes{border-left:3px solid var(--good);padding-left:8px}
+.p-accept .p-accept-no{border-left:3px solid var(--bad);padding-left:8px}
+@media(max-width:640px){
+.p-accept .p-accept-head{display:none}
+.p-accept .p-accept-row{grid-template-columns:minmax(0,1fr)}
+.p-accept .p-accept-row [data-label]::before{content:attr(data-label);display:block;font-size:12px;color:var(--muted)}
+}
+</style>
+<!-- @end accept -->
+
+<p class="cap">@pattern scale</p>
+<!-- @pattern scale｜同一刻度的横条对比现在与改后，虚线标出目标线，数字在右｜要让人看出差了多少倍、过没过线时用 -->
+<section class="p-scale">
+<h2>只有批量加缓存能过 10 秒线</h2>
+<div class="box">
+<p class="p-scale-big"><b class="num">86 秒</b><span>→</span><b class="num">7 秒</b><span class="pill part">估算</span></p>
+<div class="p-scale-row"><span>现在：逐条查询</span><div class="track"><span class="fill was" style="width:86%"></span><i class="p-scale-limit"></i></div><b class="num">86 秒</b></div>
+<div class="p-scale-row"><span>只改批量查询</span><div class="track"><span class="fill bad" style="width:31%"></span><i class="p-scale-limit"></i></div><b class="num">31 秒</b></div>
+<div class="p-scale-row"><span>改后：批量加缓存</span><div class="track"><span class="fill good" style="width:7%"></span><i class="p-scale-limit"></i></div><b class="num">7 秒</b></div>
+<p class="cap">刻度 0 到 100 秒，三条共用；虚线是 10 秒目标线。</p>
+</div>
+</section>
+<style>
+.p-scale .box{display:flex;flex-direction:column;gap:12px}
+.p-scale .p-scale-big{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:28px;line-height:1.2}
+.p-scale .p-scale-big>span:not(.pill){color:var(--muted);font-size:20px}
+.p-scale .p-scale-row{display:grid;grid-template-columns:minmax(0,9em) minmax(0,1fr) 4em;gap:4px 12px;align-items:center}
+.p-scale .p-scale-row>b{text-align:right;white-space:nowrap}
+.p-scale .p-scale-limit{position:absolute;left:10%;top:-5px;bottom:-5px;border-left:2px dashed var(--ink)}
+@media(max-width:640px){
+.p-scale .p-scale-row{grid-template-columns:minmax(0,1fr) 4em}
+.p-scale .p-scale-row>span{grid-column:1 / -1}
+}
+</style>
+<!-- @end scale -->
+
+<p class="cap">@pattern rank</p>
+<!-- @pattern rank｜多项按大小排序，颜色表示各自状态｜项目多，既要看谁大又要看谁没做 -->
+<section class="p-rank">
+<h2>耗时前 12 的报表，五张还没改批量</h2>
+<div class="box">
+<p class="legend cap"><i class="k ok"></i>已改批量<i class="k part"></i>只改了一半<i class="k no"></i>未改</p>
+<div class="rows">
+<div class="row"><span>订单明细</span><span class="track"><i class="fill ok" style="width:100%"></i></span><b class="num">18.2%</b></div>
+<div class="row"><span>退款明细</span><span class="track"><i class="fill ok" style="width:80%"></i></span><b class="num">14.6%</b></div>
+<div class="row"><span>商品销量</span><span class="track"><i class="fill no" style="width:71%"></i></span><b class="num">12.9%</b></div>
+<div class="row"><span>客户对账</span><span class="track"><i class="fill no" style="width:52%"></i></span><b class="num">9.4%</b></div>
+<div class="row"><span>库存流水</span><span class="track"><i class="fill part" style="width:42%"></i></span><b class="num">7.7%</b></div>
+<div class="row"><span>物流轨迹</span><span class="track"><i class="fill no" style="width:34%"></i></span><b class="num">6.1%</b></div>
+<div class="row"><span>发票清单</span><span class="track"><i class="fill ok" style="width:29%"></i></span><b class="num">5.2%</b></div>
+<div class="row"><span>优惠核销</span><span class="track"><i class="fill no" style="width:24%"></i></span><b class="num">4.4%</b></div>
+<div class="row"><span>门店日报</span><span class="track"><i class="fill ok" style="width:21%"></i></span><b class="num">3.8%</b></div>
+<div class="row"><span>售后工单</span><span class="track"><i class="fill no" style="width:17%"></i></span><b class="num">3.1%</b></div>
+<div class="row"><span>采购入库</span><span class="track"><i class="fill ok" style="width:14%"></i></span><b class="num">2.6%</b></div>
+<div class="row"><span>会员积分</span><span class="track"><i class="fill part" style="width:11%"></i></span><b class="num">2.0%</b></div>
+</div>
+<p class="cap">占全部导出耗时的份额，12 张合计 90.0%。已改批量的合计 44.4%。依据：上周导出日志，共 3,180 次。</p>
+</div>
+</section>
+<style>
+.p-rank .box{display:flex;flex-direction:column;gap:12px}
+.p-rank .legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.p-rank .k{display:inline-block;width:14px;height:14px;border-radius:3px;margin-left:10px}
+.p-rank .k:first-child{margin-left:0}
+.p-rank .rows{display:flex;flex-direction:column;gap:8px}
+.p-rank .row{display:grid;grid-template-columns:5.5em minmax(0,1fr) 3.6em;gap:12px;align-items:center;font-size:14px}
+.p-rank .row .num{text-align:right}
+.p-rank .track{background:transparent;height:18px}
+.p-rank .ok{background:var(--good)}
+.p-rank .no{background:var(--bad)}
+.p-rank .part{background:repeating-linear-gradient(135deg,var(--warn) 0 5px,var(--card) 5px 9px)}
+</style>
+<!-- @end rank -->
+
+<p class="cap">@pattern options</p>
+<!-- @pattern options｜两到三个方案并排，每张卡同样的行、同样的顺序，逐行可比｜让读者在几种做法里选一个时用；推荐的排第一，排除的弱化 -->
+<section class="p-options">
+<h2>推荐A：最快见效，两天可回退</h2>
+<div class="grid">
+<article class="card rec">
+<h3><span class="pill rec">推荐</span>A 批量查询加缓存</h3>
+<p class="big num">7 秒<small> 首次导出</small></p>
+<p data-label="变化">逐条改批量，加缓存</p>
+<p data-label="收益">86 秒降到 7 秒</p>
+<p data-label="代价">两天，改一个接口</p>
+<p data-label="最大风险">缓存数据过期</p>
+<p data-label="怎么验收">万条订单 7 秒内</p>
+<p data-label="交付到哪一步">上线并观察一周</p>
+</article>
+<article class="card">
+<h3><span class="pill">备选</span>B 只加缓存</h3>
+<p class="big num">86 秒<small> 首次导出</small></p>
+<p data-label="变化">查询不动，只加缓存</p>
+<p data-label="收益">重复导出降到 9 秒</p>
+<p data-label="代价">半天</p>
+<p data-label="最大风险">首次导出仍然慢</p>
+<p data-label="怎么验收">二次导出 10 秒内</p>
+<p data-label="交付到哪一步">上线</p>
+</article>
+<article class="card out">
+<h3><span class="pill no">排除</span>C 换导出服务</h3>
+<p class="big num">5 秒<small> 首次导出</small></p>
+<p data-label="变化">整体迁到新服务</p>
+<p data-label="收益">86 秒降到 5 秒</p>
+<p data-label="代价">三周，需运维配合</p>
+<p data-label="最大风险">迁移期间导出停用</p>
+<p data-label="怎么验收">新旧结果逐行一致</p>
+<p data-label="交付到哪一步">本期不做</p>
+</article>
+</div>
+</section>
+<style>
+/* 一个网格三列，卡片用 subgrid 共享行高，所以各卡同一行对齐；行名写在 data-label 里，手机上照样可见 */
+.p-options .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 14px}
+.p-options .card{display:grid;grid-row:span 8;grid-template-rows:subgrid;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:0}
+.p-options .card.rec{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.p-options .card.out{background:transparent;border-style:dashed;color:var(--muted)}
+.p-options .card h3{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-bottom:6px}
+.p-options .big{font-size:26px;line-height:1.2;padding-bottom:10px}
+.p-options .big small{font-size:12px;font-weight:400;color:var(--muted)}
+.p-options .card p[data-label]{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:8px;align-items:baseline;border-top:1px solid var(--line);padding:6px 0;font-size:14px}
+.p-options .card p[data-label]::before{content:attr(data-label);font-size:12px;color:var(--muted)}
+@media(max-width:640px){.p-options .grid{grid-template-columns:minmax(0,1fr);gap:14px}.p-options .card{grid-row:auto;grid-template-rows:none}}
+</style>
+<!-- @end options -->
+
+<p class="cap">@pattern matrix</p>
+<!-- @pattern matrix｜要求 × 方案矩阵：每格三态（有 / 部分 / 没有），列顶用占比条汇总｜逐条核对几个方案或版本各满足了哪些要求时用 -->
+<section class="p-matrix">
+<h2>六条要求，A满足五条半</h2>
+<div class="grid">
+<div class="row head"><span></span><b>A 批量加缓存</b><b>B 只加缓存</b><b>C 换导出服务</b></div>
+<div class="row sum"><span class="cap">满足情况</span>
+<div data-label="A"><div class="track"><span class="fill good" style="width:83%"></span><span class="fill part" style="width:17%"></span></div><span class="cap num">5 有 · 1 部分</span></div>
+<div data-label="B"><div class="track"><span class="fill good" style="width:67%"></span><span class="fill part" style="width:17%"></span><span class="fill bad" style="width:16%"></span></div><span class="cap num">4 有 · 1 部分 · 1 没有</span></div>
+<div data-label="C"><div class="track"><span class="fill good" style="width:50%"></span><span class="fill bad" style="width:50%"></span></div><span class="cap num">3 有 · 3 没有</span></div>
+</div>
+<div class="row group">速度</div>
+<div class="row"><span>首次导出 7 秒内</span><span data-label="A"><i class="pill ok">有</i></span><span data-label="B"><i class="pill no">没有</i></span><span data-label="C"><i class="pill ok">有</i></span></div>
+<div class="row"><span>重复导出 10 秒内</span><span data-label="A"><i class="pill ok">有</i></span><span data-label="B"><i class="pill ok">有</i></span><span data-label="C"><i class="pill ok">有</i></span></div>
+<div class="row"><span>十万条不超时</span><span data-label="A"><i class="pill ok">有</i></span><span data-label="B"><i class="pill part">部分</i></span><span data-label="C"><i class="pill ok">有</i></span></div>
+<div class="row group">稳妥</div>
+<div class="row"><span>可一键回退</span><span data-label="A"><i class="pill ok">有</i></span><span data-label="B"><i class="pill ok">有</i></span><span data-label="C"><i class="pill no">没有</i></span></div>
+<div class="row"><span>不动现有接口</span><span data-label="A"><i class="pill part">部分</i></span><span data-label="B"><i class="pill ok">有</i></span><span data-label="C"><i class="pill no">没有</i></span></div>
+<div class="row"><span>两天内交付</span><span data-label="A"><i class="pill ok">有</i></span><span data-label="B"><i class="pill ok">有</i></span><span data-label="C"><i class="pill no">没有</i></span></div>
+</div>
+</section>
+<style>
+/* 每行一个四列网格（要求 + 三个方案）；手机上要求独占一行，三格各带方案名排在下面 */
+.p-matrix .grid{background:var(--card);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.p-matrix .row{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr));gap:6px 12px;align-items:center;padding:9px 16px;border-top:1px solid var(--line)}
+.p-matrix .row:first-child{border-top:0}
+.p-matrix .row.head{font-size:13px;color:var(--muted)}
+.p-matrix .row.sum{align-items:start}
+.p-matrix .row.group{display:block;background:var(--soft);font-weight:700;font-size:13px;padding-block:5px}
+.p-matrix .track{display:flex;gap:2px;background:transparent;margin-bottom:2px}
+.p-matrix .fill{min-width:0}
+.p-matrix .fill.part{background:var(--warn)}
+.p-matrix .pill{font-style:normal}
+@media(max-width:640px){
+.p-matrix .row.head{display:none}
+.p-matrix .row{grid-template-columns:repeat(3,minmax(0,1fr))}
+.p-matrix .row>:first-child{grid-column:1/-1;font-weight:700}
+.p-matrix .row.sum{grid-template-columns:minmax(0,1fr)}
+.p-matrix [data-label]::before{content:attr(data-label);display:block;font-size:12px;color:var(--muted)}
+}
+</style>
+<!-- @end matrix -->
+
+<p class="cap">@pattern phases</p>
+<!-- @pattern phases｜分期上线：上方里程碑条，下方编号的每一期（做什么、工时、怎么算做到）｜一件事要分几步交付、每步有过关标准时用 -->
+<section class="p-phases">
+<h2>分三步上线：共两天，每步可回退</h2>
+<ol class="strip">
+<li class="on"><b class="num">第 1 天上午</b><span>找到最慢的一段</span></li>
+<li><b class="num">第 2 天</b><span>全量上线</span></li>
+<li><b class="num">第 9 天</b><span>观察期结束</span></li>
+</ol>
+<div class="three list">
+<article class="box">
+<header><span class="step">先量准</span><b class="num">0.5 <small>天</small></b></header>
+<ul><li>记录各段耗时</li><li>备好万条订单样本</li></ul>
+<p class="gate"><b>怎么算做到</b>说得出最慢的一段</p>
+</article>
+<article class="box">
+<header><span class="step">改批量查询</span><b class="num">1 <small>天</small></b></header>
+<ul><li>逐条查询改成批量</li><li>加开关，可一键回退</li></ul>
+<p class="gate"><b>怎么算做到</b>万条导出 12 秒内</p>
+</article>
+<article class="box">
+<header><span class="step">加缓存并上线</span><b class="num">0.5 <small>天</small></b></header>
+<ul><li>缓存常用筛选条件</li><li>先放给一成用户</li><li>观察一周再全量</li></ul>
+<p class="gate"><b>怎么算做到</b>导出 7 秒内，无报错</p>
+</article>
+</div>
+</section>
+<style>
+.p-phases .strip{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.p-phases .strip li{border-top:4px solid var(--line);padding-top:6px;display:flex;flex-direction:column}
+.p-phases .strip li.on{border-color:var(--accent)}
+.p-phases .strip span{font-size:13px;color:var(--muted)}
+.p-phases .list{counter-reset:p-phases}
+.p-phases .box{display:flex;flex-direction:column;gap:8px;min-width:0}
+.p-phases .box header{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.p-phases .step{counter-increment:p-phases;font-weight:700}
+.p-phases .step::before{content:"第 " counter(p-phases) " 步 · ";color:var(--accent);font-size:12px}
+.p-phases .box header small{font-weight:400;font-size:12px;color:var(--muted)}
+.p-phases .box ul{margin:0;padding-left:1.15em;font-size:14px}
+.p-phases .gate{margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);font-size:13px}
+.p-phases .gate b{display:block;font-size:12px;font-weight:400;color:var(--muted)}
+@media(max-width:640px){.p-phases .strip{grid-template-columns:minmax(0,1fr);gap:0}.p-phases .strip li{border-top:0;border-left:4px solid var(--line);padding:4px 0 4px 10px}}
+</style>
+<!-- @end phases -->
+
+<p class="cap">@pattern pairs</p>
+<!-- @pattern pairs｜每个指标一对横条，同一刻度上比之前和之后｜有两三个能量化的指标要比前后时 -->
+<section class="p-pairs">
+<h2>导出快了 12 倍，内存多用 40MB</h2>
+<div class="legend cap"><span><i class="was"></i>之前</span><span><i></i>之后</span></div>
+<div class="box chart">
+  <div class="grp">
+    <h3>导出耗时（秒）</h3>
+    <div class="row"><div class="track"><span class="fill was" style="width:100%"></span></div><span class="num">86</span></div>
+    <div class="row"><div class="track"><span class="fill" style="width:8%"></span></div><span class="num">7 <small>−92%</small></span></div>
+  </div>
+  <div class="grp">
+    <h3>数据库查询（次）</h3>
+    <div class="row"><div class="track"><span class="fill was" style="width:100%"></span></div><span class="num">2,400</span></div>
+    <div class="row"><div class="track"><span class="fill" style="width:2%"></span></div><span class="num">12 <small>−99%</small></span></div>
+  </div>
+  <div class="grp">
+    <h3>内存峰值（MB）</h3>
+    <div class="row"><div class="track"><span class="fill was" style="width:82%"></span></div><span class="num">180</span></div>
+    <div class="row"><div class="track"><span class="fill" style="width:100%"></span></div><span class="num">220 <small>+22%</small></span></div>
+  </div>
+  <p class="cap">每组两条共用同一刻度</p>
+</div>
+</section>
+<style>
+.p-pairs .legend{display:flex;gap:16px}
+.p-pairs .legend i{display:inline-block;width:14px;height:8px;border-radius:3px;margin-right:6px;background:var(--accent)}
+.p-pairs .legend i.was{background:var(--muted)}
+.p-pairs .chart{display:flex;flex-direction:column;gap:14px}
+.p-pairs .grp{display:flex;flex-direction:column;gap:5px}
+.p-pairs h3{font-size:13px;font-weight:600;color:var(--muted)}
+.p-pairs .row{display:grid;grid-template-columns:minmax(0,1fr) 7em;align-items:center;gap:10px}
+.p-pairs .num{font-size:13px;white-space:nowrap}
+.p-pairs .num small{font-weight:400;color:var(--muted);margin-left:4px}
+@media(max-width:640px){.p-pairs .row{grid-template-columns:minmax(0,1fr) 6em}}
+</style>
+<!-- @end pairs -->
+
+<p class="cap">@pattern stages</p>
+<!-- @pattern stages｜逐个环节对照之前和之后，并给出判断｜改动涉及多个环节、好坏不一时 -->
+<section class="p-stages">
+<h2>两处更好，一处变差，一处有得有失</h2>
+<div class="box">
+<table>
+  <thead><tr><th>环节</th><th>之前</th><th>之后</th><th>判断</th></tr></thead>
+  <tbody>
+    <tr><td class="stage">取数方式</td><td data-label="之前">逐条查询</td><td data-label="之后">批量查询</td><td data-label="判断"><span class="pill ok">更好</span></td></tr>
+    <tr><td class="stage">重复数据</td><td data-label="之前">每次重查</td><td data-label="之后">缓存十分钟</td><td data-label="判断"><span class="pill ok">更好</span></td></tr>
+    <tr><td class="stage">文件生成</td><td data-label="之前">单线程写入</td><td data-label="之后">单线程写入</td><td data-label="判断"><span class="pill part">持平</span></td></tr>
+    <tr><td class="stage">内存占用</td><td data-label="之前">峰值 180MB</td><td data-label="之后">峰值 220MB</td><td data-label="判断"><span class="pill no">变差</span></td></tr>
+    <tr><td class="stage">数据新鲜度</td><td data-label="之前">实时</td><td data-label="之后">最多晚十分钟</td><td data-label="判断"><span class="pill part">有得有失</span></td></tr>
+  </tbody>
+</table>
+</div>
+</section>
+<style>
+.p-stages .box{padding:2px 16px}
+.p-stages table{border-collapse:collapse;width:100%;font-size:14px}
+.p-stages th,.p-stages td{text-align:left;vertical-align:top;padding:10px 12px 10px 0;border-bottom:1px solid var(--line)}
+.p-stages tr:last-child td{border-bottom:0}
+.p-stages th{font-size:12px;font-weight:600;color:var(--muted)}
+.p-stages .stage{font-weight:700}
+@media(max-width:640px){
+  .p-stages thead{display:none}
+  .p-stages table,.p-stages tbody{display:block}
+  .p-stages tr{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .p-stages tr:last-child{border-bottom:0}
+  .p-stages td{display:grid;grid-template-columns:3.5em minmax(0,1fr);gap:8px;padding:0;border:0;justify-items:start}
+  .p-stages td.stage{display:block}
+  .p-stages td[data-label]::before{content:attr(data-label);font-size:12px;color:var(--muted)}
+}
+</style>
+<!-- @end stages -->
+
+<p class="cap">@pattern evidence</p>
+<!-- @pattern evidence｜把结论分成已证实、未证实、没做三栏，每条写明怎么查的｜交付或汇报时要说清证据边界 -->
+<section class="p-evidence">
+<h2>提速已证实，大单量还没测</h2>
+<div class="three">
+  <div class="box">
+    <span class="pill ok">已证实</span>
+    <ul>
+      <li>耗时 86 秒降到 7 秒<small>同一批订单各跑 5 次</small></li>
+      <li>导出内容没变<small>新旧文件逐行比对</small></li>
+    </ul>
+  </div>
+  <div class="box">
+    <span class="pill part">未证实</span>
+    <ul>
+      <li>十万单以上仍够快<small>只测到两万单</small></li>
+      <li>高峰期缓存命中率<small>只看过平峰日志</small></li>
+    </ul>
+  </div>
+  <div class="box">
+    <span class="pill off">没做</span>
+    <ul>
+      <li>导出格式没改<small>不在这次范围</small></li>
+      <li>旧接口没下线<small>留着方便回退</small></li>
+    </ul>
+  </div>
+</div>
+</section>
+<style>
+.p-evidence .box{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.p-evidence .pill.off{color:var(--muted)}
+.p-evidence ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;align-self:stretch}
+.p-evidence li{line-height:1.45;padding-left:10px;border-left:2px solid var(--line)}
+.p-evidence li small{display:block;font-size:12px;color:var(--muted)}
+</style>
+<!-- @end evidence -->
+
+<p class="cap">@pattern flow</p>
+<!-- @pattern flow｜几个方框用箭头连成一条短流程，标出外部环节和要问人的关口｜要讲清一件事按什么顺序发生时 -->
+<section class="p-flow">
+<h2>导出只走四步，大单量先问一次</h2>
+<div class="flow">
+  <div class="node"><span class="cap">点下导出</span><b>收集筛选条件</b></div>
+  <div class="node ext"><span class="cap">十分钟内查过</span><b>直接读缓存</b></div>
+  <div class="node"><span class="cap">缓存没有</span><b>批量查询订单</b></div>
+  <div class="node gate"><span class="cap">超过两万单</span><b>先问是否继续</b></div>
+  <div class="node"><span class="cap">约 7 秒后</span><b>生成文件下载</b></div>
+</div>
+<p class="cap">实线：本工具内｜虚线：外部或可选｜橙框：停下来问你</p>
+</section>
+<style>
+.p-flow .flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:22px}
+.p-flow .node{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+.p-flow .node b{line-height:1.4}
+.p-flow .node.ext{border-style:dashed}
+.p-flow .node.gate{border:1.5px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,var(--card))}
+.p-flow .node.gate b{color:var(--warn)}
+.p-flow .node:not(:last-child)::after{content:"→";position:absolute;right:-11px;top:50%;transform:translate(50%,-50%);color:var(--muted);font-size:14px;line-height:1}
+@media(max-width:640px){
+  .p-flow .flow{grid-template-columns:minmax(0,1fr)}
+  .p-flow .node:not(:last-child)::after{content:"↓";right:50%;top:auto;bottom:-11px;transform:translate(50%,50%)}
+}
+</style>
+<!-- @end flow -->
+
+<p class="cap">@pattern shots</p>
+<!-- @pattern shots｜改前改后截图并排，下面逐条标变好、变差、没解决｜界面改动要让人亲眼看出差别时 -->
+<section class="p-shots">
+<h2>等待从 86 秒变 7 秒，进度条仍缺</h2>
+<!-- 真截图作为独立文件随页面一起发布，用 img 引用；不要把图片转成 base64 塞进页面 -->
+<div class="two">
+  <figure><div class="shot">截图：改前</div><figcaption><b>改前</b>　转圈 86 秒才出文件</figcaption></figure>
+  <figure><div class="shot">截图：改后</div><figcaption><b class="lean">改后</b>　7 秒弹出下载</figcaption></figure>
+</div>
+<ul>
+  <li><span class="pill ok">变好</span>导出只等 7 秒</li>
+  <li><span class="pill ok">变好</span>按钮不再卡死</li>
+  <li><span class="pill no">变差</span>数据最多晚十分钟</li>
+  <li><span class="pill part">没解决</span>仍然没有进度条</li>
+</ul>
+</section>
+<style>
+.p-shots figure{margin:0;min-width:0;display:flex;flex-direction:column;gap:6px}
+.p-shots .shot{aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;border:1px dashed var(--line);border-radius:6px;background:var(--soft);color:var(--muted);font-size:13px}
+.p-shots figcaption{font-size:13px;color:var(--muted)}
+.p-shots figcaption b{color:var(--ink)}
+.p-shots figcaption b.lean{color:var(--accent)}
+.p-shots ul{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px}
+.p-shots li{display:flex;align-items:baseline;gap:8px}
+@media(max-width:640px){.p-shots ul{grid-template-columns:minmax(0,1fr)}}
+</style>
+<!-- @end shots -->
+
+<p class="cap">@pattern lanes</p>
+<!-- @pattern lanes｜泳道格：列是阶段、行是不同情形，每格标重点做、轻轻过或跳过｜同一流程在不同情形下轻重不同时 -->
+<section class="p-lanes">
+<h2>小改动跳过方案，新功能每步都做足</h2>
+<div class="box">
+  <div class="row head"><span></span><span>要什么</span><span>怎么做</span><span>做出来</span><span>成了吗</span></div>
+  <div class="row"><b class="lane">小改动</b>
+    <div class="c" data-label="要什么"><span class="n light">一句话说清</span></div>
+    <div class="c dash" data-label="怎么做"><span class="skip">跳过</span></div>
+    <div class="c" data-label="做出来"><span class="n deep">直接改查询</span></div>
+    <div class="c" data-label="成了吗"><span class="n light">导出跑一次</span></div></div>
+  <div class="row"><b class="lane">新功能</b>
+    <div class="c" data-label="要什么"><span class="n deep">问清导什么</span><span class="gate">停：等你确认</span></div>
+    <div class="c" data-label="怎么做"><span class="n deep">比两种查法</span></div>
+    <div class="c" data-label="做出来"><span class="n deep">批量加缓存</span></div>
+    <div class="c" data-label="成了吗"><span class="n deep">对比前后耗时</span></div></div>
+  <div class="row"><b class="lane">线上故障</b>
+    <div class="c" data-label="要什么"><span class="n light">确认谁受影响</span></div>
+    <div class="c" data-label="怎么做"><span class="n deep">先回退再查</span><span class="gate">停：回退前问</span></div>
+    <div class="c" data-label="做出来"><span class="n light">补上修复</span></div>
+    <div class="c" data-label="成了吗"><span class="n deep">盯一天日志</span></div></div>
+</div>
+<p class="cap">实心：重点做｜描边：轻轻过｜虚线：跳过｜橙色：停下来问你</p>
+</section>
+<style>
+.p-lanes .box{padding:0 14px}
+.p-lanes .row{display:grid;grid-template-columns:5em repeat(4,minmax(0,1fr));border-bottom:1px solid var(--line)}
+.p-lanes .row:last-child{border-bottom:0}
+.p-lanes .head{font-size:12px;font-weight:700;color:var(--muted);padding:8px 0}
+.p-lanes .lane{align-self:center}
+.p-lanes .c{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px 8px 12px 0;min-width:0}
+.p-lanes .c::after{content:"";position:absolute;left:0;right:0;top:27px;border-top:2px solid color-mix(in srgb,var(--accent) 45%,transparent)}
+.p-lanes .c.dash::after{border-top-style:dashed}
+.p-lanes .n,.p-lanes .skip,.p-lanes .gate{position:relative;z-index:1;font-size:13px;line-height:1.4}
+.p-lanes .n{padding:5px 9px;border-radius:4px;border:1.5px solid var(--accent)}
+.p-lanes .n.deep{background:var(--accent);color:var(--on-accent);font-weight:700}
+.p-lanes .n.light{background:var(--card)}
+.p-lanes .skip{align-self:center;margin-top:6px;padding:0 6px;font-size:12px;color:var(--muted);background:var(--card)}
+.p-lanes .gate{font-size:12px;font-weight:700;padding:1px 9px;border-radius:99px;border:1.5px solid var(--warn);color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,var(--card))}
+@media(max-width:640px){
+  .p-lanes .head{display:none}
+  .p-lanes .row{grid-template-columns:minmax(0,1fr);padding:12px 0;gap:8px}
+  .p-lanes .c{display:grid;grid-template-columns:4em minmax(0,1fr);justify-items:start;align-items:center;gap:4px 8px;padding:0}
+  .p-lanes .c::before{content:attr(data-label);grid-column:1;grid-row:1/span 2;font-size:12px;color:var(--muted)}
+  .p-lanes .c>*{grid-column:2}
+  .p-lanes .c::after{display:none}
+  .p-lanes .skip{align-self:auto;margin:0;padding:0}
+}
+</style>
+<!-- @end lanes -->
+</div>
+</html>

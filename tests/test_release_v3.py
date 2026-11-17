@@ -29,6 +29,7 @@ RUNTIME_FILES = {
     "NOTICE.md",
     *(f"references/{name}" for name in REFERENCES),
     "templates/work.md",
+    "templates/pages.html",
     "scripts/install.py",
     "scripts/safe_merge.py",
     "scripts/work_context.py",

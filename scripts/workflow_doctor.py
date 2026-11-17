@@ -23,7 +23,7 @@ REQUIRED_REFERENCES = (
     "learn.md",
     "linear-tracking.md",
 )
-REQUIRED_TEMPLATES = ("work.md",)
+REQUIRED_TEMPLATES = ("work.md", "pages.html")
 REQUIRED_RUNTIME_SCRIPTS = (
     "install.py",
     "safe_merge.py",
