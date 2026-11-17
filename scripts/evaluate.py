@@ -17,11 +17,11 @@ import time
 PACKAGE = Path(__file__).resolve().parents[1]
 ACTIONS = ("execute", "ask", "plan_only", "deliver", "recover", "verify", "finish")
 ROUTING_CASES = {
-    "fact_only": {"allowed": ["research", "prove"], "task_type": "事实查询", "stage": "查证"},
-    "migration_research": {"allowed": ["research", "frame", "grill", "prove", "report"], "task_type": "研究", "stage": "方案前"},
-    "resumed_fix": {"allowed": ["execute", "prove", "recover"], "task_type": "修复", "stage": "已授权续作"},
+    "fact_only": {"allowed": ["prove"], "task_type": "事实查询", "stage": "查证"},
+    "migration_research": {"allowed": ["frame", "prove", "report"], "task_type": "研究", "stage": "方案前"},
+    "resumed_fix": {"allowed": ["plan", "prove"], "task_type": "修复", "stage": "已授权续作"},
     "desktop_report": {"allowed": ["report", "prove"], "task_type": "汇报", "stage": "桌面交付"},
-    "plain_task": {"allowed": ["research", "prove"], "task_type": "查询", "stage": "未登记项目"},
+    "plain_task": {"allowed": ["prove"], "task_type": "查询", "stage": "未登记项目"},
 }
 # The result is checked through the entry the user actually runs, not through what the model reports.
 ENTRY_CHECKS = {
