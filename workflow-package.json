@@ -1,26 +1,27 @@
 {
   "schema": 1,
   "name": "workflow",
-  "version": "5.11.0",
+  "version": "5.12.0",
   "entrypoint": "SKILL.md",
   "runtime": {
     "files": {
       "LICENSE": "sha256:6f56797263fb6d17252bfd325544640f0c173926558345975fed3973b1c7fc45",
       "NOTICE.md": "sha256:9154ec5f50fdb67d6bdcc1f220276db9420933515c1dc7bd0422ab99174da13d",
-      "SKILL.md": "sha256:a50c62d4f236888dd653bee7f1f1e96acf1b68ae4a3b22c729cceb2700ee5e1e",
+      "SKILL.md": "sha256:553c13fdc485cd35bf9eaeb3d3c30d2c142283a834b091d3d8a3387b9a03689c",
       "references/deliver.md": "sha256:67ca3bb3c1ea5a743242002f25ad24ac3168aac4446f48bff3766df1bb447b94",
       "references/frame.md": "sha256:ea0811407f86774a5ad1655b532a6cd19c3ad946bdb9654c7f68fae8a0608bbe",
       "references/learn.md": "sha256:2774d71d2cb95a755ba91001dddc632d4edd9b60a2463482ba926152137780ff",
       "references/linear-tracking.md": "sha256:f19729de6e7b37536ca22f764918ccdc4d82bf871a56e193d368035b2bcc6df9",
       "references/plan.md": "sha256:5384b4fe7b120689dd39370a492c7762c85f4188d1b7635717172eb148f5ea23",
       "references/prove.md": "sha256:d3a6d08c8c169644f46cd4f7016d90ff6661cd30fa32992c06ae78b45e5f1664",
-      "references/report.md": "sha256:eb69129d227a6b2bb61c1957ec81803c3190fe954e4dbf29dbacf77963a6d129",
+      "references/report.md": "sha256:ec3aaa03c7a033458a211eaf1808b00270c6992d7bac28d39b240aafa4701933",
+      "references/strategy.md": "sha256:35d32a6679d3ed04357095740c0dafdd7fe0c0159ff0f59de0dcc2f499e77716",
       "scripts/install.py": "sha256:7b1077ef2b97da5fbfcc6b3dcdc09e4ddeb5a20741f9254495e95fef7bfbd083",
       "scripts/project_init.py": "sha256:8a3bde3ebbc0c94a11ceec5f5ea33e60d7ac4a5be3b22be2da2bbc2efbefe623",
       "scripts/safe_merge.py": "sha256:b6d3798f8b9e8dedf8f498061f723871342b80d5ca3f3942ffa6bdd721a64ffe",
       "scripts/work_context.py": "sha256:2ba866b0d59b8c6c02c85ea864c990125f47139056ff7e19a7d27791ae3a096f",
-      "scripts/workflow_doctor.py": "sha256:6a8b24c3eb18d6a566164e3f4fbc394121334a3ab2a122e0ea2dce9737936d70",
-      "templates/pages.html": "sha256:12cd77cf232a75f7e84c7f4ee1054e55b288576adf549830769c8d7dc60a6a1d",
+      "scripts/workflow_doctor.py": "sha256:6b3225eb23c597409ff42517ad6887fef702b93a99ce8e3f2f97d90058f08abd",
+      "templates/pages.html": "sha256:3407ae7a54eb4d9a9072c3d76cb274d9e7cb3d931a47ed3304982d8ad87f53c1",
       "templates/work.md": "sha256:619ee7ddf3498ffd33ed9357b4b7d074476262f8476d414d2d49a6897ba33419"
     }
   },
