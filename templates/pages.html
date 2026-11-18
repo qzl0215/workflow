@@ -18,6 +18,12 @@ workflow 页面版式库
 - 颜色只用底座里的变量；手机上折行，不横向滚动。
 - 截图单独发布成文件，不内嵌进页面。
 - 没有数据不画条形；同一组横条共用一个刻度。
+- 配色只有一个蓝：深浅表示多少（--h1 到 --h4），琥珀只留给例外，绿红只标好坏；零写成灰色的 0，不上色。
+- 同一信息全页只出现一次，放在读者用到它的地方；每个元素（文字、色条、标签）删掉后读者不会看错或做错，就删。
+- 字号最多三级，字号顺序就是阅读顺序。最大一级只给一样：读者不认识指标时给指标名（8 个字以内），认识时给现状与目标的差距。多处相同的值不放大，合并成一句。
+- 难懂的指标下面常驻一行业务价值（15 个字以内，它涨了对谁有什么好处）；先用一句人话加一个例子，讲结构或关系时才配图。
+- 定义、口径、公式用 details.more 收起，点一下展开；不放进鼠标悬停。截图后仍要看得见指标名、现状、目标和价值那一行。
+- 一页多段时给每段编号（.no），标题后用小字写这段回答哪个问题；全页只给一个主角段加蓝边（.box.lead）。
 
 索引（名称｜表达什么｜何时用）：
 ask     ｜页首决策框：一句结论、要读者定的一件事、最短回复｜需要读者拍板时放在页面最上方，先于任何说明
@@ -38,16 +44,21 @@ evidence｜把结论分成已证实、未证实、没做三栏，每条写明怎
 flow    ｜几个方框用箭头连成一条短流程，标出外部环节和要问人的关口｜要讲清一件事按什么顺序发生时
 shots   ｜改前改后截图并排，下面逐条标变好、变差、没解决｜界面改动要让人亲眼看出差别时
 lanes   ｜泳道格：列是阶段、行是不同情形，每格标重点做、轻轻过或跳过｜同一流程在不同情形下轻重不同时
+heat    ｜行是对象、列是按先后排的步骤，颜色越深做得越多，零不上色，例外用琥珀｜多个对象各自走到哪一步、要一眼看出哪片还空着时用
+share   ｜一根横条按份额分段，同一个蓝由深到浅，段内写名称和数｜要看整体由哪几块构成、谁占大头时用
+todo    ｜例外清单：一行一件待处理的事，左边是带数字的问题，右边是下一步｜页面末尾收拢要人处理的例外时用
 house   ｜战略屋：屋顶北极星和卡点链，支柱列宽按权重，指标格面积按权重并分三种状态，下接动作和负责人，地基是部门外协作｜给团队定一期战略、把目标拆到指标和人时用；怎么定见 references/strategy.md
 -->
 <title>workflow 页面版式库</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* 公共底座：全库只此一份。片段只用这里的颜色变量和公共类，不写死颜色。 */
-:root{--bg:#f7f8f5;--card:#ffffff;--ink:#182c30;--muted:#5b6b6f;--line:#d4dcd9;--soft:#eaf2ef;--accent:#086a70;--on-accent:#ffffff;--good:#1f7a4d;--warn:#b96a10;--bad:#b3382c;
+:root{--bg:#f5f5f4;--card:#ffffff;--ink:#1a1a1a;--muted:#666666;--line:#dedede;--soft:#eeeeec;--accent:#1f66c1;--on-accent:#ffffff;--good:#1a7f4b;--warn:#b26a00;--bad:#c03a2b;
+/* 同一个蓝的四档深浅，表示多少；深浅两套主题共用。--h4 上写白字，其余三档写 --on-pale */
+--h1:#e6f0fc;--h2:#c5dcf7;--h3:#8fbcf0;--h4:#2a74cf;--on-pale:#0b2a4d;
 --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10191b;--card:#172325;--ink:#e3ecea;--muted:#93a5a6;--line:#2c3c3e;--soft:#1d3032;--accent:#4fc0c2;--on-accent:#06282a;--good:#5fcf96;--warn:#f0a94a;--bad:#f08a7e;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#10191b;--card:#172325;--ink:#e3ecea;--muted:#93a5a6;--line:#2c3c3e;--soft:#1d3032;--accent:#4fc0c2;--on-accent:#06282a;--good:#5fcf96;--warn:#f0a94a;--bad:#f08a7e;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141414;--card:#1c1c1c;--ink:#ededed;--muted:#9b9b9b;--line:#303030;--soft:#262626;--accent:#5aa5f2;--on-accent:#071d36;--good:#4cc38a;--warn:#f0a030;--bad:#f0806e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141414;--card:#1c1c1c;--ink:#ededed;--muted:#9b9b9b;--line:#303030;--soft:#262626;--accent:#5aa5f2;--on-accent:#071d36;--good:#4cc38a;--warn:#f0a030;--bad:#f0806e;color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 var(--sans);padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
@@ -59,7 +70,15 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 .eyebrow{font:700 11px/1.6 var(--mono);letter-spacing:.1em;color:var(--accent)}
 .lede{color:var(--muted);max-width:44em}
 .cap{font-size:12px;color:var(--muted)}
-.box{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+/* 多段页面：.no 是段落编号，h2 里的 small 写这段回答哪个问题，.box.lead 是全页唯一的主角段 */
+.no{display:inline-block;min-width:22px;margin-right:10px;padding:0 6px;border-radius:10px;font:700 12px/22px var(--mono);text-align:center;vertical-align:2px;color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,var(--card))}
+h2 small{margin-left:10px;font-size:13px;font-weight:400;color:var(--muted);white-space:nowrap}
+.box.lead{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+/* 点开才看的补充：定义、口径、公式。summary 是带虚线下划线的可点词 */
+details.more{font-size:13px;color:var(--muted)}
+details.more summary{display:inline;cursor:pointer;list-style:none;text-decoration:underline dotted;text-underline-offset:3px}
+details.more summary::-webkit-details-marker{display:none}
 .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 /* 状态标签：ok 成立/更好，part 部分/持平，no 没有/变差，rec 推荐 */
@@ -95,10 +114,10 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 </section>
 <style>
 .p-ask .status{display:flex;flex-wrap:wrap;gap:8px}
-.p-ask .ask{background:var(--soft);border-left:4px solid var(--accent);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.p-ask .ask{background:var(--soft);border-left:4px solid var(--accent);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
 .p-ask .q{font-size:17px;font-weight:700}
 .p-ask .replies{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.p-ask .replies li{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 12px;display:flex;flex-direction:column}
+.p-ask .replies li{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;display:flex;flex-direction:column}
 .p-ask .replies li.first{border-color:var(--accent)}
 .p-ask .replies b{color:var(--accent)}
 .p-ask .replies span{font-size:13px;color:var(--muted)}
@@ -134,7 +153,7 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 <div class="three">
 <div class="box"><b class="num">86 秒</b><span class="cap">现在导一次的耗时</span><span class="pill ok">已验证</span></div>
 <div class="box"><b class="num">7 秒</b><span class="cap">改后导一次的耗时</span><span class="pill part">估算</span></div>
-<div class="box"><b class="num">2,400 次</b><span class="cap">现在一次导出的查询数</span><span class="pill ok">已验证</span></div>
+<div class="box"><b class="num">2,400 次</b><span class="cap">现在一次导出的查询数</span><span class="pill ok">已验证</span><details class="more"><summary>怎么数的</summary>导一万张订单时数据库收到的查询条数，取 5 次的中位数。</details></div>
 </div>
 </section>
 <style>
@@ -187,7 +206,7 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 <style>
 .p-status .box{display:flex;flex-direction:column;padding:0}
 .p-status .row{display:grid;grid-template-columns:6em minmax(0,1fr) 5em;gap:14px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);font-size:14px}
-.p-status .head{background:var(--soft);font-size:12px;color:var(--muted);border-radius:6px 6px 0 0}
+.p-status .head{background:var(--soft);font-size:12px;color:var(--muted);border-radius:10px 6px 0 0}
 .p-status .cap{padding:12px 16px}
 .p-status .dot{font-style:normal;font-size:12px;font-weight:700;white-space:nowrap;padding:3px 10px;border-radius:99px}
 .p-status .dot::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:6px}
@@ -355,7 +374,7 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 <style>
 /* 一个网格三列，卡片用 subgrid 共享行高，所以各卡同一行对齐；行名写在 data-label 里，手机上照样可见 */
 .p-options .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 14px}
-.p-options .card{display:grid;grid-row:span 8;grid-template-rows:subgrid;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:0}
+.p-options .card{display:grid;grid-row:span 8;grid-template-rows:subgrid;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
 .p-options .card.rec{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .p-options .card.out{background:transparent;border-style:dashed;color:var(--muted)}
 .p-options .card h3{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-bottom:6px}
@@ -390,7 +409,7 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 </section>
 <style>
 /* 每行一个四列网格（要求 + 三个方案）；手机上要求独占一行，三格各带方案名排在下面 */
-.p-matrix .grid{background:var(--card);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.p-matrix .grid{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .p-matrix .row{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr));gap:6px 12px;align-items:center;padding:9px 16px;border-top:1px solid var(--line)}
 .p-matrix .row:first-child{border-top:0}
 .p-matrix .row.head{font-size:13px;color:var(--muted)}
@@ -581,7 +600,7 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 </section>
 <style>
 .p-flow .flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:22px}
-.p-flow .node{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+.p-flow .node{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .p-flow .node b{line-height:1.4}
 .p-flow .node.ext{border-style:dashed}
 .p-flow .node.gate{border:1.5px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,var(--card))}
@@ -612,7 +631,7 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 </section>
 <style>
 .p-shots figure{margin:0;min-width:0;display:flex;flex-direction:column;gap:6px}
-.p-shots .shot{aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;border:1px dashed var(--line);border-radius:6px;background:var(--soft);color:var(--muted);font-size:13px}
+.p-shots .shot{aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;border:1px dashed var(--line);border-radius:10px;background:var(--soft);color:var(--muted);font-size:13px}
 .p-shots figcaption{font-size:13px;color:var(--muted)}
 .p-shots figcaption b{color:var(--ink)}
 .p-shots figcaption b.lean{color:var(--accent)}
@@ -673,6 +692,103 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 </style>
 <!-- @end lanes -->
 
+<p class="cap">@pattern heat</p>
+<!-- @pattern heat｜行是对象、列是按先后排的步骤，颜色越深做得越多，零不上色，例外用琥珀｜多个对象各自走到哪一步、要一眼看出哪片还空着时用 -->
+<section class="p-heat">
+<div class="box lead">
+<h2><i class="no">2</i>只有订单、退款开始加缓存；续传、压测、上线都没动<small>做到哪 · 主角</small></h2>
+<div class="grid">
+<div class="row head"><span>报表 · 接口数</span><span>改批量</span><span>加缓存</span><span>流式写</span><span>断点续传</span><span>压测</span><span>上线</span></div>
+<div class="row"><b>订单明细 14 个</b><span class="c l4" data-label="改批量">100%</span><span class="c l3" data-label="加缓存">57%</span><span class="c l2" data-label="流式写">21%</span><span class="c z" data-label="断点续传">0</span><span class="c z" data-label="压测">0</span><span class="c z" data-label="上线">0</span></div>
+<div class="row"><b>退款明细 9 个</b><span class="c l4" data-label="改批量">100%</span><span class="c l2" data-label="加缓存">44%</span><span class="c z" data-label="流式写">0</span><span class="c z" data-label="断点续传">0</span><span class="c z" data-label="压测">0</span><span class="c z" data-label="上线">0</span></div>
+<div class="row"><b>商品销量 8 个</b><span class="c x" data-label="改批量">0 待核</span><span class="c z" data-label="加缓存">0</span><span class="c z" data-label="流式写">0</span><span class="c z" data-label="断点续传">0</span><span class="c z" data-label="压测">0</span><span class="c z" data-label="上线">0</span></div>
+<div class="row"><b>客户对账 6 个</b><span class="c l3" data-label="改批量">83%</span><span class="c l1" data-label="加缓存">17%</span><span class="c l2" data-label="流式写">33%</span><span class="c z" data-label="断点续传">0</span><span class="c z" data-label="压测">0</span><span class="c z" data-label="上线">0</span></div>
+<div class="row"><b>库存流水 5 个</b><span class="c l4" data-label="改批量">100%</span><span class="c z" data-label="加缓存">0</span><span class="c l1" data-label="流式写">20%</span><span class="c z" data-label="断点续传">0</span><span class="c z" data-label="压测">0</span><span class="c z" data-label="上线">0</span></div>
+<div class="row"><b>物流轨迹 4 个</b><span class="c l4" data-label="改批量">100%</span><span class="c z" data-label="加缓存">0</span><span class="c z" data-label="流式写">0</span><span class="c z" data-label="断点续传">0</span><span class="c z" data-label="压测">0</span><span class="c z" data-label="上线">0</span></div>
+<div class="row"><b>发票清单 2 个</b><span class="c l4" data-label="改批量">100%</span><span class="c z" data-label="加缓存">0</span><span class="c z" data-label="流式写">0</span><span class="c z" data-label="断点续传">0</span><span class="c z" data-label="压测">0</span><span class="c z" data-label="上线">0</span></div>
+<div class="row sum"><b>全部 48 个</b><span class="c t" data-label="改批量">81.3%</span><span class="c t" data-label="加缓存">27.1%</span><span class="c t" data-label="流式写">12.5%</span><span class="c z" data-label="断点续传">0</span><span class="c z" data-label="压测">0</span><span class="c z" data-label="上线">0</span></div>
+</div>
+<p class="legend cap"><i class="c l1"></i>两成以内<i class="c l2"></i>两到五成<i class="c l3"></i>五到九成<i class="c l4"></i>九成以上<i class="c x"></i>数据待核</p>
+<p class="cap">每格是该报表已做完这一步的接口占比；列按加工先后排。依据：11 月 17 日代码仓库逐接口核对，共 48 个接口。</p>
+</div>
+</section>
+<style>
+.p-heat .box{display:flex;flex-direction:column;gap:12px}
+.p-heat .grid{display:flex;flex-direction:column;gap:2px}
+.p-heat .row{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(6,minmax(0,1fr));gap:2px;align-items:stretch;font-size:14px}
+.p-heat .row>b{font-weight:400;align-self:center;padding-right:8px}
+.p-heat .row.head{font-size:12px;color:var(--muted);padding-bottom:4px}
+.p-heat .row.head span:not(:first-child){text-align:center}
+.p-heat .row.sum b,.p-heat .row.sum .c{font-weight:700}
+.p-heat .c{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:36px;font-variant-numeric:tabular-nums;font-style:normal}
+.p-heat .c.z{color:var(--muted)}
+.p-heat .c.l1{background:var(--h1);color:var(--on-pale)}
+.p-heat .c.l2{background:var(--h2);color:var(--on-pale)}
+.p-heat .c.l3{background:var(--h3);color:var(--on-pale)}
+.p-heat .c.l4{background:var(--h4);color:#fff}
+.p-heat .c.x{background:color-mix(in srgb,var(--warn) 20%,var(--card));color:var(--warn);font-weight:700}
+.p-heat .legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.p-heat .legend .c{display:inline-block;width:14px;height:14px;min-height:0;margin-left:10px}
+.p-heat .legend .c:first-child{margin-left:0}
+@media(max-width:640px){
+.p-heat .row.head{display:none}
+.p-heat .row{grid-template-columns:repeat(3,minmax(0,1fr));padding-top:8px}
+.p-heat .row>b{grid-column:1/-1;font-weight:700}
+.p-heat .row .c{min-height:44px}
+.p-heat .row .c::before{content:attr(data-label);font-size:11px;font-weight:400;opacity:.8}
+}
+</style>
+<!-- @end heat -->
+
+<p class="cap">@pattern share</p>
+<!-- @pattern share｜一根横条按份额分段，同一个蓝由深到浅，段内写名称和数｜要看整体由哪几块构成、谁占大头时用 -->
+<section class="p-share">
+<h2><i class="no">1</i>上周导出 3,180 次，订单明细占四成<small>有多少</small></h2>
+<div class="box">
+<div class="bar">
+<span class="l4" style="width:40.3%">订单明细 1,280</span>
+<span class="l3" style="width:22.6%">退款 720</span>
+<span class="l3" style="width:16%">销量 510</span>
+<span class="l2" style="width:10.4%">对账 330</span>
+<span class="l1" style="width:6%">库存 190</span>
+<span class="l1" style="width:4.7%">其他 150</span>
+</div>
+<p class="cap">按报表，单位次：订单明细 1,280、退款明细 720、商品销量 510、客户对账 330、库存流水 190、其他 150。依据：11 月 10 日至 16 日导出日志。</p>
+</div>
+</section>
+<style>
+.p-share .box{display:flex;flex-direction:column;gap:10px}
+.p-share .bar{display:flex;gap:2px;border-radius:4px;overflow:hidden}
+.p-share .bar span{min-width:0;padding:5px 6px;font-size:13px;line-height:1.5;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:clip;font-variant-numeric:tabular-nums;color:var(--on-pale)}
+.p-share .l1{background:var(--h1)}.p-share .l2{background:var(--h2)}.p-share .l3{background:var(--h3)}
+.p-share .bar .l4{background:var(--h4);color:#fff}
+</style>
+<!-- @end share -->
+
+<p class="cap">@pattern todo</p>
+<!-- @pattern todo｜例外清单：一行一件待处理的事，左边是带数字的问题，右边是下一步｜页面末尾收拢要人处理的例外时用 -->
+<section class="p-todo">
+<div class="box">
+<h2><i class="no">5</i>待处理 4 项<small>例外</small></h2>
+<ul>
+<li class="warn"><b>商品销量 8 个接口查不到批量改造记录</b><span>先核数据</span></li>
+<li><b>五类报表 25 个接口没加缓存</b><span>排进下一期</span></li>
+<li><b>客户对账 2 个接口流式写后行数对不上</b><span>逐行比对</span></li>
+<li><b>190 次库存导出超过 5 万行</b><span>人工复核</span></li>
+</ul>
+<p class="cap">依据：同上一段的逐接口核对和导出日志。</p>
+</div>
+</section>
+<style>
+.p-todo .box{display:flex;flex-direction:column;gap:10px}
+.p-todo ul{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.p-todo li{display:flex;justify-content:space-between;align-items:baseline;gap:4px 16px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)}
+.p-todo li b{font-weight:400;min-width:0}
+.p-todo li b::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:10px;border:1.5px solid var(--muted)}
+.p-todo li.warn b::before{background:var(--warn);border-color:var(--warn)}
+.p-todo li span{font-size:13px;color:var(--muted);margin-left:auto}
+</style>
+<!-- @end todo -->
 <p class="cap">@pattern house</p>
 <!-- @pattern house｜战略屋：屋顶北极星和卡点链，支柱列宽按权重，指标格面积按权重并分三种状态，下接动作和负责人，地基是部门外协作｜给团队定一期战略、把目标拆到指标和人时用；怎么定见 references/strategy.md -->
 <!-- 换内容时：.cols 的 grid-template-columns 按支柱权重写；每个 .tile 的 flex-grow 写它的权重；全屋权重合计 100。 -->
@@ -776,7 +892,7 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 .p-house .roof .ns{font-size:21px;line-height:1.3}
 .p-house .goal{display:flex;align-items:baseline;justify-content:center;gap:10px;font-size:13px}
 .p-house .goal .num{font-size:40px;line-height:1.1}
-.p-house .chain{display:flex;flex-wrap:wrap;justify-content:center;font-size:13px;border-radius:6px;overflow:hidden}
+.p-house .chain{display:flex;flex-wrap:wrap;justify-content:center;font-size:13px;border-radius:10px;overflow:hidden}
 .p-house .chain span{background:var(--card);color:var(--ink);padding:3px 12px}
 .p-house .chain .jam{background:var(--bad);color:var(--card);font-weight:700}
 .p-house .cols{display:grid;grid-auto-flow:column;grid-template-rows:auto 1fr auto;gap:0 10px;border:solid var(--accent);border-width:4px 4px 0;background:var(--card);padding:0 10px 12px}
@@ -785,7 +901,7 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 .p-house .ph div{display:flex;flex-direction:column;min-width:0}
 .p-house .ph div b{font-size:17px}
 .p-house .tiles{display:flex;flex-direction:column;gap:8px;min-height:440px;min-width:0}
-.p-house .tile{flex:1 1 0;display:flex;flex-direction:column;gap:4px;border:1.5px solid var(--accent);border-radius:6px;padding:9px 11px;background:var(--card);min-width:0}
+.p-house .tile{flex:1 1 0;display:flex;flex-direction:column;gap:4px;border:1.5px solid var(--accent);border-radius:10px;padding:9px 11px;background:var(--card);min-width:0}
 .p-house .tile.core{border-width:3px}
 .p-house .tile.lit{background:var(--soft)}
 .p-house .tile.off{border-style:dashed;border-color:var(--muted)}
@@ -805,7 +921,7 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 .p-house details{font-size:12px;color:var(--muted)}
 .p-house summary{cursor:pointer;font-weight:700}
 .p-house .acts{list-style:none;counter-reset:a;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;min-width:0}
-.p-house .acts li{counter-increment:a;position:relative;border:1px solid var(--line);border-radius:6px;padding:8px 10px 8px 36px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;font-size:13px}
+.p-house .acts li{counter-increment:a;position:relative;border:1px solid var(--line);border-radius:10px;padding:8px 10px 8px 36px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;font-size:13px}
 .p-house .acts li::before{content:counter(a);position:absolute;left:9px;top:9px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);font-size:12px;font-weight:700;display:grid;place-items:center}
 .p-house .ext{font-size:11px;font-weight:700;color:var(--warn);border:1px solid currentColor;border-radius:4px;padding:0 5px;margin-left:6px;white-space:nowrap}
 .p-house .to{font-size:12px;color:var(--accent);font-weight:700}
@@ -814,10 +930,10 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 .p-house .ground{display:grid;grid-template-columns:9em repeat(3,minmax(0,1fr));gap:10px;background:var(--soft);border:4px solid var(--accent);border-radius:0 0 6px 6px;padding:12px}
 .p-house .gl,.p-house .g{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
 .p-house .gl{justify-content:center}
-.p-house .g{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:13px}
+.p-house .g{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px}
 .p-house .g.jam{border:2px solid var(--bad)}
 @media(max-width:900px){
-  .p-house .roof{clip-path:none;height:auto;padding:16px;border-radius:6px 6px 0 0}
+  .p-house .roof{clip-path:none;height:auto;padding:16px;border-radius:10px 6px 0 0}
   .p-house .cols{grid-auto-flow:row;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:none}
   .p-house .tiles{min-height:0}
   .p-house .ground{grid-template-columns:minmax(0,1fr)}
