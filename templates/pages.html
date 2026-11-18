@@ -799,25 +799,25 @@ details.more summary::-webkit-details-marker{display:none}
   <div class="roof">
     <span class="k">北极星</span>
     <b class="ns">十秒内导出成功的比例</b>
-    <p class="goal"><span>目标</span><b class="num">&gt; 90%</b><span>现 31%</span></p>
+    <p class="goal num">31% → &gt; 90%</p>
     <p class="chain"><span>单次查询 <b class="num">7 秒</b></span><span class="jam">卡在：文件生成排队</span><span>十秒内完成 <b class="num">31%</b></span></p>
   </div>
   <div class="cols" style="grid-template-columns:30fr 40fr 30fr">
 
-    <div class="ph"><b class="w num">30%</b><div><b>查询</b><span class="cap">一次查出，不逐条查</span></div></div>
+    <div class="ph"><b>查询 · 权重 30%</b><span class="cap">一次查出，不逐条查</span></div>
     <div class="tiles">
       <div class="tile prog core" style="flex-grow:20">
-        <div class="th"><i class="st"></i><b>批量查询覆盖率</b><span class="wt num">20%</span></div>
+        <div class="th"><i class="st"></i><b>批量查询覆盖率</b></div>
         <span class="cap">导出接口里不再逐条查的占比</span>
-        <p class="nums"><span class="cap">目标</span><b class="num">100%</b><span class="cap">现 60%</span></p>
+        <p class="nums"><b class="num">60% → 100%</b><span class="cap">权重 20%</span></p>
         <div class="track"><span class="fill" style="width:60%"></span></div>
-        <details><summary>口径</summary>已改批量的导出接口数 ÷ 全部导出接口数；现在 6 ÷ 10。只算线上在用的接口。</details>
+        <details class="more"><summary>口径</summary>已改批量的导出接口数 ÷ 全部导出接口数；现在 6 ÷ 10。只算线上在用的接口。</details>
       </div>
       <div class="tile off" style="flex-grow:10">
-        <div class="th"><i class="st"></i><b>慢查询清零</b><span class="wt num">10%</span></div>
+        <div class="th"><i class="st"></i><b>慢查询清零</b></div>
         <span class="cap">导出路径上超过 1 秒的查询</span>
-        <p class="nums"><span class="cap">目标</span><b class="num">0 条</b><span class="cap">现 4 条</span></p>
-        <details><summary>口径</summary>慢查询日志里近 7 天属于导出路径、耗时超 1 秒的不同语句数。</details>
+        <p class="nums"><b class="num">4 条 → 0 条</b><span class="cap">权重 10%</span></p>
+        <details class="more"><summary>口径</summary>慢查询日志里近 7 天属于导出路径、耗时超 1 秒的不同语句数。</details>
       </div>
     </div>
     <ol class="acts">
@@ -825,20 +825,20 @@ details.more summary::-webkit-details-marker{display:none}
       <li><p>4 条慢查询加索引<span class="ext">数据库组评审</span></p><span class="to">→ 慢查询清零</span><span class="cap">业务：运营组长（建议） · 实现：后端甲（建议）</span></li>
     </ol>
 
-    <div class="ph"><b class="w num">40%</b><div><b>生成</b><span class="cap">文件边查边写，不排队</span></div></div>
+    <div class="ph"><b>生成 · 权重 40%</b><span class="cap">文件边查边写，不排队</span></div>
     <div class="tiles">
       <div class="tile off core" style="flex-grow:25">
-        <div class="th"><i class="st"></i><b>十万条生成耗时</b><span class="wt num">25%</span></div>
+        <div class="th"><i class="st"></i><b>十万条生成耗时</b></div>
         <span class="cap">最大的那类导出要等多久</span>
-        <p class="nums"><span class="cap">目标</span><b class="num">&lt; 8 秒</b><span class="cap">现 待定</span></p>
-        <details><summary>口径</summary>十万条订单从点导出到文件可下载的耗时，取 20 次的中位数。十万条还没实测，等动作 2 定出基线；一万条实测 52 秒，仅作近似。</details>
+        <p class="nums"><b class="num">待定 → &lt; 8 秒</b><span class="cap">权重 25%</span></p>
+        <details class="more"><summary>口径</summary>十万条订单从点导出到文件可下载的耗时，取 20 次的中位数。十万条还没实测，等动作 2 定出基线；一万条实测 52 秒，仅作近似。</details>
       </div>
       <div class="tile off" style="flex-grow:15">
-        <div class="th"><i class="st"></i><b>排队等待</b><span class="wt num">15%</span></div>
+        <div class="th"><i class="st"></i><b>排队等待</b></div>
         <span class="cap">任务开始前在队列里等多久</span>
-        <p class="nums"><span class="cap">目标</span><b class="num">&lt; 1 秒</b><span class="cap">现 21 秒</span></p>
+        <p class="nums"><b class="num">21 秒 → &lt; 1 秒</b><span class="cap">权重 15%</span></p>
         <div class="track"><span class="fill bad" style="width:5%"></span></div>
-        <details><summary>口径</summary>近 7 天导出任务从入队到开始执行的中位等待。它是十万条生成耗时的组成部分，权重单独计，耗时不重复算。</details>
+        <details class="more"><summary>口径</summary>近 7 天导出任务从入队到开始执行的中位等待。它是十万条生成耗时的组成部分，权重单独计，耗时不重复算。</details>
       </div>
     </div>
     <ol class="acts">
@@ -846,26 +846,26 @@ details.more summary::-webkit-details-marker{display:none}
       <li><p>十万条实测 20 次，定出基线和目标</p><span class="to">→ 十万条生成耗时</span><span class="cap">业务：运营组长（建议） · 实现：后端乙（建议）</span></li>
     </ol>
 
-    <div class="ph"><b class="w num">30%</b><div><b>能力</b><span class="cap">先有再优</span></div></div>
+    <div class="ph"><b>能力 · 权重 30%</b><span class="cap">先有再优</span></div>
     <div class="tiles">
       <div class="tile prog core" style="flex-grow:15">
-        <div class="th"><i class="st"></i><b>异步导出</b><span class="wt num">15%</span></div>
+        <div class="th"><i class="st"></i><b>异步导出</b></div>
         <span class="cap">点完可以走开，好了通知</span>
-        <p class="nums"><span class="cap">目标</span><b class="num">有</b><span class="cap">现 在建</span></p>
+        <p class="nums"><b class="num">在建 → 有</b><span class="cap">权重 15%</span></p>
         <div class="seg"><i class="on"></i><i class="on"></i><i class="tgt"></i><i></i></div>
-        <details><summary>口径</summary>有：全部导出入口可选异步，完成后站内通知。优：通知送达率 ≥ 99%。现在：试跑中，只开了一个入口。</details>
+        <details class="more"><summary>口径</summary>有：全部导出入口可选异步，完成后站内通知。优：通知送达率 ≥ 99%。现在：试跑中，只开了一个入口。</details>
       </div>
       <div class="tile prog" style="flex-grow:10">
-        <div class="th"><i class="st"></i><b>失败重试</b><span class="wt num">10%</span></div>
+        <div class="th"><i class="st"></i><b>失败重试</b></div>
         <span class="cap">失败了自己再来</span>
-        <p class="nums"><span class="cap">目标</span><b class="num">优</b><span class="cap">现 有</span></p>
+        <p class="nums"><b class="num">有 → 优</b><span class="cap">权重 10%</span></p>
         <div class="seg"><i class="on"></i><i class="on"></i><i class="on"></i><i class="tgt"></i></div>
-        <details><summary>口径</summary>有：失败后自动重试。优：重试后一次成功率 ≥ 99%，超限有告警。现在：会重试，没告警。</details>
+        <details class="more"><summary>口径</summary>有：失败后自动重试。优：重试后一次成功率 ≥ 99%，超限有告警。现在：会重试，没告警。</details>
       </div>
       <div class="tile lit" style="flex-grow:5">
-        <div class="th"><i class="st"></i><b>进度提示</b><span class="wt num">5%</span></div>
-        <p class="nums"><span class="cap">目标</span><b class="num">有</b><span class="cap">现 有 ✓</span></p>
-        <details><summary>口径</summary>有：导出中显示已完成的百分比。价值较低，权重调小。</details>
+        <div class="th"><i class="st"></i><b>进度提示</b></div>
+        <p class="nums"><b class="num">有，已达标</b><span class="cap">权重 5%</span></p>
+        <details class="more"><summary>口径</summary>有：导出中显示已完成的百分比。价值较低，权重调小。</details>
       </div>
     </div>
     <ol class="acts">
@@ -889,37 +889,32 @@ details.more summary::-webkit-details-marker{display:none}
 .p-house .house{display:flex;flex-direction:column;min-width:0}
 .p-house .roof{background:var(--accent);color:var(--on-accent);clip-path:polygon(50% 0,100% 100%,0 100%);height:270px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;padding:0 16px 16px;text-align:center}
 .p-house .roof .k{font-size:12px;letter-spacing:.3em;opacity:.85}
-.p-house .roof .ns{font-size:21px;line-height:1.3}
-.p-house .goal{display:flex;align-items:baseline;justify-content:center;gap:10px;font-size:13px}
-.p-house .goal .num{font-size:40px;line-height:1.1}
+.p-house .roof .ns{font-size:24px;line-height:1.3}
+.p-house .goal{font-size:18px}
 .p-house .chain{display:flex;flex-wrap:wrap;justify-content:center;font-size:13px;border-radius:10px;overflow:hidden}
 .p-house .chain span{background:var(--card);color:var(--ink);padding:3px 12px}
 .p-house .chain .jam{background:var(--bad);color:var(--card);font-weight:700}
 .p-house .cols{display:grid;grid-auto-flow:column;grid-template-rows:auto 1fr auto;gap:0 10px;border:solid var(--accent);border-width:4px 4px 0;background:var(--card);padding:0 10px 12px}
-.p-house .ph{display:flex;align-items:center;gap:10px;padding:12px 0 10px;min-width:0}
-.p-house .ph .w{flex:none;width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-size:16px}
-.p-house .ph div{display:flex;flex-direction:column;min-width:0}
-.p-house .ph div b{font-size:17px}
+.p-house .ph{display:flex;flex-direction:column;gap:2px;padding:12px 0 10px;min-width:0}
+.p-house .ph>b{font-size:13px;color:var(--accent)}
 .p-house .tiles{display:flex;flex-direction:column;gap:8px;min-height:440px;min-width:0}
 .p-house .tile{flex:1 1 0;display:flex;flex-direction:column;gap:4px;border:1.5px solid var(--accent);border-radius:10px;padding:9px 11px;background:var(--card);min-width:0}
 .p-house .tile.core{border-width:3px}
 .p-house .tile.lit{background:var(--soft)}
 .p-house .tile.off{border-style:dashed;border-color:var(--muted)}
 .p-house .th{display:flex;align-items:center;gap:6px}
-.p-house .th b{flex:1;min-width:0;line-height:1.35}
+.p-house .th b{flex:1;min-width:0;font-size:17px;line-height:1.35}
 .p-house .st{flex:none;width:11px;height:11px;border-radius:50%;border:2px solid var(--accent);background:linear-gradient(90deg,var(--accent) 50%,transparent 50%)}
 .p-house .lit .st{background:var(--accent)}
 .p-house .off .st{background:none;border:1.5px dashed var(--muted)}
-.p-house .wt{flex:none;font-size:11px;padding:0 6px;border-radius:4px;background:var(--accent);color:var(--on-accent)}
 .p-house .nums{margin-top:auto;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
-.p-house .nums .num{font-size:19px;color:var(--accent)}
+.p-house .nums{justify-content:space-between}
+.p-house .nums .num{font-size:14px}
 .p-house .track{height:5px}
 .p-house .seg{display:flex;gap:3px}
 .p-house .seg i{flex:1;height:6px;border-radius:2px;background:var(--soft)}
 .p-house .seg i.on{background:var(--accent)}
 .p-house .seg i.tgt{background:none;outline:1.5px dashed var(--accent);outline-offset:-1.5px}
-.p-house details{font-size:12px;color:var(--muted)}
-.p-house summary{cursor:pointer;font-weight:700}
 .p-house .acts{list-style:none;counter-reset:a;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;min-width:0}
 .p-house .acts li{counter-increment:a;position:relative;border:1px solid var(--line);border-radius:10px;padding:8px 10px 8px 36px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;font-size:13px}
 .p-house .acts li::before{content:counter(a);position:absolute;left:9px;top:9px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);font-size:12px;font-weight:700;display:grid;place-items:center}
