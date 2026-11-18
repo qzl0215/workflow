@@ -21,6 +21,7 @@ REQUIRED_REFERENCES = (
     "deliver.md",
     "report.md",
     "learn.md",
+    "strategy.md",
     "linear-tracking.md",
 )
 REQUIRED_TEMPLATES = ("work.md", "pages.html")
