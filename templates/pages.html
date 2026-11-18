@@ -38,6 +38,7 @@ evidence｜把结论分成已证实、未证实、没做三栏，每条写明怎
 flow    ｜几个方框用箭头连成一条短流程，标出外部环节和要问人的关口｜要讲清一件事按什么顺序发生时
 shots   ｜改前改后截图并排，下面逐条标变好、变差、没解决｜界面改动要让人亲眼看出差别时
 lanes   ｜泳道格：列是阶段、行是不同情形，每格标重点做、轻轻过或跳过｜同一流程在不同情形下轻重不同时
+house   ｜战略屋：屋顶北极星和卡点链，支柱列宽按权重，指标格面积按权重并分三种状态，下接动作和负责人，地基是部门外协作｜给团队定一期战略、把目标拆到指标和人时用；怎么定见 references/strategy.md
 -->
 <title>workflow 页面版式库</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -671,5 +672,157 @@ section{display:flex;flex-direction:column;gap:12px;min-width:0}
 }
 </style>
 <!-- @end lanes -->
+
+<p class="cap">@pattern house</p>
+<!-- @pattern house｜战略屋：屋顶北极星和卡点链，支柱列宽按权重，指标格面积按权重并分三种状态，下接动作和负责人，地基是部门外协作｜给团队定一期战略、把目标拆到指标和人时用；怎么定见 references/strategy.md -->
+<!-- 换内容时：.cols 的 grid-template-columns 按支柱权重写；每个 .tile 的 flex-grow 写它的权重；全屋权重合计 100。 -->
+<section class="p-house">
+<h2>查询已经够快，卡在文件生成排队</h2>
+<p class="cap">订单导出组 · 四季度 · 对结果负责：导出组负责人 · 截止 12-31 · 现状截至 11-18</p>
+<div class="house">
+  <div class="roof">
+    <span class="k">北极星</span>
+    <b class="ns">十秒内导出成功的比例</b>
+    <p class="goal"><span>目标</span><b class="num">&gt; 90%</b><span>现 31%</span></p>
+    <p class="chain"><span>单次查询 <b class="num">7 秒</b></span><span class="jam">卡在：文件生成排队</span><span>十秒内完成 <b class="num">31%</b></span></p>
+  </div>
+  <div class="cols" style="grid-template-columns:30fr 40fr 30fr">
+
+    <div class="ph"><b class="w num">30%</b><div><b>查询</b><span class="cap">一次查出，不逐条查</span></div></div>
+    <div class="tiles">
+      <div class="tile prog core" style="flex-grow:20">
+        <div class="th"><i class="st"></i><b>批量查询覆盖率</b><span class="wt num">20%</span></div>
+        <span class="cap">导出接口里不再逐条查的占比</span>
+        <p class="nums"><span class="cap">目标</span><b class="num">100%</b><span class="cap">现 60%</span></p>
+        <div class="track"><span class="fill" style="width:60%"></span></div>
+        <details><summary>口径</summary>已改批量的导出接口数 ÷ 全部导出接口数；现在 6 ÷ 10。只算线上在用的接口。</details>
+      </div>
+      <div class="tile off" style="flex-grow:10">
+        <div class="th"><i class="st"></i><b>慢查询清零</b><span class="wt num">10%</span></div>
+        <span class="cap">导出路径上超过 1 秒的查询</span>
+        <p class="nums"><span class="cap">目标</span><b class="num">0 条</b><span class="cap">现 4 条</span></p>
+        <details><summary>口径</summary>慢查询日志里近 7 天属于导出路径、耗时超 1 秒的不同语句数。</details>
+      </div>
+    </div>
+    <ol class="acts">
+      <li><p>剩下 4 个导出接口改成批量查询，每个加 10 点</p><span class="to">→ 批量查询覆盖率</span><span class="cap">业务：运营组长（建议） · 实现：后端甲（建议）</span></li>
+      <li><p>4 条慢查询加索引<span class="ext">数据库组评审</span></p><span class="to">→ 慢查询清零</span><span class="cap">业务：运营组长（建议） · 实现：后端甲（建议）</span></li>
+    </ol>
+
+    <div class="ph"><b class="w num">40%</b><div><b>生成</b><span class="cap">文件边查边写，不排队</span></div></div>
+    <div class="tiles">
+      <div class="tile off core" style="flex-grow:25">
+        <div class="th"><i class="st"></i><b>十万条生成耗时</b><span class="wt num">25%</span></div>
+        <span class="cap">最大的那类导出要等多久</span>
+        <p class="nums"><span class="cap">目标</span><b class="num">&lt; 8 秒</b><span class="cap">现 待定</span></p>
+        <details><summary>口径</summary>十万条订单从点导出到文件可下载的耗时，取 20 次的中位数。十万条还没实测，等动作 2 定出基线；一万条实测 52 秒，仅作近似。</details>
+      </div>
+      <div class="tile off" style="flex-grow:15">
+        <div class="th"><i class="st"></i><b>排队等待</b><span class="wt num">15%</span></div>
+        <span class="cap">任务开始前在队列里等多久</span>
+        <p class="nums"><span class="cap">目标</span><b class="num">&lt; 1 秒</b><span class="cap">现 21 秒</span></p>
+        <div class="track"><span class="fill bad" style="width:5%"></span></div>
+        <details><summary>口径</summary>近 7 天导出任务从入队到开始执行的中位等待。它是十万条生成耗时的组成部分，权重单独计，耗时不重复算。</details>
+      </div>
+    </div>
+    <ol class="acts">
+      <li class="jam"><b class="tag">最大卡点</b><p>文件改成边查边写，取消单队列<span class="ext">运维扩容队列</span></p><span class="to">→ 北极星、排队等待</span><span class="cap">业务：运营组长（建议） · 实现：后端乙（建议）</span></li>
+      <li><p>十万条实测 20 次，定出基线和目标</p><span class="to">→ 十万条生成耗时</span><span class="cap">业务：运营组长（建议） · 实现：后端乙（建议）</span></li>
+    </ol>
+
+    <div class="ph"><b class="w num">30%</b><div><b>能力</b><span class="cap">先有再优</span></div></div>
+    <div class="tiles">
+      <div class="tile prog core" style="flex-grow:15">
+        <div class="th"><i class="st"></i><b>异步导出</b><span class="wt num">15%</span></div>
+        <span class="cap">点完可以走开，好了通知</span>
+        <p class="nums"><span class="cap">目标</span><b class="num">有</b><span class="cap">现 在建</span></p>
+        <div class="seg"><i class="on"></i><i class="on"></i><i class="tgt"></i><i></i></div>
+        <details><summary>口径</summary>有：全部导出入口可选异步，完成后站内通知。优：通知送达率 ≥ 99%。现在：试跑中，只开了一个入口。</details>
+      </div>
+      <div class="tile prog" style="flex-grow:10">
+        <div class="th"><i class="st"></i><b>失败重试</b><span class="wt num">10%</span></div>
+        <span class="cap">失败了自己再来</span>
+        <p class="nums"><span class="cap">目标</span><b class="num">优</b><span class="cap">现 有</span></p>
+        <div class="seg"><i class="on"></i><i class="on"></i><i class="on"></i><i class="tgt"></i></div>
+        <details><summary>口径</summary>有：失败后自动重试。优：重试后一次成功率 ≥ 99%，超限有告警。现在：会重试，没告警。</details>
+      </div>
+      <div class="tile lit" style="flex-grow:5">
+        <div class="th"><i class="st"></i><b>进度提示</b><span class="wt num">5%</span></div>
+        <p class="nums"><span class="cap">目标</span><b class="num">有</b><span class="cap">现 有 ✓</span></p>
+        <details><summary>口径</summary>有：导出中显示已完成的百分比。价值较低，权重调小。</details>
+      </div>
+    </div>
+    <ol class="acts">
+      <li><p>异步导出开到全部入口，完成后通知</p><span class="to">→ 异步导出</span><span class="cap">业务：运营组长（建议） · 实现：前端甲（建议）</span></li>
+      <li><p>重试超过 3 次告警，统计重试后成功率</p><span class="to">→ 失败重试</span><span class="cap">业务：运营组长（建议） · 实现：后端乙（建议）</span></li>
+    </ol>
+
+  </div>
+  <div class="ground">
+    <div class="gl"><b>部门外协作</b><span class="cap">导出组负责人协调</span></div>
+    <div class="g jam"><b class="tag">最大卡点</b><b>运维</b><span>扩容导出队列和文件存储</span><span class="cap">服务：生成</span></div>
+    <div class="g"><b>数据库组</b><span>评审 4 条索引</span><span class="cap">服务：查询</span></div>
+    <div class="g"><b>运营</b><span>给出月底对账的真实导出样本</span><span class="cap">服务：生成、能力</span></div>
+  </div>
+</div>
+<p class="cap">读法：列宽和格子高度按权重，7 项合计 100%；粗框是该支柱的核心指标。底色：已点亮｜实线：进行中｜虚线：未点亮。四段条是无、在建、有、优，实心是现在，虚框是本期目标。</p>
+<p class="cap">口径：导出请求指运营后台发起的订单导出，不含接口调用；同一人一分钟内重复点击算一次；成功指十秒内拿到完整文件。现状取 11-11 至 11-17 的日志。人选都是建议，未和各组对过。</p>
+<p class="cap">下一期方向：导出内容可自选字段。这一期不做。</p>
+</section>
+<style>
+.p-house .house{display:flex;flex-direction:column;min-width:0}
+.p-house .roof{background:var(--accent);color:var(--on-accent);clip-path:polygon(50% 0,100% 100%,0 100%);height:270px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;padding:0 16px 16px;text-align:center}
+.p-house .roof .k{font-size:12px;letter-spacing:.3em;opacity:.85}
+.p-house .roof .ns{font-size:21px;line-height:1.3}
+.p-house .goal{display:flex;align-items:baseline;justify-content:center;gap:10px;font-size:13px}
+.p-house .goal .num{font-size:40px;line-height:1.1}
+.p-house .chain{display:flex;flex-wrap:wrap;justify-content:center;font-size:13px;border-radius:6px;overflow:hidden}
+.p-house .chain span{background:var(--card);color:var(--ink);padding:3px 12px}
+.p-house .chain .jam{background:var(--bad);color:var(--card);font-weight:700}
+.p-house .cols{display:grid;grid-auto-flow:column;grid-template-rows:auto 1fr auto;gap:0 10px;border:solid var(--accent);border-width:4px 4px 0;background:var(--card);padding:0 10px 12px}
+.p-house .ph{display:flex;align-items:center;gap:10px;padding:12px 0 10px;min-width:0}
+.p-house .ph .w{flex:none;width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-size:16px}
+.p-house .ph div{display:flex;flex-direction:column;min-width:0}
+.p-house .ph div b{font-size:17px}
+.p-house .tiles{display:flex;flex-direction:column;gap:8px;min-height:440px;min-width:0}
+.p-house .tile{flex:1 1 0;display:flex;flex-direction:column;gap:4px;border:1.5px solid var(--accent);border-radius:6px;padding:9px 11px;background:var(--card);min-width:0}
+.p-house .tile.core{border-width:3px}
+.p-house .tile.lit{background:var(--soft)}
+.p-house .tile.off{border-style:dashed;border-color:var(--muted)}
+.p-house .th{display:flex;align-items:center;gap:6px}
+.p-house .th b{flex:1;min-width:0;line-height:1.35}
+.p-house .st{flex:none;width:11px;height:11px;border-radius:50%;border:2px solid var(--accent);background:linear-gradient(90deg,var(--accent) 50%,transparent 50%)}
+.p-house .lit .st{background:var(--accent)}
+.p-house .off .st{background:none;border:1.5px dashed var(--muted)}
+.p-house .wt{flex:none;font-size:11px;padding:0 6px;border-radius:4px;background:var(--accent);color:var(--on-accent)}
+.p-house .nums{margin-top:auto;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.p-house .nums .num{font-size:19px;color:var(--accent)}
+.p-house .track{height:5px}
+.p-house .seg{display:flex;gap:3px}
+.p-house .seg i{flex:1;height:6px;border-radius:2px;background:var(--soft)}
+.p-house .seg i.on{background:var(--accent)}
+.p-house .seg i.tgt{background:none;outline:1.5px dashed var(--accent);outline-offset:-1.5px}
+.p-house details{font-size:12px;color:var(--muted)}
+.p-house summary{cursor:pointer;font-weight:700}
+.p-house .acts{list-style:none;counter-reset:a;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;min-width:0}
+.p-house .acts li{counter-increment:a;position:relative;border:1px solid var(--line);border-radius:6px;padding:8px 10px 8px 36px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;font-size:13px}
+.p-house .acts li::before{content:counter(a);position:absolute;left:9px;top:9px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);font-size:12px;font-weight:700;display:grid;place-items:center}
+.p-house .ext{font-size:11px;font-weight:700;color:var(--warn);border:1px solid currentColor;border-radius:4px;padding:0 5px;margin-left:6px;white-space:nowrap}
+.p-house .to{font-size:12px;color:var(--accent);font-weight:700}
+.p-house .tag{font-size:11px;color:var(--card);background:var(--bad);border-radius:4px;padding:0 6px}
+.p-house .jam{border:2px solid var(--bad)}
+.p-house .ground{display:grid;grid-template-columns:9em repeat(3,minmax(0,1fr));gap:10px;background:var(--soft);border:4px solid var(--accent);border-radius:0 0 6px 6px;padding:12px}
+.p-house .gl,.p-house .g{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
+.p-house .gl{justify-content:center}
+.p-house .g{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:13px}
+.p-house .g.jam{border:2px solid var(--bad)}
+@media(max-width:900px){
+  .p-house .roof{clip-path:none;height:auto;padding:16px;border-radius:6px 6px 0 0}
+  .p-house .cols{grid-auto-flow:row;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:none}
+  .p-house .tiles{min-height:0}
+  .p-house .ground{grid-template-columns:minmax(0,1fr)}
+}
+</style>
+<!-- @end house -->
 </div>
 </html>

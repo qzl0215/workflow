@@ -21,6 +21,7 @@ REFERENCES = {
     "deliver.md",
     "report.md",
     "learn.md",
+    "strategy.md",
     "linear-tracking.md",
 }
 RUNTIME_FILES = {
