@@ -15,6 +15,7 @@ workflow 页面版式库
 - 每张图或表下面写依据：数据来源、口径、核对时间。
 - 要读者回复的，把怎么回放在页首。
 - 方案逐行可比：每个方案同样的行、同样的顺序，含风险和怎么验收。
+- 让读者选时，先交代今天的数和口径，再拿同几个真实例子在每个方案下各算一遍：写结果，旁边标相对今天的变化，不变就写“不变”。
 - 颜色只用底座里的变量；手机上折行，不横向滚动。
 - 截图单独发布成文件，不内嵌进页面。
 - 没有数据不画条形；同一组横条共用一个刻度。
@@ -35,7 +36,7 @@ swap    ｜旧做法划掉、箭头指向新做法，一行一条｜要改规则
 accept  ｜每个验收项并排写出成与没成各自看到什么，验收可以判失败｜交付前约定凭什么算做到时用
 scale   ｜同一刻度的横条对比现在与改后，虚线标出目标线，数字在右｜要让人看出差了多少倍、过没过线时用
 rank    ｜多项按大小排序，颜色表示各自状态｜项目多，既要看谁大又要看谁没做
-options ｜两到三个方案并排，每张卡同样的行、同样的顺序，逐行可比｜让读者在几种做法里选一个时用；推荐的排第一，排除的弱化
+options ｜两到三个方案并排：每张卡一句“它守住什么”，同几个真实例子在每个方案下各算一遍并标出相对今天的变化，再到风险和验收｜让读者在几种做法里选一个时用；推荐的排第一，不推荐的弱化
 matrix  ｜要求 × 方案矩阵：每格三态（有 / 部分 / 没有），列顶用占比条汇总｜逐条核对几个方案或版本各满足了哪些要求时用
 phases  ｜分期上线：上方里程碑条，下方编号的每一期（做什么、工时、怎么算做到）｜一件事要分几步交付、每步有过关标准时用
 pairs   ｜每个指标一对横条，同一刻度上比之前和之后｜有两三个能量化的指标要比前后时
@@ -335,53 +336,65 @@ details.more summary::-webkit-details-marker{display:none}
 <!-- @end rank -->
 
 <p class="cap">@pattern options</p>
-<!-- @pattern options｜两到三个方案并排，每张卡同样的行、同样的顺序，逐行可比｜让读者在几种做法里选一个时用；推荐的排第一，排除的弱化 -->
+<!-- @pattern options｜两到三个方案并排：每张卡一句“它守住什么”，同几个真实例子在每个方案下各算一遍并标出相对今天的变化，再到风险和验收，逐行可比｜让读者在几种做法里选一个时用；推荐的排第一并加蓝边，不推荐的用虚线弱化 -->
 <section class="p-options">
-<h2>推荐A：最快见效，两天可回退</h2>
+<h2><span class="no">1</span>推荐A：首次就快，两天可回退<small>做法要你定</small></h2>
+<p class="lede">今天：万条订单首次导出 86 秒，再次导出 86 秒，十万条超时。口径：从点“导出”到文件可下载。</p>
 <div class="grid">
 <article class="card rec">
 <h3><span class="pill rec">推荐</span>A 批量查询加缓存</h3>
-<p class="big num">7 秒<small> 首次导出</small></p>
-<p data-label="变化">逐条改批量，加缓存</p>
-<p data-label="收益">86 秒降到 7 秒</p>
-<p data-label="代价">两天，改一个接口</p>
-<p data-label="最大风险">缓存数据过期</p>
-<p data-label="怎么验收">万条订单 7 秒内</p>
-<p data-label="交付到哪一步">上线并观察一周</p>
+<p class="big">首次就快<small>查询和缓存都改</small></p>
+<p data-label="万条首次"><b class="num">7 秒</b><i class="good">原 86</i></p>
+<p data-label="万条再次"><b class="num">3 秒</b><i class="good">原 86</i></p>
+<p data-label="十万条"><b class="num">58 秒</b><i class="good">原超时</i></p>
+<p class="sep" data-label="工期"><b class="num">2 天</b></p>
+<p data-label="能否回退"><b>一键回退</b></p>
+<p class="sep" data-label="最大风险">缓存里的数据过期</p>
+<p data-label="怎么验收">万条订单 7 秒内导完</p>
 </article>
 <article class="card">
 <h3><span class="pill">备选</span>B 只加缓存</h3>
-<p class="big num">86 秒<small> 首次导出</small></p>
-<p data-label="变化">查询不动，只加缓存</p>
-<p data-label="收益">重复导出降到 9 秒</p>
-<p data-label="代价">半天</p>
-<p data-label="最大风险">首次导出仍然慢</p>
-<p data-label="怎么验收">二次导出 10 秒内</p>
-<p data-label="交付到哪一步">上线</p>
+<p class="big">再次才快<small>查询不动，只加缓存</small></p>
+<p data-label="万条首次"><b class="num">86 秒</b><i>不变</i></p>
+<p data-label="万条再次"><b class="num">9 秒</b><i class="good">原 86</i></p>
+<p data-label="十万条"><b>超时</b><i class="bad">没解决</i></p>
+<p class="sep" data-label="工期"><b class="num">半天</b></p>
+<p data-label="能否回退"><b>一键回退</b></p>
+<p class="sep" data-label="最大风险">首次导出仍然慢</p>
+<p data-label="怎么验收">再次导出 10 秒内导完</p>
 </article>
 <article class="card out">
-<h3><span class="pill no">排除</span>C 换导出服务</h3>
-<p class="big num">5 秒<small> 首次导出</small></p>
-<p data-label="变化">整体迁到新服务</p>
-<p data-label="收益">86 秒降到 5 秒</p>
-<p data-label="代价">三周，需运维配合</p>
-<p data-label="最大风险">迁移期间导出停用</p>
+<h3><span class="pill no">不推荐</span>C 换导出服务</h3>
+<p class="big">最快，但要停用<small>整体迁到新服务</small></p>
+<p data-label="万条首次"><b class="num">5 秒</b><i class="good">原 86</i></p>
+<p data-label="万条再次"><b class="num">3 秒</b><i class="good">原 86</i></p>
+<p data-label="十万条"><b class="num">40 秒</b><i class="good">原超时</i></p>
+<p class="sep" data-label="工期"><b class="num">3 周</b><i class="bad">超出本期</i></p>
+<p data-label="能否回退"><b>不能</b><i class="bad">迁移后回不去</i></p>
+<p class="sep" data-label="最大风险">迁移期间导出停用</p>
 <p data-label="怎么验收">新旧结果逐行一致</p>
-<p data-label="交付到哪一步">本期不做</p>
 </article>
 </div>
+<p class="cap">依据：三个例子都用同一批万条和十万条订单实测，每个做法各跑三次取中间值。</p>
 </section>
 <style>
-/* 一个网格三列，卡片用 subgrid 共享行高，所以各卡同一行对齐；行名写在 data-label 里，手机上照样可见 */
+/* 一个网格三列，卡片用 subgrid 共享行高，所以各卡同一行对齐；行数变了要改 span（标题 + 大字 + 行数）。行名写在 data-label 里，手机上照样可见 */
 .p-options .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 14px}
-.p-options .card{display:grid;grid-row:span 8;grid-template-rows:subgrid;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.p-options .card{display:grid;grid-row:span 9;grid-template-rows:subgrid;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;min-width:0}
 .p-options .card.rec{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
-.p-options .card.out{background:transparent;border-style:dashed;color:var(--muted)}
-.p-options .card h3{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-bottom:6px}
-.p-options .big{font-size:26px;line-height:1.2;padding-bottom:10px}
-.p-options .big small{font-size:12px;font-weight:400;color:var(--muted)}
-.p-options .card p[data-label]{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:8px;align-items:baseline;border-top:1px solid var(--line);padding:6px 0;font-size:14px}
+.p-options .card.out{background:transparent;border-style:dashed}
+.p-options .card h3{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-bottom:8px}
+/* 大字是一句“它守住什么”，下面一行小字说怎么做到 */
+.p-options .big{font-size:22px;font-weight:700;line-height:1.3;padding-bottom:12px}
+.p-options .big small{display:block;font-size:13px;font-weight:400;color:var(--muted)}
+/* 每行：行名 + 结果（b）+ 相对今天的变化（i：good 变好，bad 变差，warn 要留意，不写类是不变） */
+.p-options .card p[data-label]{display:grid;grid-template-columns:5.5em auto minmax(0,1fr);gap:8px;align-items:baseline;border-top:1px solid var(--line);padding:8px 0;font-size:14px}
 .p-options .card p[data-label]::before{content:attr(data-label);font-size:12px;color:var(--muted)}
+.p-options .card p b{font-size:16px}
+.p-options .card p i{font-style:normal;font-size:12px;color:var(--muted)}
+.p-options .card p i.good{color:var(--good);font-weight:700}.p-options .card p i.bad{color:var(--bad);font-weight:700}.p-options .card p i.warn{color:var(--warn);font-weight:700}
+/* .sep 另起一组：例子、代价、风险和验收之间留出空 */
+.p-options .card p.sep{margin-top:10px}
 @media(max-width:640px){.p-options .grid{grid-template-columns:minmax(0,1fr);gap:14px}.p-options .card{grid-row:auto;grid-template-rows:none}}
 </style>
 <!-- @end options -->

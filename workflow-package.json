@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "name": "workflow",
-  "version": "5.12.1",
+  "version": "5.12.2",
   "entrypoint": "SKILL.md",
   "runtime": {
     "files": {
       "LICENSE": "sha256:6f56797263fb6d17252bfd325544640f0c173926558345975fed3973b1c7fc45",
       "NOTICE.md": "sha256:9154ec5f50fdb67d6bdcc1f220276db9420933515c1dc7bd0422ab99174da13d",
-      "SKILL.md": "sha256:78ddd007a72e13e7dc5e4c581fa36463b7a0375f01831a3a5e1db8c59b839da5",
+      "SKILL.md": "sha256:1fecd2c475bab0237d532ad5f44b170ca033009af67f6d1b5f65abff02a80b35",
       "references/deliver.md": "sha256:67ca3bb3c1ea5a743242002f25ad24ac3168aac4446f48bff3766df1bb447b94",
       "references/frame.md": "sha256:ea0811407f86774a5ad1655b532a6cd19c3ad946bdb9654c7f68fae8a0608bbe",
       "references/learn.md": "sha256:2774d71d2cb95a755ba91001dddc632d4edd9b60a2463482ba926152137780ff",
@@ -21,7 +21,7 @@
       "scripts/safe_merge.py": "sha256:b6d3798f8b9e8dedf8f498061f723871342b80d5ca3f3942ffa6bdd721a64ffe",
       "scripts/work_context.py": "sha256:2ba866b0d59b8c6c02c85ea864c990125f47139056ff7e19a7d27791ae3a096f",
       "scripts/workflow_doctor.py": "sha256:6b3225eb23c597409ff42517ad6887fef702b93a99ce8e3f2f97d90058f08abd",
-      "templates/pages.html": "sha256:a89cd2d2ee6bd16cdb31809a374ed7f4248ca9baac467912e3ffcc65915f6d58",
+      "templates/pages.html": "sha256:b7b5166beb2be81f594957a132dd4f1e5099ee9ef3b6056f43b555d2e172e4e2",
       "templates/work.md": "sha256:619ee7ddf3498ffd33ed9357b4b7d074476262f8476d414d2d49a6897ba33419"
     }
   },
