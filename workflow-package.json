@@ -1,18 +1,18 @@
 {
   "schema": 1,
   "name": "workflow",
-  "version": "5.13.0",
+  "version": "5.14.0",
   "entrypoint": "SKILL.md",
   "runtime": {
     "files": {
       "LICENSE": "sha256:6f56797263fb6d17252bfd325544640f0c173926558345975fed3973b1c7fc45",
       "NOTICE.md": "sha256:9154ec5f50fdb67d6bdcc1f220276db9420933515c1dc7bd0422ab99174da13d",
-      "SKILL.md": "sha256:7065d75a1b1cc2ccbb225f3ea49a05e53526d01bb160a3e2251c84d91134cd7c",
+      "SKILL.md": "sha256:9d8454ca6c26a46f698efbc2458bc44d7adee9f4734b6540868ffe3fa16ee921",
       "references/deliver.md": "sha256:67ca3bb3c1ea5a743242002f25ad24ac3168aac4446f48bff3766df1bb447b94",
-      "references/frame.md": "sha256:33857be65aa147a5c08aee8280d8e2a312db228d971bb0876edd18a06152d3b1",
+      "references/frame.md": "sha256:3a82bec025f35129fe5e37d017837cacac3c61cb2ef3ecbd78660a31cafa5385",
       "references/learn.md": "sha256:2774d71d2cb95a755ba91001dddc632d4edd9b60a2463482ba926152137780ff",
       "references/linear-tracking.md": "sha256:f19729de6e7b37536ca22f764918ccdc4d82bf871a56e193d368035b2bcc6df9",
-      "references/plan.md": "sha256:5384b4fe7b120689dd39370a492c7762c85f4188d1b7635717172eb148f5ea23",
+      "references/plan.md": "sha256:e18abcee867052f3229598b07db3e9f337586cc5765af0807f2b9dbdb730f599",
       "references/prove.md": "sha256:d3a6d08c8c169644f46cd4f7016d90ff6661cd30fa32992c06ae78b45e5f1664",
       "references/report.md": "sha256:ec3aaa03c7a033458a211eaf1808b00270c6992d7bac28d39b240aafa4701933",
       "references/strategy.md": "sha256:a1b615bd36db1623bebf11026672498c669d50a20e31e0b2a7fdb6229c1f2a80",
