@@ -20,11 +20,12 @@ REQUIRED_REFERENCES = (
     "prove.md",
     "deliver.md",
     "report.md",
+    "visual-demo.md",
     "learn.md",
     "strategy.md",
     "linear-tracking.md",
 )
-REQUIRED_TEMPLATES = ("work.md", "pages.html")
+REQUIRED_TEMPLATES = ("work.md", "pages.html", "explorer.html")
 REQUIRED_RUNTIME_SCRIPTS = (
     "install.py",
     "safe_merge.py",

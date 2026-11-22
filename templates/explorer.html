@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>两处海湾的潮位观测</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --paper: #f6f3e9; --surface: #fffcf4; --ink: #173c3a; --muted: #4e6661;
+  --line: #c8cfc4; --accent: #176857; --wash: #c1d9c9; --focus: #934b18;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --paper: #142524; --surface: #1a302d; --ink: #f4f1df; --muted: #b5c8bf;
+    --line: #4f6661; --accent: #90d6ba; --wash: #395951; --focus: #f4b37f; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 1rem/1.6 system-ui, sans-serif; }
+main { max-width: 64rem; margin: auto; padding: clamp(1.2rem, 5vw, 4rem); }
+h1 { font: 600 clamp(2rem, 5vw, 4rem)/1.15 "Songti SC", "Noto Serif CJK SC", serif; margin: 0 0 .6rem; }
+header { border-top: .3rem solid var(--ink); padding: 1.8rem 0; }
+p, h2 { margin: 0; } h2 { font-size: 1.15rem; }
+header p, caption, figcaption, summary, legend { color: var(--muted); }
+figure { margin: 0; padding: clamp(1rem, 4vw, 2rem); background: var(--surface); border-block: 1px solid var(--line); }
+.toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+fieldset { margin: 0; padding: 0; border: 0; }
+legend { font-size: .85rem; }
+fieldset label { display: inline-flex; gap: .3rem; align-items: center; cursor: pointer; padding: .45rem .7rem; border-bottom: 2px solid var(--line); }
+fieldset label:has(:checked) { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+input { margin: 0; accent-color: var(--accent); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.plot { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: clamp(.3rem, 2vw, 1.4rem); margin: 1.6rem 0 .8rem; text-align: center; }
+.column { display: grid; grid-template-rows: 10rem auto; min-width: 0; }
+.track { display: flex; align-items: end; justify-content: center; border-bottom: 1px solid var(--ink);
+  background: repeating-linear-gradient(to top, transparent 0 calc(25% - 1px), var(--line) calc(25% - 1px) 25%); }
+.bar { position: relative; width: min(65%, 3.6rem); height: var(--height); background: var(--wash); border-top: 3px solid var(--accent); }
+.peak { background: var(--accent); }
+.bar b { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); color: var(--ink); background: var(--surface); line-height: 1.3; font-size: .95rem; }
+time, td, .bar { font-variant-numeric: tabular-nums; }
+time { font-size: .85rem; margin-top: .25rem; } figcaption { font-size: .9rem; }
+details { margin-top: 1.4rem; } summary { cursor: pointer; width: fit-content; padding: .4rem 0; }
+table { border-collapse: collapse; margin-top: .5rem; width: 100%; text-align: right; }
+caption, th:first-child { text-align: left; } td, th { padding: .35rem .4rem; border-bottom: 1px solid var(--line); }
+[hidden] { display: none; }
+</style>
+</head>
+<body><main>
+<header><h1>两处海湾的潮位观测</h1><p>虚构观测记录 · 同一天，每两小时采样一次</p></header>
+<figure hidden>
+  <div class="toolbar"><h2 aria-live="polite"></h2><fieldset><legend>观测点</legend></fieldset></div>
+  <div class="plot" role="img"></div>
+  <figcaption>潮位以米计。两处共用 0–4 米刻度，每道横线相隔 1 米，深色柱标出本站最高读数。</figcaption>
+</figure>
+<details open><summary>查看两站原始读数</summary>
+<table><caption>潮位（米）</caption><thead><tr><th scope="col">时刻</th><th scope="col">松湾</th><th scope="col">白沙湾</th></tr></thead>
+<tbody>
+<tr><th scope="row">06:00</th><td>0.8</td><td>1.4</td></tr>
+<tr><th scope="row">08:00</th><td>1.4</td><td>2.5</td></tr>
+<tr><th scope="row">10:00</th><td>2.6</td><td>3.2</td></tr>
+<tr><th scope="row">12:00</th><td>3.1</td><td>2.7</td></tr>
+<tr><th scope="row">14:00</th><td>2.4</td><td>1.9</td></tr>
+<tr><th scope="row">16:00</th><td>1.3</td><td>1.1</td></tr>
+</tbody></table></details>
+</main>
+<script>
+const table = document.querySelector("table");
+const selector = document.querySelector("fieldset");
+const plot = document.querySelector(".plot");
+const stations = [...table.tHead.rows[0].cells].slice(1);
+stations.forEach((cell, index) => {
+  const label = document.createElement("label");
+  const input = document.createElement("input");
+  input.type = "radio";
+  input.name = "station";
+  input.value = index + 1;
+  input.checked = index === 0;
+  label.append(input, cell.textContent);
+  selector.append(label);
+});
+function render() {
+  const stationColumn = Number(selector.querySelector(":checked").value);
+  const readings = [...table.tBodies[0].rows].map(row => ({
+    time: row.cells[0].textContent, level: Number(row.cells[stationColumn].textContent)
+  }));
+  const highest = Math.max(...readings.map(reading => reading.level));
+  const times = readings.filter(reading => reading.level === highest).map(reading => reading.time);
+  const station = table.tHead.rows[0].cells[stationColumn].textContent;
+  document.querySelector("h2").textContent = station + "在 " + times.join("、") + " 录得最高 " + highest + " 米";
+  plot.setAttribute("aria-label", station + "潮位（米）：" + readings.map(r => r.time + "，" + r.level).join("；"));
+  plot.replaceChildren();
+  for (const {time, level} of readings) {
+    const column = document.createElement("div");
+    column.className = "column";
+    column.innerHTML = '<div class="track"><span class="bar"><b></b></span></div><time></time>';
+    const bar = column.querySelector(".bar");
+    bar.style.setProperty("--height", (level / 4 * 100) + "%");
+    bar.classList.toggle("peak", level === highest);
+    bar.firstElementChild.textContent = level.toFixed(1);
+    column.querySelector("time").textContent = time;
+    plot.append(column);
+  }
+}
+selector.addEventListener("change", render);
+render();
+document.querySelector("figure").hidden = false;
+document.querySelector("details").open = false;
+</script>
+</body></html>
