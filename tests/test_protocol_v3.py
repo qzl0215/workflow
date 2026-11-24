@@ -182,7 +182,8 @@ class FileMapTest(unittest.TestCase):
         section = page[page.index('<section id="files"'):page.index('<section id="changes"')]
         panels = set(re.findall(r'class="map-panel" data-path="([^"]+)"', section))
         self.assertEqual(panels, files)
-        routed = {path for _, path in visual.LINK.findall(visual.section((PACKAGE / "SKILL.md").read_text(encoding="utf-8"), "按需读取"))}
+        routed = {path for _, path in visual.LINK.findall((PACKAGE / "SKILL.md").read_text(encoding="utf-8")) if path.startswith("references/")}
+        self.assertEqual(len(routed), len(list((PACKAGE / "references").glob("*.md"))))
         nodes = set(re.findall(r'<g class="n [^"]*" data-go="([^"]+)"', section))
         self.assertLessEqual(routed, nodes)
 
