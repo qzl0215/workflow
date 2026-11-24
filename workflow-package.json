@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "name": "workflow",
-  "version": "5.17.0",
+  "version": "5.18.0",
   "entrypoint": "SKILL.md",
   "runtime": {
     "files": {
       "LICENSE": "sha256:6f56797263fb6d17252bfd325544640f0c173926558345975fed3973b1c7fc45",
       "NOTICE.md": "sha256:9154ec5f50fdb67d6bdcc1f220276db9420933515c1dc7bd0422ab99174da13d",
-      "SKILL.md": "sha256:ec96c363e7365db0f166540659f20d8e98ba028db1ed5ade54fd0158cb3433ae",
+      "SKILL.md": "sha256:9d83b2f6d92ca4dff5648d928cae528471278da80b6f763017d4ef4a386cae2c",
       "references/deliver.md": "sha256:4c7ffc66700a9cd7d66ec064358fb32ed6af3a3b2f6a96a0b40ba726ed72901b",
       "references/frame.md": "sha256:53b4888df46e8fd2164f0728992b02458f68f1f224735cbd6d1c87acc685119e",
       "references/learn.md": "sha256:2774d71d2cb95a755ba91001dddc632d4edd9b60a2463482ba926152137780ff",
@@ -16,7 +16,7 @@
       "references/prove.md": "sha256:d3a6d08c8c169644f46cd4f7016d90ff6661cd30fa32992c06ae78b45e5f1664",
       "references/report.md": "sha256:fe348a6fe6eb1dcede24182de681b14647c643ec088ef41b215cca3f9c26def8",
       "references/strategy.md": "sha256:9ed6e69c277212c6910fad99b2209f2186a2f4ae110a2cf14a09dcd1eb6592c8",
-      "references/visual-demo.md": "sha256:f076c5a3eb5cd6d89557df6379ef3c2d78913c5c99632babc74ceeb3fa5efe3a",
+      "references/visual-demo.md": "sha256:f2d1916da476b4910e4208cf7c54c51d79e78b95239f4d16e5c0a90ecc34e115",
       "scripts/install.py": "sha256:7b1077ef2b97da5fbfcc6b3dcdc09e4ddeb5a20741f9254495e95fef7bfbd083",
       "scripts/project_init.py": "sha256:8a3bde3ebbc0c94a11ceec5f5ea33e60d7ac4a5be3b22be2da2bbc2efbefe623",
       "scripts/safe_merge.py": "sha256:b6d3798f8b9e8dedf8f498061f723871342b80d5ca3f3942ffa6bdd721a64ffe",
