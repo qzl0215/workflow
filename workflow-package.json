@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "name": "workflow",
-  "version": "5.18.0",
+  "version": "5.19.0",
   "entrypoint": "SKILL.md",
   "runtime": {
     "files": {
       "LICENSE": "sha256:6f56797263fb6d17252bfd325544640f0c173926558345975fed3973b1c7fc45",
       "NOTICE.md": "sha256:9154ec5f50fdb67d6bdcc1f220276db9420933515c1dc7bd0422ab99174da13d",
-      "SKILL.md": "sha256:353713d5fe592f0fbb3b703059782399dd9dcad024ee418bd45518e5cdea5eb8",
+      "SKILL.md": "sha256:da86aef650cf65956efdb998ee958db7e5a779cf59a565d6c37abd4ebcd42ecb",
       "references/deliver.md": "sha256:4c7ffc66700a9cd7d66ec064358fb32ed6af3a3b2f6a96a0b40ba726ed72901b",
       "references/frame.md": "sha256:53b4888df46e8fd2164f0728992b02458f68f1f224735cbd6d1c87acc685119e",
       "references/learn.md": "sha256:2774d71d2cb95a755ba91001dddc632d4edd9b60a2463482ba926152137780ff",
