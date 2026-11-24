@@ -111,7 +111,7 @@ def opening(text: str) -> str:
 
 
 def section(text: str, title: str) -> str:
-    match = re.search(r'^## ' + re.escape(title) + r'\n(.*?)(?=^## |\Z)', text, re.M | re.S)
+    match = re.search(r'^#{2,3} ' + re.escape(title) + r'\n(.*?)(?=^#{2,3} |\Z)', text, re.M | re.S)
     return match[1].strip() if match else ''
 
 
@@ -350,7 +350,7 @@ def file_map(read, manifest_text: str) -> str:
     outs = {f: [g for s, g in edges if s == f] for f in files}
     ins = {f: [s for s, g in edges if g == f] for f in files}
     when, order = {}, []
-    for condition, target in table_rows(section(texts['SKILL.md'], '按需读取'), 2):
+    for condition, target in (row for rows in route_groups({p: t for p, t in texts.items() if p == 'SKILL.md' or p.startswith('references/')}).values() for row in rows):
         for _, path in LINK.findall(target):
             when[path] = condition
             order.append(path)
@@ -432,7 +432,7 @@ def file_map(read, manifest_text: str) -> str:
         if 'SKILL.md' in ins.get(leaf, []) and not sources:
             svg += f'<path class="e" d="M275 {mid} V 44 H 880 V {row_y(j)}"/>'
     svg += node(10, mid, 150, None, 'description', '技能的触发描述', 'desc')
-    svg += node(200, mid, 150, 'SKILL.md', 'SKILL.md', '入口：判断、推进、路由', 'hub')
+    svg += node(200, mid, 150, 'SKILL.md', 'SKILL.md', '入口：沟通、执行、复盘', 'hub')
     for i, ref in enumerate(refs):
         svg += node(400, row_y(i), 290, ref, title(ref), posixpath.basename(ref))
     for j, leaf in enumerate(leaves):
