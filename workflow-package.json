@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "name": "workflow",
-  "version": "5.18.0",
+  "version": "5.19.0",
   "entrypoint": "SKILL.md",
   "runtime": {
     "files": {
       "LICENSE": "sha256:6f56797263fb6d17252bfd325544640f0c173926558345975fed3973b1c7fc45",
       "NOTICE.md": "sha256:9154ec5f50fdb67d6bdcc1f220276db9420933515c1dc7bd0422ab99174da13d",
-      "SKILL.md": "sha256:9d83b2f6d92ca4dff5648d928cae528471278da80b6f763017d4ef4a386cae2c",
+      "SKILL.md": "sha256:da86aef650cf65956efdb998ee958db7e5a779cf59a565d6c37abd4ebcd42ecb",
       "references/deliver.md": "sha256:4c7ffc66700a9cd7d66ec064358fb32ed6af3a3b2f6a96a0b40ba726ed72901b",
       "references/frame.md": "sha256:53b4888df46e8fd2164f0728992b02458f68f1f224735cbd6d1c87acc685119e",
       "references/learn.md": "sha256:2774d71d2cb95a755ba91001dddc632d4edd9b60a2463482ba926152137780ff",
@@ -16,14 +16,14 @@
       "references/prove.md": "sha256:d3a6d08c8c169644f46cd4f7016d90ff6661cd30fa32992c06ae78b45e5f1664",
       "references/report.md": "sha256:fe348a6fe6eb1dcede24182de681b14647c643ec088ef41b215cca3f9c26def8",
       "references/strategy.md": "sha256:9ed6e69c277212c6910fad99b2209f2186a2f4ae110a2cf14a09dcd1eb6592c8",
-      "references/visual-demo.md": "sha256:f2d1916da476b4910e4208cf7c54c51d79e78b95239f4d16e5c0a90ecc34e115",
+      "references/visual-demo.md": "sha256:577382b8aadac090407d9a0db49bfdcba0cea172212d9414011bc00e2a3a9d28",
       "scripts/install.py": "sha256:7b1077ef2b97da5fbfcc6b3dcdc09e4ddeb5a20741f9254495e95fef7bfbd083",
       "scripts/project_init.py": "sha256:8a3bde3ebbc0c94a11ceec5f5ea33e60d7ac4a5be3b22be2da2bbc2efbefe623",
       "scripts/safe_merge.py": "sha256:b6d3798f8b9e8dedf8f498061f723871342b80d5ca3f3942ffa6bdd721a64ffe",
       "scripts/work_context.py": "sha256:2ba866b0d59b8c6c02c85ea864c990125f47139056ff7e19a7d27791ae3a096f",
       "scripts/workflow_doctor.py": "sha256:b2a5ba36603d65aee58ad4ce1c008c4e1977d99b343dfecc93185eaa3ef8cbcd",
       "templates/explorer.html": "sha256:45e51a9858261b7bb2767ee45e0dfe2d59030a45c90c8228ba84eb257ae9a066",
-      "templates/pages.html": "sha256:2dd8bb46cd24dbee73b1c3bcdaede462a10614ab8554364de4b1b49aebe429b9",
+      "templates/pages.html": "sha256:932c7689736de6259eb7ed619d5aae21a4e761302bed82f04c29b34017966ff2",
       "templates/work.md": "sha256:619ee7ddf3498ffd33ed9357b4b7d074476262f8476d414d2d49a6897ba33419"
     }
   },
