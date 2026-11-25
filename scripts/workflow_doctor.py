@@ -23,15 +23,12 @@ REQUIRED_REFERENCES = (
     "visual-demo.md",
     "learn.md",
     "strategy.md",
-    "linear-tracking.md",
 )
-REQUIRED_TEMPLATES = ("work.md", "pages.html", "explorer.html")
+REQUIRED_TEMPLATES = ("pages.html", "explorer.html")
 REQUIRED_RUNTIME_SCRIPTS = (
     "install.py",
     "safe_merge.py",
-    "work_context.py",
     "workflow_doctor.py",
-    "project_init.py",
 )
 EXPECTED_RUNTIME_FILES = frozenset(
     {

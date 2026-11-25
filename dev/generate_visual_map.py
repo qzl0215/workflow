@@ -213,8 +213,6 @@ def page_from_sources(sources: dict[str, str], changelog: str = '') -> tuple[str
 
 def build() -> tuple[str, str]:
     paths = ['SKILL.md', *sorted(p.relative_to(PACKAGE).as_posix() for p in (PACKAGE/'references').glob('*.md'))]
-    if (PACKAGE/'templates/work.md').is_file():
-        paths.append('templates/work.md')
     changelog = PACKAGE/'CHANGELOG.md'
     page, identity = page_from_sources({p: (PACKAGE/p).read_text(encoding='utf-8') for p in paths},
                                       changelog.read_text(encoding='utf-8') if changelog.is_file() else '')
@@ -254,8 +252,6 @@ def build_review(repo: Path, base: str, target: str, *, asset_root: Path | None 
     before, after = resolve(base), resolve(target)
     names = git(repo, 'ls-tree', '-r', '--name-only', after).splitlines()
     paths = ['SKILL.md', *sorted(p for p in names if p.startswith('references/') and p.endswith('.md'))]
-    if 'templates/work.md' in names:
-        paths.append('templates/work.md')
     page, digest = page_from_sources({p: git(repo, 'show', f'{after}:{p}') for p in paths},
                                     git(repo, 'show', f'{after}:CHANGELOG.md') if 'CHANGELOG.md' in names else '')
     page = fill(page, {'__FILEMAP__': file_map(lambda p: git(repo, 'show', f'{after}:{p}'), git(repo, 'show', f'{after}:workflow-package.json'))
@@ -304,7 +300,7 @@ def references_between(texts: dict[str, str]) -> list[tuple[str, str]]:
         for target in texts:
             if target == source or target.startswith('docs/assets/') or target in {'.gitignore', 'LICENSE'}:
                 continue
-            if source.endswith('.py') and (not (target.endswith('.py') or target in {'SKILL.md', 'workflow-package.json', 'templates/work.md'})
+            if source.endswith('.py') and (not (target.endswith('.py') or target in {'SKILL.md', 'workflow-package.json'})
                                            or (target.startswith('tests/') and not source.startswith('tests/'))):
                 continue
             base = posixpath.basename(target)

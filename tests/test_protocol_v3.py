@@ -43,14 +43,14 @@ class SkillStructureTest(unittest.TestCase):
             (repo/'references').mkdir(); (repo/'templates').mkdir()
             (repo/'SKILL.md').write_text('---\nversion: 9.0.0\n---\n# 入口\n[旧](references/old.md)\n')
             (repo/'references/old.md').write_text('# 参考\n\n中文长行与特殊字符 <script>不执行</script>\n')
-            (repo/'templates/work.md').write_text('# 模板\n')
+            (repo/'templates/gone.md').write_text('# 模板\n')
             (repo/'CHANGELOG.md').write_text('## [9.0.0]\n\n- 旧版说明。\n')
             git('add','.'); git('commit','-qm','base'); base=git('rev-parse','HEAD')
             git('mv','references/old.md','references/new.md')
             (repo/'SKILL.md').write_text('---\nversion: 9.1.0\n---\n# 入口\n[新](references/new.md)\n')
             (repo/'changed.txt').write_text('__CSS__ __LIBRARY__ __PATCH__ <script>not executable</script>\n')
             (repo/'CHANGELOG.md').write_text('## [9.1.0]\n\n- 新版收益来自同一份变更记录。\n\n## [9.0.0]\n\n- 旧版说明。\n')
-            (repo/'templates/work.md').unlink()
+            (repo/'templates/gone.md').unlink()
             git('add','.'); git('commit','-qm','target'); target=git('rev-parse','HEAD')
             (repo/'SKILL.md').write_text('UNCOMMITTED SECRET MUST NOT APPEAR')
             (repo/'CHANGELOG.md').write_text('UNCOMMITTED CHANGELOG MUST NOT APPEAR')
@@ -109,7 +109,6 @@ class SkillStructureTest(unittest.TestCase):
             (root / "templates").mkdir()
             (root / "SKILL.md").write_text("---\nversion: 9.0.0\n---\n# 新入口\n\n[新参考](references/new.md)\n")
             (root / "references/new.md").write_text("# 新参考\n\n新的规则，不要求阶段名称。\n")
-            (root / "templates/work.md").write_text("# 恢复记录\n")
             with patch.object(visual, "PACKAGE", root):
                 first, old_digest = visual.build()
                 (root / "references/new.md").write_text("# 新参考\n\n修改后的规则。\n")
@@ -171,7 +170,7 @@ class SkillStructureTest(unittest.TestCase):
         raw = RawSources(); raw.feed(page)
         for path, contents in raw.sources.items():
             self.assertEqual(contents, (PACKAGE/path).read_text())
-        self.assertEqual(set(raw.sources), {'SKILL.md', 'templates/work.md', *(p.relative_to(PACKAGE).as_posix() for p in (PACKAGE/'references').glob('*.md'))})
+        self.assertEqual(set(raw.sources), {'SKILL.md', *(p.relative_to(PACKAGE).as_posix() for p in (PACKAGE/'references').glob('*.md'))})
 
 
 class FileMapTest(unittest.TestCase):

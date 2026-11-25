@@ -102,52 +102,6 @@ class PortabilityContractTest(unittest.TestCase):
                 )
                 self.assertEqual(result.returncode, 0, result.stdout)
 
-    def test_work_context_works_without_git_browser_memory_or_subagents(self) -> None:
-        with tempfile.TemporaryDirectory() as temp:
-            task = Path(temp) / "project/plans/demo"
-            task.mkdir(parents=True)
-            (task / "work.md").write_text(
-                """# 工作真源
-
-## 当前状态
-- 状态：active
-- 当前动作：任务执行
-
-## 目标契约
-- 目标：完成可验证的结果
-
-## 结果计划
-### P01｜结果
-#### P01-T01｜任务
-- 任务状态：active
-- 验收：返回有界上下文
-"""
-            )
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    "-B",
-                    str(PACKAGE / "scripts/work_context.py"),
-                    "--task-dir",
-                    str(task),
-                    "--plan",
-                    "P01",
-                    "--task",
-                    "P01-T01",
-                    "--format",
-                    "json",
-                ],
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                check=False,
-            )
-            self.assertEqual(result.returncode, 0, result.stdout)
-            payload = json.loads(result.stdout)
-            self.assertEqual(payload["source"], "work.md")
-            self.assertEqual(payload["status"], "active")
-            self.assertEqual(payload["action_hint"], "任务执行")
-
     def test_package_has_no_symlinks_or_shell_runtime(self) -> None:
         self.assertEqual([path for path in PACKAGE.rglob("*") if path.is_symlink()], [])
         self.assertEqual(list((PACKAGE / "scripts").glob("*.sh")), [])
