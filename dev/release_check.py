@@ -32,9 +32,6 @@ SOURCE_ONLY_FILES = frozenset(
         "CHANGELOG.md",
         "evals/README.md",
         "evals/cases.json",
-        "evals/4.0.0-results.md",
-        "evals/4.1.0-results.md",
-        "evals/4.2.0-results.md",
         "dev/evaluate.py",
         "tests/test_evaluate.py",
         "dev/observe.py",
@@ -51,10 +48,8 @@ SOURCE_ONLY_FILES = frozenset(
         "tests/test_portability.py",
         "tests/test_publish.py",
         "tests/test_protocol_v3.py",
-        "tests/test_project_init.py",
         "tests/test_release_v3.py",
         "tests/test_safe_merge.py",
-        "tests/test_work_context.py",
     }
 )
 EXPECTED_SOURCE_FILES = RUNTIME_FILES | SOURCE_ONLY_FILES | {install.RUNTIME_MANIFEST_NAME}

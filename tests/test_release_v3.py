@@ -23,21 +23,17 @@ REFERENCES = {
     "visual-demo.md",
     "learn.md",
     "strategy.md",
-    "linear-tracking.md",
 }
 RUNTIME_FILES = {
     "SKILL.md",
     "LICENSE",
     "NOTICE.md",
     *(f"references/{name}" for name in REFERENCES),
-    "templates/work.md",
     "templates/pages.html",
     "templates/explorer.html",
     "scripts/install.py",
     "scripts/safe_merge.py",
-    "scripts/work_context.py",
     "scripts/workflow_doctor.py",
-    "scripts/project_init.py",
 }
 SOURCE_ONLY_FILES = {
     ".gitignore",
@@ -48,9 +44,6 @@ SOURCE_ONLY_FILES = {
     "CHANGELOG.md",
     "evals/README.md",
     "evals/cases.json",
-    "evals/4.0.0-results.md",
-    "evals/4.1.0-results.md",
-    "evals/4.2.0-results.md",
     "dev/evaluate.py",
     "tests/test_evaluate.py",
     "dev/observe.py",
@@ -67,10 +60,8 @@ SOURCE_ONLY_FILES = {
     "tests/test_portability.py",
     "tests/test_publish.py",
     "tests/test_protocol_v3.py",
-    "tests/test_project_init.py",
     "tests/test_release_v3.py",
     "tests/test_safe_merge.py",
-    "tests/test_work_context.py",
 }
 
 

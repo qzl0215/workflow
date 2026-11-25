@@ -1,30 +1,26 @@
 {
   "schema": 1,
   "name": "workflow",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "entrypoint": "SKILL.md",
   "runtime": {
     "files": {
       "LICENSE": "sha256:6f56797263fb6d17252bfd325544640f0c173926558345975fed3973b1c7fc45",
       "NOTICE.md": "sha256:9154ec5f50fdb67d6bdcc1f220276db9420933515c1dc7bd0422ab99174da13d",
-      "SKILL.md": "sha256:44cddc134f584e45ff20c528c78ea142570011f43f87ea719e8b39258c04398d",
+      "SKILL.md": "sha256:9046ec14aaf6dfe44432c3fd8e72012cb82bce3c2008f7ea13917a0da4a25145",
       "references/deliver.md": "sha256:4c7ffc66700a9cd7d66ec064358fb32ed6af3a3b2f6a96a0b40ba726ed72901b",
-      "references/frame.md": "sha256:4024b923ef0402f18e17e11e79bd0626511a4ee819a9004d9994a1d71b48f324",
-      "references/learn.md": "sha256:fc64ef03b8add4e3f7c4e0a8d15f91908b0e59f0041e86487b4874400a8384bf",
-      "references/linear-tracking.md": "sha256:f19729de6e7b37536ca22f764918ccdc4d82bf871a56e193d368035b2bcc6df9",
-      "references/plan.md": "sha256:e18abcee867052f3229598b07db3e9f337586cc5765af0807f2b9dbdb730f599",
+      "references/frame.md": "sha256:78a8042b18d6cc50c6164c84d772c8eab2d0c68cb35ec959b3c90d59a5ad03f8",
+      "references/learn.md": "sha256:02ab374fa3c064a111c7fe88aea514be7bd6762231be30ec334ed39761a6136d",
+      "references/plan.md": "sha256:0d99afe057352638f1177e9368487b3844dec56a58b3a061efcc4f4783bc7825",
       "references/prove.md": "sha256:d3a6d08c8c169644f46cd4f7016d90ff6661cd30fa32992c06ae78b45e5f1664",
-      "references/report.md": "sha256:51c33dda3b4b965e821811bebeb8f9d971fb079accafa7a098ebbb20fd865901",
-      "references/strategy.md": "sha256:2015d3b2ffbff6dde644445572b7ed1f3244c2eb1bbbf8785c763308451d5562",
+      "references/report.md": "sha256:96e43bd518aaafe6a52037cc7353f56006e54c3f7a55d2d061530a07d4b688ec",
+      "references/strategy.md": "sha256:46ac186ca92c42d3000358a701646e7619e180582253b0157d1d58a1b4161c97",
       "references/visual-demo.md": "sha256:577382b8aadac090407d9a0db49bfdcba0cea172212d9414011bc00e2a3a9d28",
       "scripts/install.py": "sha256:7b1077ef2b97da5fbfcc6b3dcdc09e4ddeb5a20741f9254495e95fef7bfbd083",
-      "scripts/project_init.py": "sha256:8a3bde3ebbc0c94a11ceec5f5ea33e60d7ac4a5be3b22be2da2bbc2efbefe623",
       "scripts/safe_merge.py": "sha256:b6d3798f8b9e8dedf8f498061f723871342b80d5ca3f3942ffa6bdd721a64ffe",
-      "scripts/work_context.py": "sha256:2ba866b0d59b8c6c02c85ea864c990125f47139056ff7e19a7d27791ae3a096f",
-      "scripts/workflow_doctor.py": "sha256:b2a5ba36603d65aee58ad4ce1c008c4e1977d99b343dfecc93185eaa3ef8cbcd",
+      "scripts/workflow_doctor.py": "sha256:2137bc272283bf3973c844bc78f9f1053365c3a32adbe1c4063c1330e6013f66",
       "templates/explorer.html": "sha256:45e51a9858261b7bb2767ee45e0dfe2d59030a45c90c8228ba84eb257ae9a066",
-      "templates/pages.html": "sha256:a88d1407e4e944de884db7b4c637199e7ef3ac5b7d6c307f4848eaff3567d792",
-      "templates/work.md": "sha256:619ee7ddf3498ffd33ed9357b4b7d074476262f8476d414d2d49a6897ba33419"
+      "templates/pages.html": "sha256:a88d1407e4e944de884db7b4c637199e7ef3ac5b7d6c307f4848eaff3567d792"
     }
   },
   "source_only": [
@@ -44,20 +40,15 @@
     "docs/assets/diff2html/diff2html.min.js",
     "docs/assets/diff2html/provenance.json",
     "docs/workflow-visual-map.html",
-    "evals/4.0.0-results.md",
-    "evals/4.1.0-results.md",
-    "evals/4.2.0-results.md",
     "evals/5.2.0-results.md",
     "evals/README.md",
     "evals/cases.json",
     "tests/test_evaluate.py",
     "tests/test_observe.py",
     "tests/test_portability.py",
-    "tests/test_project_init.py",
     "tests/test_protocol_v3.py",
     "tests/test_publish.py",
     "tests/test_release_v3.py",
-    "tests/test_safe_merge.py",
-    "tests/test_work_context.py"
+    "tests/test_safe_merge.py"
   ]
 }
