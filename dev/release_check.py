@@ -36,6 +36,7 @@ SOURCE_ONLY_FILES = frozenset(
         "tests/test_evaluate.py",
         "dev/observe.py",
         "tests/test_observe.py",
+        "tests/test_page_check.py",
         "docs/workflow-visual-map.html",
         "docs/assets/diff2html/diff2html.min.js",
         "docs/assets/diff2html/diff2html.min.css",
