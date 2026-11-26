@@ -25,12 +25,13 @@ REQUIRED_REFERENCES = (
     "learn.md",
     "strategy.md",
 )
-REQUIRED_TEMPLATES = ("pages.html", "explorer.html")
+REQUIRED_TEMPLATES = ("pages.html", "explorer.html", "chart-theme.json", "chart-examples.json")
 REQUIRED_RUNTIME_SCRIPTS = (
     "install.py",
     "page_check.py",
     "safe_merge.py",
     "workflow_doctor.py",
+    "render_chart.mjs",
 )
 EXPECTED_RUNTIME_FILES = frozenset(
     {
@@ -59,7 +60,7 @@ MACHINE_PATH = re.compile(
     r"(?:/(?:Users|home)/[^\s`]+|[A-Za-z]:\\Users\\[^\\\s`]+)"
 )
 TEXT_NAMES = frozenset({"SKILL.md", "LICENSE"})
-TEXT_SUFFIXES = frozenset({".md", ".html", ".json", ".py"})
+TEXT_SUFFIXES = frozenset({".md", ".html", ".json", ".py", ".mjs"})
 IGNORED_CONTROL_NAMES = frozenset({".git"})
 GENERATED_NAMES = frozenset({".DS_Store", "Thumbs.db", "desktop.ini", ".pytest_cache", "__pycache__"})
 
