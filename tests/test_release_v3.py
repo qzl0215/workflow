@@ -18,6 +18,7 @@ REFERENCES = {
     "frame.md",
     "plan.md",
     "prove.md",
+    "diagnose.md",
     "deliver.md",
     "report.md",
     "visual-demo.md",
