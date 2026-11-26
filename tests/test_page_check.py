@@ -14,7 +14,7 @@ FAKE_CHROME = """#!/bin/sh
 for a in "$@"; do
   case "$a" in
     --screenshot=*) printf png > "${a#--screenshot=}" ;;
-    --dump-dom) printf '%s' '<pre id="__workflow_page_check__">{"width":1440,"height":813,"screens":2.5,"firstScreenChars":120,"firstScreenControls":0,"biggestText":"49.8 万","overflowX":true}</pre>' ;;
+    --dump-dom) printf '%s' '<pre id="__workflow_page_check__">{"width":1440,"height":813,"screens":2.5,"firstScreenChars":120,"firstScreenControls":0,"biggestText":"49.8 万","overflowX":true,"smallChars":90,"prose":["每件商品按下面的先后找到跟随…（70 字）"],"repeated":["1.74亿 ×2"]}</pre>' ;;
   esac
 done
 """
@@ -38,17 +38,22 @@ class PageCheckTest(unittest.TestCase):
     def tearDown(self) -> None:
         self.tmp.cleanup()
 
-    def test_gives_screenshots_measures_and_a_ready_cold_read_prompt(self) -> None:
+    def test_flags_prose_and_repeats_and_hands_the_glance_view_to_the_cold_read(self) -> None:
         out = self.root / "shots"
         result = run(str(self.page), "--reader", "运营同事，反复打开", "--out", str(out), chrome=str(self.chrome))
-        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.returncode, 1, result.stderr)
         self.assertTrue((out / "first-screen-desktop.png").is_file())
+        self.assertTrue((out / "glance-desktop.png").is_file())
+        self.assertIn("结论：不过", result.stdout)
+        self.assertIn("首屏有 70 字成段文字", result.stdout)
+        self.assertIn("1.74亿 ×2", result.stdout)
+        self.assertIn(str(out / "glance-desktop.png"), result.stdout)
+        self.assertIn("细小的字已经抹掉", result.stdout)
         self.assertTrue((out / "first-screen-phone.png").is_file())
         self.assertIn("整页 2.5 屏", result.stdout)
         self.assertIn("整页横向溢出", result.stdout)
         self.assertIn("首屏没有可操作的控件", result.stdout)
         self.assertIn("你扮演这页的读者：运营同事，反复打开", result.stdout)
-        self.assertIn(str(out / "first-screen-desktop.png"), result.stdout)
         for question in ("这页的答案是什么", "最重要的数是哪个", "你从哪里动手"):
             self.assertIn(question, result.stdout)
         self.assertEqual(sorted(p.name for p in self.root.iterdir()), ["chrome", "page.html", "shots"])
