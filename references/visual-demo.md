@@ -46,7 +46,7 @@
 
 ### 画数据图
 
-聊天、汇报和页面里的数据图都按这里画。本机装有 `dataviz` 时调用它选图和校验配色。动笔前先定读者看完要记住哪个数、它是好是坏，再选形式，最后才定颜色。
+聊天、汇报和页面里的数据图都按这里画，不另读其他画图规范。动笔前先定读者看完要记住哪个数、它是好是坏，再选形式，最后才定颜色。
 
 | 要点 | 规则 |
 |---|---|
@@ -62,6 +62,17 @@
 画完截图只看图：三秒内说不出结论数字和它是好是坏，就回到第一行重做。
 
 在聊天里出图时，结论句和解释写在回复正文，图里只留图形和贴着图形的标签。正文说细节在下文，图就真的只画骨架。
+
+#### 用工具画
+
+数据图统一用 ECharts，颜色与样式只取 [chart-theme.json](../templates/chart-theme.json)，不用 ECharts 默认样式。
+
+- 先从 [chart-examples.json](../templates/chart-examples.json) 挑最接近的示例改数据：`split` 分段条、`trend` 趋势加目标线、`rank` 横条排名。`node <workflow根>/scripts/render_chart.mjs png --example trend --out 图.png` 可直接看样子。
+- 颜色只写主题里的名字，如 `"$accent"`、`"$muted2"`、`"$seq3"`，不写色值；写了不存在的名字工具会报错。
+- 聊天、汇报要静态图：把配置写成 JSON，运行 `node <workflow根>/scripts/render_chart.mjs png 配置.json --out 图.png`，深色加 `--mode dark`。聊天里的图去掉 `title`。首次运行会把锁定版本的依赖装进用户缓存，需要 Node 18 以上和 npm。
+- 网页要动画和交互：先加载 `echarts@5.6.0`，再内联 `node <workflow根>/scripts/render_chart.mjs page` 的输出，然后 `echarts.init(el, WORKFLOW_CHART.theme(mode), { renderer: "svg" })`，`setOption(WORKFLOW_CHART.fill(配置, mode))`。切换深浅时销毁后按新模式重建。离线页面内联 `~/.cache/workflow-chart/node_modules/echarts/dist/echarts.min.js`。
+- 同一份配置既出静态图也上网页；静态图会自动关掉动画。
+- 已知的坑：按阈值给折线分段上色的 `visualMap` 要写 `seriesIndex`，每段都写上下界，否则报错。配置是 JSON，不能写函数，提示框用字符串模板如 `"{b}<br/>{c} 秒"`。
 
 ## 4 写文案
 

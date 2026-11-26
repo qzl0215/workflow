@@ -32,10 +32,13 @@ RUNTIME_FILES = {
     *(f"references/{name}" for name in REFERENCES),
     "templates/pages.html",
     "templates/explorer.html",
+    "templates/chart-theme.json",
+    "templates/chart-examples.json",
     "scripts/install.py",
     "scripts/page_check.py",
     "scripts/safe_merge.py",
     "scripts/workflow_doctor.py",
+    "scripts/render_chart.mjs",
 }
 SOURCE_ONLY_FILES = {
     ".gitignore",

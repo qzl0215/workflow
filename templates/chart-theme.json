@@ -1,0 +1,51 @@
+{
+  "font": "PingFang SC, Microsoft YaHei, Helvetica Neue, Arial, sans-serif",
+  "tokens": {
+    "light": {
+      "bg": "#ffffff", "text": "#1f2328", "subtle": "#656d76", "grid": "#eaeef2",
+      "muted": "#c9ced6", "muted2": "#a4acb7", "accent": "#d1461f", "good": "#1a7f37",
+      "seq1": "#dbe4f3", "seq2": "#a9bfe3", "seq3": "#6f93cf", "seq4": "#3b6bb8", "seq5": "#1f4a8f",
+      "cat1": "#3b6bb8", "cat2": "#2f9e8f", "cat3": "#8a63d2", "cat4": "#c08a1e"
+    },
+    "dark": {
+      "bg": "#16181c", "text": "#e6e8eb", "subtle": "#9aa3ad", "grid": "#2b3037",
+      "muted": "#3d434c", "muted2": "#5b636e", "accent": "#ff7a4d", "good": "#3fb950",
+      "seq1": "#1f2b3d", "seq2": "#2c4468", "seq3": "#3f6399", "seq4": "#6b90cc", "seq5": "#a9c3ef",
+      "cat1": "#6b90cc", "cat2": "#4cc2b0", "cat3": "#a98be6", "cat4": "#e0ac45"
+    }
+  },
+  "echarts": {
+    "backgroundColor": "$bg",
+    "color": ["$cat1", "$cat2", "$cat3", "$cat4"],
+    "animationDuration": 900,
+    "animationEasing": "cubicOut",
+    "textStyle": { "fontFamily": "$font", "color": "$text" },
+    "title": {
+      "left": 16, "top": 12, "itemGap": 6,
+      "textStyle": { "color": "$text", "fontSize": 18, "fontWeight": 600 },
+      "subtextStyle": { "color": "$subtle", "fontSize": 13 }
+    },
+    "grid": { "left": 44, "right": 64, "top": 88, "bottom": 36, "containLabel": false },
+    "legend": { "show": false },
+    "tooltip": {
+      "backgroundColor": "$bg", "borderColor": "$grid", "borderWidth": 1,
+      "textStyle": { "color": "$text", "fontSize": 13 },
+      "axisPointer": { "lineStyle": { "color": "$subtle", "type": "dashed" } }
+    },
+    "categoryAxis": {
+      "axisLine": { "show": false }, "axisTick": { "show": false },
+      "axisLabel": { "color": "$subtle", "fontSize": 12 }, "splitLine": { "show": false }
+    },
+    "valueAxis": {
+      "axisLine": { "show": false }, "axisTick": { "show": false },
+      "axisLabel": { "color": "$subtle", "fontSize": 12 },
+      "splitLine": { "lineStyle": { "color": "$grid" } }
+    },
+    "timeAxis": {
+      "axisLine": { "show": false }, "axisTick": { "show": false },
+      "axisLabel": { "color": "$subtle", "fontSize": 12 }, "splitLine": { "show": false }
+    },
+    "line": { "symbol": "circle", "symbolSize": 7, "showSymbol": false, "lineStyle": { "width": 2 } },
+    "bar": { "itemStyle": { "borderColor": "$bg", "borderWidth": 0 } }
+  }
+}

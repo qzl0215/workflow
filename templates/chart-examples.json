@@ -1,0 +1,70 @@
+{
+  "split": {
+    "use": "一个整体怎么分，不超过 6 段；结论落在某一段",
+    "width": 640, "height": 160,
+    "option": {
+      "title": { "text": "近三成请求超过 30 秒", "subtext": "22 次，占 73 次的 30%（演示数据）" },
+      "grid": { "left": 16, "right": 16, "top": 76, "height": 36 },
+      "xAxis": { "type": "value", "max": 73, "show": false },
+      "yAxis": { "type": "category", "data": [""], "show": false },
+      "tooltip": { "trigger": "item", "formatter": "{a}<br/><b>{c} 次</b>" },
+      "series": [
+        { "name": "10 秒内", "type": "bar", "stack": "all", "barWidth": 36, "data": [31],
+          "itemStyle": { "color": "$muted", "borderColor": "$bg", "borderWidth": 2 },
+          "emphasis": { "focus": "series" },
+          "label": { "show": true, "position": [2, 46], "formatter": "10 秒内  31 次", "color": "$subtle", "fontSize": 13 } },
+        { "name": "10–30 秒", "type": "bar", "stack": "all", "data": [20],
+          "itemStyle": { "color": "$muted2", "borderColor": "$bg", "borderWidth": 2 },
+          "emphasis": { "focus": "series" },
+          "label": { "show": true, "position": [2, 46], "formatter": "10–30 秒  20 次", "color": "$subtle", "fontSize": 13 } },
+        { "name": "超过 30 秒", "type": "bar", "stack": "all", "data": [22],
+          "itemStyle": { "color": "$accent", "borderColor": "$bg", "borderWidth": 2 },
+          "emphasis": { "focus": "series" },
+          "label": { "show": true, "position": [2, 46], "formatter": "超过 30 秒  22 次", "color": "$accent", "fontWeight": 600, "fontSize": 13 } }
+      ]
+    }
+  },
+  "trend": {
+    "use": "随时间变化，和目标线比；超过阈值的部分上强调色",
+    "width": 640, "height": 340,
+    "option": {
+      "title": { "text": "P90 耗时连续 4 天高于 30 秒目标", "subtext": "每日九成请求的耗时，单位秒（演示数据）" },
+      "tooltip": { "trigger": "axis", "formatter": "{b}<br/>P90 <b>{c} 秒</b>" },
+      "xAxis": { "type": "category", "boundaryGap": false, "axisLabel": { "interval": 1 },
+        "data": ["11-13","11-14","11-15","11-16","11-17","11-18","11-19","11-20","11-21","11-22","11-23","11-24","11-25","11-26"] },
+      "yAxis": { "type": "value", "min": 0, "max": 40, "interval": 10 },
+      "visualMap": { "show": false, "dimension": 1, "seriesIndex": 0,
+        "pieces": [ { "lte": 30, "color": "$muted2" }, { "gt": 30, "lte": 1000000, "color": "$accent" } ],
+        "outOfRange": { "color": "$muted2" } },
+      "series": [ {
+        "name": "P90", "type": "line", "data": [22,24,21,25,23,26,24,27,28,29,33,35,34,38],
+        "endLabel": { "show": true, "formatter": "{c} 秒", "color": "$accent", "fontWeight": 600, "fontSize": 13 },
+        "markLine": { "symbol": "none", "silent": true, "data": [ { "yAxis": 30 } ],
+          "lineStyle": { "color": "$subtle", "type": [4, 4], "width": 1 },
+          "label": { "position": "insideStartTop", "formatter": "目标 30 秒", "color": "$subtle" } }
+      } ]
+    }
+  },
+  "rank": {
+    "use": "比大小：同一基线的横条，按大小排，只强调结论那一条",
+    "width": 640, "height": 300,
+    "option": {
+      "title": { "text": "支付接口最慢，P90 41 秒", "subtext": "各接口九成请求的耗时，单位秒（演示数据）" },
+      "grid": { "left": 64, "right": 56, "top": 84, "bottom": 16 },
+      "tooltip": { "trigger": "item", "formatter": "{b}<br/><b>{c} 秒</b>" },
+      "xAxis": { "type": "value", "show": false, "max": 45 },
+      "yAxis": { "type": "category", "inverse": true, "axisLabel": { "fontSize": 13, "color": "$text" },
+        "data": ["支付", "下单", "搜索", "登录", "首页"] },
+      "series": [ {
+        "type": "bar", "barWidth": 22,
+        "data": [
+          { "value": 41, "itemStyle": { "color": "$accent" }, "label": { "color": "$accent", "fontWeight": 600 } },
+          { "value": 27 }, { "value": 18 }, { "value": 9 }, { "value": 6 }
+        ],
+        "itemStyle": { "color": "$muted2", "borderRadius": [0, 3, 3, 0] },
+        "emphasis": { "focus": "self" },
+        "label": { "show": true, "position": "right", "formatter": "{c} 秒", "color": "$subtle", "fontSize": 13 }
+      } ]
+    }
+  }
+}
