@@ -33,6 +33,7 @@ RUNTIME_FILES = {
     "templates/pages.html",
     "templates/explorer.html",
     "scripts/install.py",
+    "scripts/page_check.py",
     "scripts/safe_merge.py",
     "scripts/workflow_doctor.py",
 }
@@ -49,6 +50,7 @@ SOURCE_ONLY_FILES = {
     "tests/test_evaluate.py",
     "dev/observe.py",
     "tests/test_observe.py",
+    "tests/test_page_check.py",
     "docs/workflow-visual-map.html",
     "docs/assets/diff2html/diff2html.min.js",
     "docs/assets/diff2html/diff2html.min.css",

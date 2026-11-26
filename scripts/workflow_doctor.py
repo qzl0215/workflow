@@ -28,6 +28,7 @@ REQUIRED_REFERENCES = (
 REQUIRED_TEMPLATES = ("pages.html", "explorer.html")
 REQUIRED_RUNTIME_SCRIPTS = (
     "install.py",
+    "page_check.py",
     "safe_merge.py",
     "workflow_doctor.py",
 )
