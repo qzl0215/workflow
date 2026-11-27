@@ -21,6 +21,17 @@ EARLY_CALLS = 5
 LATE_CALLS = 30
 LONG_SESSION_CALLS = 30
 STREAK = 3
+LONG_TURN_CALLS = 15
+LONG_CLOSING_CHARS = 600
+ACCOUNTS_ENOUGH = 3
+# 选择题里出现了哪几本账；只看有没有提到，不证明写得准。
+ACCOUNTS = {
+    "用户体验": re.compile(r"体验"),
+    "代码量": re.compile(r"代码量|\d+ ?行"),
+    "时间": re.compile(r"分钟|小时|时间"),
+    "长期成本": re.compile(r"长期|维护"),
+}
+ANSWER = re.compile(r'="([^"]*)"')
 SKILL_BASE = re.compile(r"Base directory for this skill: (\S+)")
 REFERENCE = re.compile(r"skills/" + SKILL + r"/((?:references|templates)/[\w.-]+\.(?:md|html))")
 WRAPPER = re.compile(r"<(system-reminder|local-command-caveat|local-command-stdout)>.*?</\1>", re.S)
@@ -94,7 +105,16 @@ def observe_session(path: Path, since: str = "", until: str = "") -> dict | None
         "session": path.stem, "path": str(path), "user_messages": 0, "tool_calls": 0,
         "skills": [], "reference_reads": [], "friction": [], "error_streaks": [],
         "external_writes": [], "compactions": 0, "skill_reattached_after_compaction": False,
+        "choices": [], "closings": [],
     }
+    turn = {"calls": 0, "visual": False, "text": "", "line": 0}
+
+    def close_turn() -> None:
+        if turn["calls"] >= LONG_TURN_CALLS and turn["text"]:
+            session["closings"].append({
+                "line": turn["line"], "chars": len(turn["text"]),
+                "visual": turn["visual"] or "\n|" in turn["text"]})
+        turn.update(calls=0, visual=False, text="", line=0)
     pending: dict[str, dict] = {}
     streak: list[dict] = []
     calls_since_load: int | None = None
@@ -115,8 +135,13 @@ def observe_session(path: Path, since: str = "", until: str = "") -> dict | None
         if (event.get("attachment") or {}).get("type") == "invoked_skills" and session["compactions"]:
             session["skill_reattached_after_compaction"] = True
         if event.get("type") == "assistant":
+            for part in parts_of(event, "text"):
+                if part.get("text", "").strip():
+                    turn.update(text=part["text"], line=line)
             for call in parts_of(event, "tool_use"):
                 session["tool_calls"] += 1
+                turn["calls"] += 1
+                turn["visual"] = turn["visual"] or "show_widget" in call.get("name", "")
                 if calls_since_load is not None:
                     calls_since_load += 1
                 payload = json.dumps(call.get("input", {}), ensure_ascii=False, sort_keys=True)
@@ -126,6 +151,10 @@ def observe_session(path: Path, since: str = "", until: str = "") -> dict | None
                     "references": sorted(set(REFERENCE.findall(payload))), "calls_since_load": calls_since_load,
                     "external_write": bool(isinstance(command, str) and EXTERNAL_WRITE.search(command)),
                 }
+                if call.get("name") == "AskUserQuestion":
+                    pending[call.get("id", "")]["labels"] = sorted(
+                        (option.get("label", "") for question in call.get("input", {}).get("questions", [])
+                         for option in question.get("options", [])), key=len, reverse=True)
             continue
         if event.get("type") != "user":
             continue
@@ -150,13 +179,24 @@ def observe_session(path: Path, since: str = "", until: str = "") -> dict | None
                     {"reference": reference, "line": call["line"], "calls_since_load": call["calls_since_load"]})
             if call["external_write"]:
                 session["external_writes"].append({"line": call["line"]})
+            if "labels" in call:
+                typed = False
+                for answer in ANSWER.findall(error):
+                    for label in call["labels"]:
+                        answer = answer.replace(label, "")
+                    typed = typed or bool(answer.strip(" ,，"))
+                session["choices"].append({
+                    "line": call["line"], "typed": typed,
+                    "accounts": [name for name, pattern in ACCOUNTS.items() if pattern.search(call["input"])]})
         text = user_text(event)
         if text:
+            close_turn()
             session["user_messages"] += 1
             for kind, pattern in FRICTION.items():
                 if pattern.search(text):
                     session["friction"].append({"kind": kind, "line": line, "text": " ".join(text.split())[:160]})
     close_streak()
+    close_turn()
     if not session["user_messages"]:
         return None
     session["loaded"] = any(item["name"] == SKILL for item in session["skills"])
@@ -198,6 +238,14 @@ def summarize(sessions: list[dict], references: list[str]) -> dict:
                               for kind in FRICTION},
         "error_streak_sessions": sum(bool(item["error_streaks"]) for item in loaded),
         "external_write_sessions": sum(bool(item["external_writes"]) for item in loaded),
+        "choices": sum(len(item["choices"]) for item in loaded),
+        "choices_with_accounts": sum(len(choice["accounts"]) >= ACCOUNTS_ENOUGH
+                                     for item in loaded for choice in item["choices"]),
+        "choices_typed": sum(choice["typed"] for item in loaded for choice in item["choices"]),
+        "long_turn_closings": sum(len(item["closings"]) for item in loaded),
+        "long_turn_closings_visual": sum(closing["visual"] for item in loaded for closing in item["closings"]),
+        "long_turn_closings_wordy": sum(closing["chars"] > LONG_CLOSING_CHARS
+                                        for item in loaded for closing in item["closings"]),
         "compacted_sessions": len(compacted),
         "compacted_with_skill_reattached": sum(item["skill_reattached_after_compaction"] for item in compacted),
     }
@@ -245,6 +293,12 @@ def render(summary: dict) -> str:
         f"待人工复核的线索（仅 {SKILL} 会话）：返工措辞 {summary['friction_sessions']['rework']}，"
         f"仍失败措辞 {summary['friction_sessions']['still_failing']}，连续 {STREAK}+ 次真实报错 {summary['error_streak_sessions']}，"
         f"外部写入命令 {summary['external_write_sessions']}")
+    lines.append(
+        f"选择题 {summary['choices']} 道：提到至少 {ACCOUNTS_ENOUGH} 本账的 {summary['choices_with_accounts']}，"
+        f"用户没点现成选项、自己打字的 {summary['choices_typed']}")
+    lines.append(
+        f"长的一轮（≥{LONG_TURN_CALLS} 次工具调用）收尾 {summary['long_turn_closings']} 次："
+        f"带图或表的 {summary['long_turn_closings_visual']}，超过 {LONG_CLOSING_CHARS} 字的 {summary['long_turn_closings_wordy']}")
     lines.append(f"压缩过的会话 {summary['compacted_sessions']}，其中宿主重新附带技能 {summary['compacted_with_skill_reattached']}")
     return "\n".join(lines)
 

@@ -119,6 +119,46 @@ class ObserveTest(unittest.TestCase):
         self.assertIn("1 2026-11-10T08:00 用户: 为什么又失败了", text)
         self.assertIn("3 2026-11-10T08:01 报错: 1 failed", text)
 
+    def test_choice_questions_count_accounts_and_typed_answers(self):
+        options = [{"label": "规则加核对", "description": "体验不变，代码量约 40 行，约 25 分钟，每周多维护一项"},
+                   {"label": "只写规则", "description": "最省"}]
+        bare = [{"label": "甲", "description": "快"}, {"label": "乙", "description": "稳"}]
+        path = self.session([
+            user("帮我做个新功能"),
+            user(BASE + "workflow\n\n# 工作流"),
+            call("a", "AskUserQuestion", questions=[{"question": "怎么落地？", "options": options}]),
+            result("a", 'The user answered: "怎么落地？"="规则加核对". Read the answers carefully'),
+            call("b", "AskUserQuestion", questions=[{"question": "选哪个？", "options": bare}]),
+            result("b", 'The user answered: "选哪个？"="缺少背景，选不了". Read the answers carefully'),
+        ])
+        session = observe.observe_session(path)
+        self.assertEqual([choice["typed"] for choice in session["choices"]], [False, True])
+        self.assertEqual([len(choice["accounts"]) for choice in session["choices"]], [4, 0])
+        summary = observe.summarize([session], [])
+        self.assertEqual((summary["choices"], summary["choices_with_accounts"], summary["choices_typed"]), (2, 1, 1))
+
+    def test_long_turn_closings_record_length_and_visual(self):
+        def text(body):
+            return {"type": "assistant", "timestamp": "2026-11-10T08:02:00Z",
+                    "message": {"content": [{"type": "text", "text": body}]}}
+        work = [event for number in range(observe.LONG_TURN_CALLS)
+                for event in (call(f"w{number}", "Bash", command="ls"), result(f"w{number}"))]
+        path = self.session([
+            user("帮我做个新功能"),
+            user(BASE + "workflow\n\n# 工作流"),
+            *work, text("字" * (observe.LONG_CLOSING_CHARS + 1)),
+            user("继续"),
+            *work, call("v", "mcp__visualize__show_widget", title="report"), result("v"), text("见上图。"),
+            user("好"),
+            call("s", "Bash", command="ls"), result("s"), text("小事做完了。"),
+        ])
+        session = observe.observe_session(path)
+        self.assertEqual([(closing["visual"], closing["chars"] > observe.LONG_CLOSING_CHARS)
+                          for closing in session["closings"]], [(False, True), (True, False)])
+        summary = observe.summarize([session], [])
+        self.assertEqual((summary["long_turn_closings"], summary["long_turn_closings_visual"],
+                          summary["long_turn_closings_wordy"]), (2, 1, 1))
+
 
 if __name__ == "__main__":
     unittest.main()
